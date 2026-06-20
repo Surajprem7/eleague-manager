@@ -16,6 +16,7 @@ const ASSETS = [
   './js/stats.js',
   './js/activitylog.js',
   './bracket.html',
+  './setup-admin.html',
   './js/dispute.js',
   './stats.html',
   './manifest.json',

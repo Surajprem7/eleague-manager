@@ -44,6 +44,7 @@
     <button class="admin-tab" data-tab="results">Results</button>
     <button class="admin-tab" data-tab="disputes">Disputes</button>
     <button class="admin-tab" data-tab="log">Activity Log</button>
+    <button class="admin-tab" data-tab="admins">👥 Admins</button>
   </div>
 
   <main class="page">
@@ -103,6 +104,13 @@
         </div>
       </div>
 
+      <!-- ADMINS TAB -->
+      <div class="tab-content" id="tab-admins" style="display:none">
+        <div id="admins-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -111,7 +119,7 @@
 
 <script type="module">
   import { auth, db } from './js/firebase.js';
-  import { loginWithGoogle, logout, onAdminAuth } from './js/auth.js';
+  import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin } from './js/auth.js';
   import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
@@ -143,6 +151,7 @@
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('admin-app').style.display = 'block';
       document.getElementById('admin-email').textContent = user.email;
+      currentAdminEmail = user.email;
       loadPlayers();
     } else {
       document.getElementById('login-screen').style.display = 'flex';
@@ -165,6 +174,7 @@
       if (tab.dataset.tab === 'results')  loadResults();
       if (tab.dataset.tab === 'disputes') loadDisputes();
       if (tab.dataset.tab === 'log')      loadActivityLog();
+      if (tab.dataset.tab === 'admins')   loadAdmins();
     });
   });
 
@@ -528,6 +538,71 @@
       el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading log.</p></div>';
     }
   }
+
+  // ── ADMINS MANAGEMENT ──
+  let currentAdminEmail = '';
+  async function loadAdmins() {
+    const el = document.getElementById('admins-panel');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const admins = await getAdmins();
+      el.innerHTML = `
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-title">Add new admin</div>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter their Gmail address. They sign in with Google — no password needed.</p>
+          <div style="display:flex;gap:8px">
+            <input type="email" class="form-input" id="new-admin-email" placeholder="theirgmail@gmail.com" style="flex:1" />
+            <button class="btn btn-primary" onclick="addAdminFromUI()">Add</button>
+          </div>
+          <div id="add-admin-result" style="margin-top:.5rem;font-size:.82rem"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Current admins (${admins.length})</div>
+          ${admins.length ? admins.map(a => `
+            <div class="player-item">
+              <div class="player-avatar">${a.email[0].toUpperCase()}</div>
+              <div style="flex:1">
+                <div class="player-name">${esc(a.email)}</div>
+                <div class="player-sub">Added ${a.addedAt ? new Date(a.addedAt).toLocaleDateString() : 'N/A'}${a.isSuper?' · Super Admin':''}</div>
+              </div>
+              ${!a.isSuper ? `<button class="btn btn-sm btn-danger" onclick="removeAdminFromUI('${esc(a.email)}')">Remove</button>` : '<span class="badge badge-green">Owner</span>'}
+            </div>`).join('') : '<p style="font-size:.85rem;color:var(--gray-600)">No admins found.</p>'}
+        </div>
+        <div class="card" style="background:#FEF7E0;border-color:#FAC775">
+          <div class="card-title" style="color:#854F0B">ℹ️ How it works</div>
+          <p style="font-size:.82rem;color:#854F0B;line-height:1.6">Add any Gmail address here. That person goes to <strong>league.getgol.in/admin.html</strong> and signs in with their Google account. If their email is on this list, they get admin access automatically.</p>
+        </div>`;
+    } catch(e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading admins.</p></div>';
+    }
+  }
+
+  window.addAdminFromUI = async () => {
+    const email = document.getElementById('new-admin-email')?.value.trim();
+    const result = document.getElementById('add-admin-result');
+    if (!email) { toast('Enter an email address'); return; }
+    try {
+      await addAdmin(email);
+      result.style.color = '#1D9E75';
+      result.textContent = '✅ ' + email + ' added as admin!';
+      document.getElementById('new-admin-email').value = '';
+      setTimeout(() => loadAdmins(), 1000);
+    } catch(e) {
+      result.style.color = '#D93025';
+      result.textContent = '❌ ' + e.message;
+    }
+  };
+
+  window.removeAdminFromUI = async (email) => {
+    if (!confirm('Remove ' + email + ' as admin?')) return;
+    try {
+      await removeAdmin(email, currentAdminEmail);
+      toast('Admin removed.');
+      loadAdmins();
+    } catch(e) {
+      toast('Error: ' + e.message);
+    }
+  };
 </script>
 </body>
 </html>
