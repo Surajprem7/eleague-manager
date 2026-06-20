@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1D9E75" />
+  <title>Bracket — eLeague Manager</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    .back-btn { display:flex;align-items:center;gap:6px;color:#1D9E75;font-size:.85rem;font-weight:500;text-decoration:none;margin-bottom:1rem }
+    .bracket-wrap { overflow-x:auto;padding-bottom:1rem }
+    .bracket-canvas-wrap { background:#fff;border-radius:16px;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:1rem }
+    #bracket-canvas { display:block;max-width:100% }
+    .share-bar { display:flex;gap:8px;flex-wrap:wrap }
+    .phase-header { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#1D9E75;margin-bottom:.5rem }
+    .bround { margin-bottom:1.25rem }
+    .bmatch { display:flex;align-items:center;gap:8px;background:#F8F9FA;border-radius:10px;padding:.75rem;margin-bottom:.5rem }
+    .bteam { flex:1;font-size:.85rem;font-weight:500 }
+    .bteam.winner { color:#1D9E75;font-weight:700 }
+    .bscore { font-size:.9rem;font-weight:700;padding:0 8px;color:#202124 }
+    .bvs { font-size:.72rem;color:#888;background:#fff;padding:2px 6px;border-radius:4px }
+    .empty-bracket { text-align:center;padding:3rem 1rem;color:#888 }
+    .trophy-row { text-align:center;padding:1.5rem;background:linear-gradient(135deg,#1D9E75,#0F6E56);border-radius:16px;color:#fff;margin-bottom:1rem }
+    .trophy-row .t-icon { font-size:2.5rem;display:block;margin-bottom:.5rem }
+    .trophy-row h2 { color:#fff;font-size:1.2rem;margin-bottom:2px }
+    .trophy-row p { opacity:.85;font-size:.85rem }
+  </style>
+</head>
+<body>
+
+<div id="splash"><span class="splash-icon">⚽</span><h1>eLeague Manager</h1><p>Loading bracket...</p></div>
+<div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
+
+<header class="app-header">
+  <div class="container">
+    <div class="logo">⚽</div>
+    <div><h1>eLeague Manager</h1><p>Tournament Bracket</p></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container">
+    <a href="index.html" class="back-btn">← Back to Tournament</a>
+
+    <div id="bracket-content">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+
+    <div id="share-section" style="display:none">
+      <div class="bracket-canvas-wrap">
+        <canvas id="bracket-canvas"></canvas>
+      </div>
+      <div class="share-bar">
+        <button class="btn btn-primary" id="download-btn" style="flex:1">⬇️ Download Image</button>
+        <button class="btn btn-whatsapp" id="share-wa-btn" style="flex:1">📲 Share on WhatsApp</button>
+      </div>
+      <p style="font-size:.72rem;color:#888;margin-top:.5rem;text-align:center">Tap "Download Image" then share it anywhere!</p>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { db } from './js/firebase.js';
+import {
+  collection, getDocs, query, where, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+window.addEventListener('load', () => setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1000));
+window.addEventListener('offline', () => document.getElementById('offline-banner').classList.add('show'));
+window.addEventListener('online',  () => document.getElementById('offline-banner').classList.remove('show'));
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const ROUND_ORDER = ['r32','r16','qf','sf','3rd','final'];
+const ROUND_LABEL = { r32:'Round of 32', r16:'Round of 16', qf:'Quarter-finals', sf:'Semi-finals', '3rd':'3rd Place Playoff', final:'Final', group:'Group Stage' };
+
+async function loadBracket() {
+  const el = document.getElementById('bracket-content');
+  try {
+    const [matchSnap, tournSnap] = await Promise.all([
+      getDocs(collection(db, 'matches')),
+      getDocs(collection(db, 'tournament'))
+    ]);
+
+    const allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const status = tournSnap.empty ? null : { id: tournSnap.docs[0].id, ...tournSnap.docs[0].data() };
+
+    const koMatches = allMatches.filter(m => ROUND_ORDER.includes(m.phase));
+
+    if (!koMatches.length) {
+      el.innerHTML = `<div class="empty-bracket"><span style="font-size:2.5rem;display:block;margin-bottom:.75rem">🏆</span><p>Knockout bracket will appear here once the group stage is complete.</p><a href="index.html" style="color:#1D9E75;font-size:.85rem">← Go back</a></div>`;
+      return;
+    }
+
+    // Show winner banner if done
+    let html = '';
+    if (status?.phase === 'done' && status.winner) {
+      html += `<div class="trophy-row">
+        <span class="t-icon">🏆</span>
+        <h2>${esc(status.winner)}</h2>
+        <p>Tournament Champion!</p>
+        ${status.second ? `<p style="margin-top:4px;opacity:.75;font-size:.8rem">🥈 ${esc(status.second)} &nbsp; ${status.third ? '🥉 ' + esc(status.third) : ''}</p>` : ''}
+      </div>`;
+    }
+
+    // Render each round
+    const rounds = [...new Set(koMatches.map(m => m.phase))].sort((a,b) => ROUND_ORDER.indexOf(a) - ROUND_ORDER.indexOf(b));
+
+    rounds.forEach(round => {
+      const rMatches = koMatches.filter(m => m.phase === round);
+      html += `<div class="bround">
+        <div class="phase-header">${ROUND_LABEL[round]||round}</div>
+        ${rMatches.map(m => {
+          const hWin = m.winner === 'home';
+          const aWin = m.winner === 'away';
+          return `<div class="bmatch">
+            <div class="bteam ${hWin?'winner':''}">${esc(m.homeName)}</div>
+            ${m.status === 'completed'
+              ? `<div class="bscore">${m.homeScore} – ${m.awayScore}</div>`
+              : `<div class="bvs">${m.status === 'live' ? '🔴 LIVE' : 'vs'}</div>`}
+            <div class="bteam ${aWin?'winner':''}" style="text-align:right">${esc(m.awayName)}</div>
+            ${m.status === 'completed' ? `<span style="font-size:.7rem;background:#E1F5EE;color:#0F6E56;padding:2px 6px;border-radius:4px;margin-left:4px">✓</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    });
+
+    el.innerHTML = html;
+
+    // Draw canvas for sharing
+    drawBracketCanvas(rounds, koMatches, status);
+    document.getElementById('share-section').style.display = 'block';
+
+  } catch(e) {
+    el.innerHTML = `<div class="empty-bracket"><span style="font-size:2rem">⚠️</span><p>Error loading bracket.</p></div>`;
+    console.error(e);
+  }
+}
+
+function drawBracketCanvas(rounds, matches, status) {
+  const canvas = document.getElementById('bracket-canvas');
+  const dpr = window.devicePixelRatio || 1;
+
+  // Layout constants
+  const MATCH_W = 220;
+  const MATCH_H = 56;
+  const COL_GAP = 40;
+  const ROW_GAP = 16;
+  const PAD = 24;
+  const HEADER_H = 80;
+
+  // Separate 3rd place from main bracket
+  const mainRounds = rounds.filter(r => r !== '3rd');
+  const has3rd = rounds.includes('3rd');
+
+  // Calculate max matches in any round
+  const maxMatches = Math.max(...mainRounds.map(r => matches.filter(m => m.phase === r).length));
+  const cols = mainRounds.length + (has3rd ? 1 : 0);
+  const rows = maxMatches;
+
+  const W = PAD * 2 + cols * MATCH_W + (cols - 1) * COL_GAP;
+  const H = HEADER_H + PAD + rows * (MATCH_H + ROW_GAP) + (has3rd ? MATCH_H + ROW_GAP + 40 : 0) + PAD + 60;
+
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  // Header gradient
+  const grad = ctx.createLinearGradient(0, 0, W, 0);
+  grad.addColorStop(0, '#1D9E75');
+  grad.addColorStop(1, '#0F6E56');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, HEADER_H);
+
+  // Header text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 22px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('eLeague Manager', W / 2, 32);
+  ctx.font = '400 14px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillText('Tournament Bracket', W / 2, 52);
+  if (status?.phase === 'done' && status.winner) {
+    ctx.font = '500 13px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.fillText('🏆 Champion: ' + status.winner, W / 2, 70);
+  }
+
+  // Draw each round column
+  mainRounds.forEach((round, ci) => {
+    const rMatches = matches.filter(m => m.phase === round);
+    const totalSlots = maxMatches;
+    const slotH = (MATCH_H + ROW_GAP);
+    const colX = PAD + ci * (MATCH_W + COL_GAP);
+
+    // Round label
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.fillStyle = '#1D9E75';
+    ctx.textAlign = 'left';
+    ctx.fillText((ROUND_LABEL[round] || round).toUpperCase(), colX, HEADER_H + 16);
+
+    rMatches.forEach((m, ri) => {
+      // Center matches vertically within available space
+      const slotsPerMatch = totalSlots / rMatches.length;
+      const slotStart = ri * slotsPerMatch;
+      const matchY = HEADER_H + PAD + 20 + (slotStart + (slotsPerMatch - 1) / 2) * slotH;
+
+      drawMatch(ctx, colX, matchY, MATCH_W, MATCH_H, m);
+
+      // Connector line to next round
+      if (ci < mainRounds.length - 1) {
+        const nextRound = mainRounds[ci + 1];
+        const nextMatches = matches.filter(m2 => m2.phase === nextRound);
+        const nextSlotsPerMatch = totalSlots / nextMatches.length;
+        const nextMatchIdx = Math.floor(ri / 2);
+        const nextSlotStart = nextMatchIdx * nextSlotsPerMatch;
+        const nextMatchY = HEADER_H + PAD + 20 + (nextSlotStart + (nextSlotsPerMatch - 1) / 2) * slotH;
+        const nextColX = PAD + (ci + 1) * (MATCH_W + COL_GAP);
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#D3D1C7';
+        ctx.lineWidth = 1;
+        const midX = colX + MATCH_W + COL_GAP / 2;
+        ctx.moveTo(colX + MATCH_W, matchY + MATCH_H / 2);
+        ctx.lineTo(midX, matchY + MATCH_H / 2);
+        ctx.lineTo(midX, nextMatchY + MATCH_H / 2);
+        ctx.lineTo(nextColX, nextMatchY + MATCH_H / 2);
+        ctx.stroke();
+      }
+    });
+  });
+
+  // Draw 3rd place match
+  if (has3rd) {
+    const thirdMatches = matches.filter(m => m.phase === '3rd');
+    const thirdY = HEADER_H + PAD + 20 + maxMatches * (MATCH_H + ROW_GAP) + 32;
+    const thirdX = PAD;
+
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.fillStyle = '#854F0B';
+    ctx.textAlign = 'left';
+    ctx.fillText('3RD PLACE PLAYOFF', thirdX, thirdY - 8);
+
+    thirdMatches.forEach((m, i) => {
+      drawMatch(ctx, thirdX + i * (MATCH_W + COL_GAP), thirdY, MATCH_W, MATCH_H, m);
+    });
+  }
+
+  // Footer
+  ctx.font = '400 11px Inter, sans-serif';
+  ctx.fillStyle = '#B4B2A9';
+  ctx.textAlign = 'center';
+  ctx.fillText('league.getgol.in', W / 2, H - 12);
+}
+
+function drawMatch(ctx, x, y, w, h, m) {
+  const GREEN = '#1D9E75';
+  const DARK  = '#202124';
+  const GRAY  = '#888780';
+  const isLive = m.status === 'live';
+  const isDone = m.status === 'completed';
+
+  // Card background
+  ctx.fillStyle = isDone ? '#F8F9FA' : isLive ? '#E1F5EE' : '#F8F9FA';
+  roundRect(ctx, x, y, w, h, 8);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = isDone ? '#D3D1C7' : isLive ? GREEN : '#D3D1C7';
+  ctx.lineWidth = isDone ? 0.5 : isLive ? 1.5 : 0.5;
+  roundRect(ctx, x, y, w, h, 8);
+  ctx.stroke();
+
+  // Divider line
+  ctx.strokeStyle = '#E8EAED';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y + h / 2);
+  ctx.lineTo(x + w - 8, y + h / 2);
+  ctx.stroke();
+
+  // Home player
+  const homeWin = m.winner === 'home';
+  const awayWin = m.winner === 'away';
+  ctx.font = homeWin ? '600 12px Inter, sans-serif' : '400 12px Inter, sans-serif';
+  ctx.fillStyle = homeWin ? GREEN : DARK;
+  ctx.textAlign = 'left';
+  const homeTxt = truncate(m.homeName || '?', 18);
+  ctx.fillText(homeTxt, x + 10, y + h / 2 - 7);
+
+  // Away player
+  ctx.font = awayWin ? '600 12px Inter, sans-serif' : '400 12px Inter, sans-serif';
+  ctx.fillStyle = awayWin ? GREEN : DARK;
+  const awayTxt = truncate(m.awayName || '?', 18);
+  ctx.fillText(awayTxt, x + 10, y + h / 2 + 14);
+
+  // Score or status
+  if (isDone) {
+    ctx.font = '700 13px Inter, sans-serif';
+    ctx.fillStyle = DARK;
+    ctx.textAlign = 'right';
+    ctx.fillText(`${m.homeScore}`, x + w - 10, y + h / 2 - 7);
+    ctx.fillText(`${m.awayScore}`, x + w - 10, y + h / 2 + 14);
+  } else if (isLive) {
+    ctx.font = '600 10px Inter, sans-serif';
+    ctx.fillStyle = GREEN;
+    ctx.textAlign = 'right';
+    ctx.fillText('LIVE', x + w - 10, y + h / 2 + 4);
+  } else {
+    ctx.font = '400 10px Inter, sans-serif';
+    ctx.fillStyle = GRAY;
+    ctx.textAlign = 'right';
+    ctx.fillText('vs', x + w - 10, y + h / 2 + 4);
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function truncate(str, max) {
+  return str.length > max ? str.slice(0, max - 1) + '…' : str;
+}
+
+// Download button
+document.getElementById('download-btn').addEventListener('click', () => {
+  const canvas = document.getElementById('bracket-canvas');
+  const link = document.createElement('a');
+  link.download = 'eLeague-Bracket.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('Bracket image downloaded! 📥');
+});
+
+// WhatsApp share
+document.getElementById('share-wa-btn').addEventListener('click', () => {
+  const msg = encodeURIComponent('🏆 eLeague Manager — Tournament Bracket\n\nCheck out the latest bracket at:\nhttps://league.getgol.in/bracket.html\n\n⚽ Follow the action live!');
+  window.open('https://wa.me/?text=' + msg, '_blank');
+});
+
+loadBracket();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
