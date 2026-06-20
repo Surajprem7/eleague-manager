@@ -42,6 +42,8 @@
     <button class="admin-tab" data-tab="matches">Matches</button>
     <button class="admin-tab" data-tab="knockout">Knockout</button>
     <button class="admin-tab" data-tab="results">Results</button>
+    <button class="admin-tab" data-tab="disputes">Disputes</button>
+    <button class="admin-tab" data-tab="log">Activity Log</button>
   </div>
 
   <main class="page">
@@ -87,6 +89,20 @@
         </div>
       </div>
 
+      <!-- DISPUTES TAB -->
+      <div class="tab-content" id="tab-disputes" style="display:none">
+        <div id="disputes-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOG TAB -->
+      <div class="tab-content" id="tab-log" style="display:none">
+        <div id="log-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
@@ -101,6 +117,8 @@
   import { computeStandings } from './js/tournament.js';
   import { generateMatchAlert, generateWinnerAlert } from './js/notify.js';
   import { onPlayers, onGroupMatches, onGroups, onKnockoutMatches } from './js/realtime.js';
+  import { getLogs, LOG_ICON } from './js/activitylog.js';
+  import { getDisputes, resolveDispute } from './js/dispute.js';
   import {
     collection, getDocs, query, where, doc, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -145,6 +163,8 @@
       if (tab.dataset.tab === 'matches')  loadMatches();
       if (tab.dataset.tab === 'knockout') loadKnockout();
       if (tab.dataset.tab === 'results')  loadResults();
+      if (tab.dataset.tab === 'disputes') loadDisputes();
+      if (tab.dataset.tab === 'log')      loadActivityLog();
     });
   });
 
@@ -424,6 +444,89 @@
           <span class="badge badge-green">✓ Completed</span>
         </div>
       </div>`).join('');
+  }
+
+  // ── DISPUTES ──
+  async function loadDisputes() {
+    const el = document.getElementById('disputes-panel');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const disputes = await getDisputes();
+      if (!disputes.length) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">✅</span><p>No disputes raised yet.</p></div>';
+        return;
+      }
+      const open     = disputes.filter(d => d.status === 'open');
+      const resolved = disputes.filter(d => d.status === 'resolved');
+      let html = '';
+      if (open.length) {
+        html += '<div style="margin-bottom:1rem"><div class="card-title" style="margin-bottom:.5rem;color:#D93025">⚠️ Open Disputes (' + open.length + ')</div>';
+        html += open.map(d => `
+          <div class="match-card" style="border-left:3px solid #D93025;margin-bottom:.75rem">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem">
+              <div>
+                <div style="font-weight:500;font-size:.9rem">${esc(d.playerName)}</div>
+                <div style="font-size:.78rem;color:var(--gray-600)">${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : 'Just now'}</div>
+              </div>
+              <span class="badge badge-red">Open</span>
+            </div>
+            <p style="font-size:.85rem;color:var(--gray-600);margin-bottom:.75rem">${esc(d.reason)}</p>
+            <div style="display:flex;gap:6px">
+              <input type="text" class="form-input" id="res-${d.id}" placeholder="Enter resolution..." style="flex:1;min-height:36px;font-size:.82rem" />
+              <button class="btn btn-primary btn-sm" onclick="resolveDisputeAdmin('${d.id}')">Resolve</button>
+            </div>
+          </div>`).join('');
+        html += '</div>';
+      }
+      if (resolved.length) {
+        html += '<div class="card-title" style="margin-bottom:.5rem">✔️ Resolved (' + resolved.length + ')</div>';
+        html += resolved.map(d => `
+          <div class="match-card" style="margin-bottom:.5rem;opacity:.7">
+            <div style="display:flex;justify-content:space-between">
+              <div style="font-size:.85rem;font-weight:500">${esc(d.playerName)}</div>
+              <span class="badge badge-green">Resolved</span>
+            </div>
+            <div style="font-size:.78rem;color:var(--gray-600);margin:.25rem 0">${esc(d.reason)}</div>
+            <div style="font-size:.78rem;color:var(--green-dark)">→ ${esc(d.resolution||'')}</div>
+          </div>`).join('');
+      }
+      el.innerHTML = html;
+    } catch(e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading disputes.</p></div>';
+    }
+  }
+
+  window.resolveDisputeAdmin = async (id) => {
+    const resolution = document.getElementById('res-' + id)?.value.trim();
+    if (!resolution) { toast('Enter a resolution first'); return; }
+    try {
+      await resolveDispute(id, resolution);
+      toast('Dispute resolved! ✅');
+      loadDisputes();
+    } catch(e) { toast('Error: ' + e.message); }
+  };
+
+  // ── ACTIVITY LOG ──
+  async function loadActivityLog() {
+    const el = document.getElementById('log-panel');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const logs = await getLogs(100);
+      if (!logs.length) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">📋</span><p>No activity yet. Actions will appear here.</p></div>';
+        return;
+      }
+      el.innerHTML = '<div class="card">' + logs.map(log => `
+        <div style="display:flex;gap:10px;padding:8px 0;border-bottom:.5px solid var(--gray-100)">
+          <span style="font-size:1.1rem;flex-shrink:0">${LOG_ICON[log.type]||'📋'}</span>
+          <div style="flex:1">
+            <div style="font-size:.85rem;font-weight:500">${esc(log.message)}</div>
+            <div style="font-size:.72rem;color:var(--gray-600)">${log.createdAt ? new Date(log.createdAt.seconds*1000).toLocaleString() : 'Just now'}</div>
+          </div>
+        </div>`).join('') + '</div>';
+    } catch(e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading log.</p></div>';
+    }
   }
 </script>
 </body>
