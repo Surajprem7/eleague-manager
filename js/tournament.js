@@ -1,8 +1,3 @@
-import { db } from './firebase.js';
-import {
-  collection, doc, getDocs, setDoc, updateDoc, query, where, orderBy
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
 // Compute standings for a group
 export function computeStandings(players, matches) {
   const table = {};
