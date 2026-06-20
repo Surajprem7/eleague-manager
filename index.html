@@ -191,8 +191,8 @@
       const status = await getTournamentStatus();
       if (!status) {
         el.innerHTML = `
-          <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56)">
-            <span class="trophy">⚽</span>
+          <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:1rem">
+            <img src="assets/banner.png" alt="eLeague" style="width:100%;max-width:340px;border-radius:12px;margin-bottom:0.75rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'" />
             <h2>Welcome!</h2>
             <p>Tournament registration is open. Sign up now!</p>
           </div>
