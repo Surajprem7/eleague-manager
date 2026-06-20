@@ -1,6 +1,7 @@
 import { db } from './firebase.js';
 import { generateGroupMatches, generateKnockoutRound, getQualifiers, computeStandings } from './tournament.js';
-import { updateMatch, getLiveMatchCount, getMatches } from './matches.js';
+import { updateMatch, getLiveMatchCount } from './matches.js';
+import { addLog, LOG } from './activitylog.js';
 import {
   collection, doc, getDocs, updateDoc, setDoc,
   query, where, serverTimestamp, writeBatch
@@ -14,14 +15,20 @@ export async function getAllPlayers() {
 
 // Approve / reject player
 export async function updatePlayerStatus(playerId, status) {
-  return updateDoc(doc(db, 'players', playerId), { status });
+  const snap = await getDocs(query(collection(db, 'players'), where('__name__', '==', playerId)));
+  const name = snap.empty ? playerId : snap.docs[0].data().name;
+  await updateDoc(doc(db, 'players', playerId), { status });
+  const logType = status === 'approved' ? LOG.PLAYER_APPROVE : LOG.PLAYER_REJECT;
+  await addLog(logType, `Player "${name}" was ${status}`, { playerId, status });
 }
 
 // Save groups and generate group stage matches
 export async function saveGroupsAndGenerateMatches(groups) {
   const batch = writeBatch(db);
+  const groupLetters = [];
 
   for (const [letter, players] of Object.entries(groups)) {
+    groupLetters.push(letter);
     const groupRef = doc(collection(db, 'groups'));
     batch.set(groupRef, { letter, players: players.map(p => p.id) });
 
@@ -39,19 +46,38 @@ export async function saveGroupsAndGenerateMatches(groups) {
   await setDoc(doc(db, 'tournament', 'main'), {
     phase: 'group', winner: null, second: null, third: null, createdAt: serverTimestamp()
   });
+  await addLog(LOG.GROUP_SAVED, `Groups ${groupLetters.join(', ')} created and schedule generated`, { groups: groupLetters });
 }
 
 // Set match live (max 2 at a time)
 export async function setMatchLive(matchId) {
   const live = await getLiveMatchCount();
   if (live >= 2) throw new Error('Max 2 matches can be live at the same time.');
-  return updateMatch(matchId, { status: 'live' });
+  await updateMatch(matchId, { status: 'live' });
+
+  // Get match details for log
+  const snap = await getDocs(query(collection(db, 'matches'), where('__name__', '==', matchId)));
+  const m = snap.empty ? {} : snap.docs[0].data();
+  await addLog(LOG.MATCH_LIVE, `Match went LIVE: ${m.homeName||'?'} vs ${m.awayName||'?'}`, { matchId, joinCode: m.joinCode });
+}
+
+// Schedule a match
+export async function scheduleMatch(matchId, scheduledAt) {
+  await updateMatch(matchId, { scheduledAt });
+  await addLog(LOG.MATCH_SCHEDULE, `Match scheduled`, { matchId, scheduledAt: scheduledAt?.toString() });
 }
 
 // Enter score and complete match
 export async function enterScore(matchId, homeScore, awayScore) {
+  const snap = await getDocs(query(collection(db, 'matches'), where('__name__', '==', matchId)));
+  const m = snap.empty ? {} : snap.docs[0].data();
   const winner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
-  return updateMatch(matchId, { homeScore, awayScore, status: 'completed', winner });
+  await updateMatch(matchId, { homeScore, awayScore, status: 'completed', winner });
+  await addLog(
+    LOG.SCORE_SAVED,
+    `Score saved: ${m.homeName||'?'} ${homeScore}–${awayScore} ${m.awayName||'?'}`,
+    { matchId, homeScore, awayScore, winner }
+  );
 }
 
 // Check if all group matches done → generate knockout
@@ -66,7 +92,6 @@ export async function checkAndGenerateKnockout() {
   const koSnap = await getDocs(query(collection(db, 'matches'), where('phase', 'in', ['r32','r16','qf','sf','final'])));
   if (!koSnap.empty) return false;
 
-  // Build standings per group
   const playersSnap = await getDocs(query(collection(db, 'players'), where('status', '==', 'approved')));
   const players = playersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
@@ -89,8 +114,9 @@ export async function checkAndGenerateKnockout() {
 
   const pairs = [];
   const usedRunners = new Set();
-  seeds.forEach((s, i) => {
-    const opp = runners.find(r => r.group !== s.group && !usedRunners.has(r.id)) || runners.find(r => !usedRunners.has(r.id));
+  seeds.forEach(s => {
+    const opp = runners.find(r => r.group !== s.group && !usedRunners.has(r.id))
+             || runners.find(r => !usedRunners.has(r.id));
     if (opp) { pairs.push([s, opp]); usedRunners.add(opp.id); }
   });
 
@@ -104,10 +130,12 @@ export async function checkAndGenerateKnockout() {
   });
   batch.update(doc(db, 'tournament', 'main'), { phase: 'knockout' });
   await batch.commit();
+
+  await addLog(LOG.KNOCKOUT_GEN, `Knockout stage generated — ${roundName.toUpperCase()}`, { round: roundName, matches: knockoutMatches.length });
   return true;
 }
 
-// Advance knockout round — FIX: now saves third place winner correctly
+// Advance knockout round
 export async function advanceKnockout(completedRound) {
   const snap = await getDocs(query(collection(db, 'matches'), where('phase', '==', completedRound)));
   const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -119,6 +147,7 @@ export async function advanceKnockout(completedRound) {
     const m = matches[0];
     const third = m.winner === 'home' ? m.homeName : m.awayName;
     await updateDoc(doc(db, 'tournament', 'main'), { third });
+    await addLog(LOG.WINNER_SET, `3rd place: ${third}`, { third });
     return '3rd_done';
   }
 
@@ -126,19 +155,19 @@ export async function advanceKnockout(completedRound) {
     id: m.winner === 'home' ? m.homeId : m.awayId,
     name: m.winner === 'home' ? m.homeName : m.awayName
   }));
-
   const losers = matches.map(m => ({
     id: m.winner === 'home' ? m.awayId : m.homeId,
     name: m.winner === 'home' ? m.awayName : m.homeName
   }));
 
-  // Final completed — save winner & runner-up
+  // Final completed
   if (completedRound === 'final') {
     await updateDoc(doc(db, 'tournament', 'main'), {
       phase: 'done',
       winner: winners[0].name,
       second: losers[0].name
     });
+    await addLog(LOG.WINNER_SET, `🏆 Champion: ${winners[0].name}`, { winner: winners[0].name, second: losers[0].name });
     return 'done';
   }
 
@@ -148,7 +177,7 @@ export async function advanceKnockout(completedRound) {
 
   const nextMatches = generateKnockoutRound(winners, nextRound);
 
-  // Generate 3rd place playoff from SF losers
+  // 3rd place playoff from SF losers
   if (completedRound === 'sf') {
     const thirdPlace = generateKnockoutRound(losers, '3rd');
     nextMatches.push(...thirdPlace);
@@ -159,5 +188,6 @@ export async function advanceKnockout(completedRound) {
     batch.set(doc(collection(db, 'matches')), { ...m, createdAt: serverTimestamp() });
   });
   await batch.commit();
+  await addLog(LOG.KNOCKOUT_GEN, `Next round generated: ${nextRound.toUpperCase()}`, { round: nextRound });
   return nextRound;
 }
