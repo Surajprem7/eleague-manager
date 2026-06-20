@@ -15,6 +15,31 @@
   <link rel="icon" href="assets/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #1D9E75; display: inline-block;
+      animation: pulse 1.2s ease-in-out infinite;
+      margin-right: 6px;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .realtime-badge {
+      display: inline-flex; align-items: center;
+      font-size: 0.7rem; color: #1D9E75;
+      background: #E1F5EE; padding: 2px 8px;
+      border-radius: 99px; margin-left: 8px;
+    }
+    .update-flash {
+      animation: flash 0.6s ease-out;
+    }
+    @keyframes flash {
+      0% { background: #E1F5EE; }
+      100% { background: transparent; }
+    }
+  </style>
 </head>
 <body>
 
@@ -32,10 +57,11 @@
 <header class="app-header">
   <div class="container">
     <div class="logo">⚽</div>
-    <div>
+    <div style="flex:1">
       <h1>eLeague Manager</h1>
       <p id="tournament-phase">eFootball Tournament</p>
     </div>
+    <span class="realtime-badge"><span class="live-dot"></span>Live</span>
   </div>
 </header>
 
@@ -150,9 +176,14 @@
 
 <script type="module">
   import { db } from './js/firebase.js';
-  import { registerPlayer, getTournamentStatus, getPlayerMatches, joinMatch } from './js/app.js';
+  import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
+  import { computeStandings } from './js/tournament.js';
   import {
-    collection, getDocs, query, where, onSnapshot, orderBy
+    onLiveMatches, onTournamentStatus, onGroupMatches,
+    onGroups, onPlayers, onPlayerMatches, cleanupAll
+  } from './js/realtime.js';
+  import {
+    collection, getDocs, query, where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // Splash
@@ -172,97 +203,198 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
 
-  // Navigation
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Flash animation on update
+  function flash(el) {
+    if (!el) return;
+    el.classList.remove('update-flash');
+    void el.offsetWidth;
+    el.classList.add('update-flash');
+  }
+
+  // ── NAVIGATION ──
+  let currentSection = 'home';
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('sec-' + btn.dataset.section).classList.add('active');
-      if (btn.dataset.section === 'home') loadHome();
-      if (btn.dataset.section === 'standings') loadStandings();
+      currentSection = btn.dataset.section;
+      document.getElementById('sec-' + currentSection).classList.add('active');
+      if (currentSection === 'standings') startStandingsListener();
     });
   });
 
-  // ── HOME ──
-  async function loadHome() {
+  // ── HOME — real-time ──
+  let homeInitialized = false;
+  let cachedStatus = null;
+  let cachedLiveMatches = [];
+
+  function renderHome() {
     const el = document.getElementById('home-content');
-    try {
-      const status = await getTournamentStatus();
-      if (!status) {
-        el.innerHTML = `
-          <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:1rem">
-            <img src="assets/banner.png" alt="eLeague" style="width:100%;max-width:340px;border-radius:12px;margin-bottom:0.75rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'" />
-            <h2>Welcome!</h2>
-            <p>Tournament registration is open. Sign up now!</p>
-          </div>
-          <div class="card">
-            <div class="card-title">How it works</div>
-            <div class="player-item"><div class="player-avatar">1</div><div><div class="player-name">Register</div><div class="player-sub">Fill in your details to join</div></div></div>
-            <div class="player-item"><div class="player-avatar">2</div><div><div class="player-name">Get approved</div><div class="player-sub">Admin confirms your spot</div></div></div>
-            <div class="player-item"><div class="player-avatar">3</div><div><div class="player-name">Play matches</div><div class="player-sub">Join with your match code</div></div></div>
-            <div class="player-item"><div class="player-avatar">4</div><div><div class="player-name">Win the league!</div><div class="player-sub">Group stage → Knockout → Final</div></div></div>
-          </div>`;
-        return;
-      }
+    const status = cachedStatus;
+    const liveMatches = cachedLiveMatches;
 
-      if (status.phase === 'done' && status.winner) {
-        el.innerHTML = `
-          <div class="winner-banner">
-            <span class="trophy">🏆</span>
-            <h2>${status.winner}</h2>
-            <p>Tournament Champion!</p>
-          </div>
-          <div class="card">
-            <div class="card-title">Final Results</div>
-            <div class="player-item"><div class="player-avatar">🥇</div><div><div class="player-name">${status.winner}</div><div class="player-sub">Champion</div></div></div>
-            ${status.second ? `<div class="player-item"><div class="player-avatar">🥈</div><div><div class="player-name">${status.second}</div><div class="player-sub">Runner-up</div></div></div>` : ''}
-            ${status.third  ? `<div class="player-item"><div class="player-avatar">🥉</div><div><div class="player-name">${status.third}</div><div class="player-sub">Third place</div></div></div>` : ''}
-          </div>`;
-        return;
-      }
-
-      // Live matches
-      const liveSnap = await getDocs(query(collection(db, 'matches'), where('status', '==', 'live')));
-      const liveMatches = liveSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      let liveHtml = '';
-      if (liveMatches.length) {
-        liveHtml = `<div class="card"><div class="card-title">🔴 Live Now</div>` +
-          liveMatches.map(m => `
-            <div class="match-card" style="border-left:3px solid var(--green)">
-              <div class="match-teams">
-                <div class="match-player">${m.homeName}</div>
-                <div class="match-vs">LIVE</div>
-                <div class="match-player">${m.awayName}</div>
-              </div>
-              <div class="match-meta"><span class="match-code">🔑 ${m.joinCode}</span><span class="badge badge-green">Live</span></div>
-            </div>`).join('') + `</div>`;
-      }
-
+    if (!status) {
       el.innerHTML = `
-        <div class="phase-banner" style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
-          ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
+        <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:1rem">
+          <img src="assets/banner.png" alt="eLeague" style="width:100%;max-width:340px;border-radius:12px;margin-bottom:0.75rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'" />
+          <h2>Welcome!</h2>
+          <p>Tournament registration is open. Sign up now!</p>
         </div>
-        ${liveHtml}
         <div class="card">
-          <div class="card-title">Quick Actions</div>
-          <div style="display:flex;flex-direction:column;gap:0.5rem">
-            <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=matches]').click()">📅 View my schedule</button>
-            <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=join]').click()">🔑 Enter join code</button>
-            <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=standings]').click()">📊 See standings</button>
-          </div>
+          <div class="card-title">How it works</div>
+          <div class="player-item"><div class="player-avatar">1</div><div><div class="player-name">Register</div><div class="player-sub">Fill in your details to join</div></div></div>
+          <div class="player-item"><div class="player-avatar">2</div><div><div class="player-name">Get approved</div><div class="player-sub">Admin confirms your spot</div></div></div>
+          <div class="player-item"><div class="player-avatar">3</div><div><div class="player-name">Play matches</div><div class="player-sub">Join with your match code</div></div></div>
+          <div class="player-item"><div class="player-avatar">4</div><div><div class="player-name">Win the league!</div><div class="player-sub">Group stage → Knockout → Final</div></div></div>
         </div>`;
-    } catch (e) {
-      el.innerHTML = `<div class="empty-state"><span class="icon">⚠️</span><p>Could not load data. Check your connection.</p></div>`;
+      return;
     }
+
+    if (status.phase === 'done' && status.winner) {
+      el.innerHTML = `
+        <div class="winner-banner">
+          <span class="trophy">🏆</span>
+          <h2>${esc(status.winner)}</h2>
+          <p>Tournament Champion!</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Final Results</div>
+          <div class="player-item"><div class="player-avatar">🥇</div><div><div class="player-name">${esc(status.winner)}</div><div class="player-sub">Champion</div></div></div>
+          ${status.second ? `<div class="player-item"><div class="player-avatar">🥈</div><div><div class="player-name">${esc(status.second)}</div><div class="player-sub">Runner-up</div></div></div>` : ''}
+          ${status.third  ? `<div class="player-item"><div class="player-avatar">🥉</div><div><div class="player-name">${esc(status.third)}</div><div class="player-sub">Third place</div></div></div>` : ''}
+        </div>`;
+      return;
+    }
+
+    const liveHtml = liveMatches.length ? `
+      <div class="card" id="live-matches-card">
+        <div class="card-title">🔴 Live Now</div>
+        ${liveMatches.map(m => `
+          <div class="match-card" style="border-left:3px solid var(--green)">
+            <div class="match-teams">
+              <div class="match-player">${esc(m.homeName)}</div>
+              <div class="match-vs">LIVE</div>
+              <div class="match-player">${esc(m.awayName)}</div>
+            </div>
+            <div class="match-meta">
+              <span class="match-code">🔑 ${esc(m.joinCode)}</span>
+              <span class="badge badge-green">Live</span>
+            </div>
+          </div>`).join('')}
+      </div>` : '';
+
+    el.innerHTML = `
+      <div style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
+        ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
+      </div>
+      ${liveHtml}
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=matches]').click()">📅 View my schedule</button>
+          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=join]').click()">🔑 Enter join code</button>
+          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=standings]').click()">📊 See standings</button>
+        </div>
+      </div>`;
+
+    flash(document.getElementById('live-matches-card'));
+  }
+
+  // Start home real-time listeners
+  function startHomeListeners() {
+    onTournamentStatus(status => {
+      cachedStatus = status;
+      const phase = status?.phase || 'registration';
+      document.getElementById('tournament-phase').textContent =
+        phase === 'group' ? 'Group Stage' :
+        phase === 'knockout' ? 'Knockout Rounds' :
+        phase === 'done' ? 'Tournament Complete!' : 'eFootball Tournament';
+      if (currentSection === 'home') renderHome();
+    });
+
+    onLiveMatches(matches => {
+      const prev = cachedLiveMatches.length;
+      cachedLiveMatches = matches;
+      // Toast notification when a new match goes live
+      if (matches.length > prev && prev >= 0 && document.getElementById('home-content').innerHTML.length > 100) {
+        const newest = matches[matches.length - 1];
+        toast(`🔴 ${newest.homeName} vs ${newest.awayName} is now LIVE!`);
+      }
+      if (currentSection === 'home') renderHome();
+      if (currentSection === 'standings') startStandingsListener();
+    });
+  }
+
+  // ── STANDINGS — real-time ──
+  let standingsListenerStarted = false;
+  let cachedGroups = [];
+  let cachedPlayers = [];
+  let cachedGroupMatches = [];
+
+  function renderStandings() {
+    const el = document.getElementById('standings-content');
+    if (!cachedGroups.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>Standings will appear after groups are drawn.</p></div>';
+      return;
+    }
+    let html = '';
+    cachedGroups.sort((a,b) => a.letter.localeCompare(b.letter)).forEach(g => {
+      const gPlayers = cachedPlayers.filter(p => g.players.includes(p.id));
+      const gMatches = cachedGroupMatches.filter(m => m.group === g.letter);
+      const standings = computeStandings(gPlayers, gMatches);
+      html += `
+        <div class="card">
+          <div class="card-title">Group ${esc(g.letter)}</div>
+          <table class="standings-table">
+            <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>${standings.map((r,i) => `
+              <tr class="${i<2?'qualify':''}">
+                <td>${esc(r.name)}${i<2?' <span style="color:var(--green);font-size:0.7rem">✓</span>':''}</td>
+                <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+                <td>${r.gd>0?'+'+r.gd:r.gd}</td>
+                <td><strong>${r.pts}</strong></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+          <p style="font-size:0.72rem;color:var(--gray-600);margin-top:0.5rem">✓ = qualifies for knockout</p>
+        </div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  function startStandingsListener() {
+    if (standingsListenerStarted) return;
+    standingsListenerStarted = true;
+
+    onGroups(groups => {
+      cachedGroups = groups;
+      renderStandings();
+    });
+
+    onPlayers(players => {
+      cachedPlayers = players;
+      renderStandings();
+    });
+
+    onGroupMatches(matches => {
+      const prev = JSON.stringify(cachedGroupMatches.filter(m=>m.status==='completed').map(m=>m.id));
+      cachedGroupMatches = matches;
+      const next = JSON.stringify(matches.filter(m=>m.status==='completed').map(m=>m.id));
+      if (prev !== next && prev !== '[]') toast('📊 Standings updated!');
+      renderStandings();
+    });
   }
 
   // ── REGISTER ──
   document.getElementById('reg-submit').addEventListener('click', async () => {
-    const name    = document.getElementById('reg-name').value.trim();
-    const efid    = document.getElementById('reg-efid').value.trim();
-    const phone   = document.getElementById('reg-phone').value.trim();
+    const name  = document.getElementById('reg-name').value.trim();
+    const efid  = document.getElementById('reg-efid').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
     if (!name || !efid) { toast('Please fill in name and eFootball ID'); return; }
     const btn = document.getElementById('reg-submit');
     btn.textContent = 'Registering...'; btn.disabled = true;
@@ -276,114 +408,82 @@
     btn.textContent = 'Register Now'; btn.disabled = false;
   });
 
-  // ── MY MATCHES ──
+  // ── MY MATCHES — real-time ──
+  let currentPlayerId = null;
+
   document.getElementById('search-btn').addEventListener('click', async () => {
     const name = document.getElementById('player-search').value.trim();
     if (!name) { toast('Enter your name to search'); return; }
     const el = document.getElementById('my-matches-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
     try {
       const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
-      if (snap.empty) { el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found. Check your name or register first.</p></div>'; return; }
+      if (snap.empty) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found. Check your name or register first.</p></div>';
+        return;
+      }
       const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      const matches = await getPlayerMatches(player.id);
-      if (!matches.length) { el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet. Check back soon!</p></div>'; return; }
-      el.innerHTML = matches.map(m => {
-        const isHome = m.homeId === player.id;
-        const opp = isHome ? m.awayName : m.homeName;
-        const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
-        return `<div class="match-card">
-          <div class="match-teams">
-            <div class="match-player" style="color:var(--green-dark)">${player.name}</div>
-            <div class="match-vs">vs</div>
-            <div class="match-player">${opp}</div>
-          </div>
-          <div class="match-meta">
-            <span>📅 ${date}</span>
-            <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
-          </div>
-          ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:0.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
-          ${m.status === 'live' ? `<div class="match-meta" style="margin-top:0.5rem"><span class="match-code">🔑 ${m.joinCode}</span></div>` : ''}
-        </div>`;
-      }).join('');
-    } catch (e) {
+      currentPlayerId = player.id;
+
+      // Real-time listener for this player's matches
+      onPlayerMatches(player.id, matches => {
+        if (!matches.length) {
+          el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet. Check back soon!</p></div>';
+          return;
+        }
+        matches.sort((a,b) => (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0));
+        el.innerHTML = matches.map(m => {
+          const isHome = m.homeId === player.id;
+          const opp = isHome ? m.awayName : m.homeName;
+          const date = m.scheduledAt ? new Date(m.scheduledAt.seconds*1000).toLocaleString() : 'TBA';
+          return `<div class="match-card">
+            <div class="match-teams">
+              <div class="match-player" style="color:var(--green-dark)">${esc(player.name)}</div>
+              <div class="match-vs">vs</div>
+              <div class="match-player">${esc(opp)}</div>
+            </div>
+            <div class="match-meta">
+              <span>📅 ${date}</span>
+              <span class="badge badge-${m.status==='live'?'green':m.status==='completed'?'gray':'blue'}">${m.status}</span>
+            </div>
+            ${m.status==='completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:0.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+            ${m.status==='live' ? `<div class="match-meta" style="margin-top:0.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:0.78rem;color:var(--green-dark);font-weight:500">Your match is LIVE!</span></div>` : ''}
+          </div>`;
+        }).join('');
+      });
+    } catch(e) {
       el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading matches.</p></div>';
     }
   });
 
   // ── JOIN MATCH ──
   document.getElementById('join-btn').addEventListener('click', async () => {
-    const code = document.getElementById('join-code-input').value.trim().toUpperCase();
-    const name = document.getElementById('join-name-input').value.trim();
+    const code   = document.getElementById('join-code-input').value.trim().toUpperCase();
+    const name   = document.getElementById('join-name-input').value.trim();
     const result = document.getElementById('join-result');
     if (!code || !name) { toast('Enter both your name and the join code'); return; }
     result.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
     const res = await joinMatch(code, name);
     if (!res.success) {
-      result.innerHTML = `<div class="empty-state"><span class="icon">❌</span><p>${res.message}</p></div>`;
+      result.innerHTML = `<div class="empty-state"><span class="icon">❌</span><p>${esc(res.message)}</p></div>`;
     } else {
       result.innerHTML = `
         <div style="text-align:center;padding:1rem">
           <span style="font-size:2.5rem">✅</span>
           <h3 style="margin:0.5rem 0">You're confirmed!</h3>
-          <p style="color:var(--gray-600);font-size:0.88rem">${res.match.homeName} vs ${res.match.awayName}</p>
+          <p style="color:var(--gray-600);font-size:0.88rem">${esc(res.match.homeName)} vs ${esc(res.match.awayName)}</p>
           <p style="font-size:0.85rem;margin-top:0.5rem">Go play on eFootball — good luck! 🎮</p>
         </div>`;
     }
   });
 
-  // ── STANDINGS ──
-  async function loadStandings() {
-    const el = document.getElementById('standings-content');
-    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-    try {
-      const groupsSnap = await getDocs(collection(db, 'groups'));
-      const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (!groups.length) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>Standings will appear after groups are drawn.</p></div>';
-        return;
-      }
-      const playersSnap = await getDocs(collection(db, 'players'));
-      const players = playersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const matchesSnap = await getDocs(query(collection(db, 'matches'), where('phase', '==', 'group')));
-      const matches = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      const { computeStandings } = await import('./js/tournament.js');
-
-      let html = '';
-      groups.sort((a, b) => a.letter.localeCompare(b.letter)).forEach(g => {
-        const gPlayers = players.filter(p => g.players.includes(p.id));
-        const gMatches = matches.filter(m => m.group === g.letter);
-        const standings = computeStandings(gPlayers, gMatches);
-        html += `
-          <div class="card">
-            <div class="card-title">Group ${g.letter}</div>
-            <table class="standings-table">
-              <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
-              <tbody>${standings.map((r, i) => `
-                <tr class="${i < 2 ? 'qualify' : ''}">
-                  <td>${r.name}${i < 2 ? ' <span style="color:var(--green);font-size:0.7rem">✓</span>' : ''}</td>
-                  <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
-                  <td>${r.gd > 0 ? '+' + r.gd : r.gd}</td>
-                  <td><strong>${r.pts}</strong></td>
-                </tr>`).join('')}
-              </tbody>
-            </table>
-            <p style="font-size:0.72rem;color:var(--gray-600);margin-top:0.5rem">✓ = qualifies for knockout</p>
-          </div>`;
-      });
-      el.innerHTML = html;
-    } catch (e) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load standings.</p></div>';
-    }
-  }
-
-  // Init
-  loadHome();
+  // ── INIT ──
+  startHomeListeners();
 
   // Service Worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 </script>
 </body>

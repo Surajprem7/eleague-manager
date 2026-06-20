@@ -96,12 +96,13 @@
 <script type="module">
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth } from './js/auth.js';
-  import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, scheduleMatch, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
+  import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
   import { generateMatchAlert, generateWinnerAlert } from './js/notify.js';
+  import { onPlayers, onGroupMatches, onGroups, onKnockoutMatches } from './js/realtime.js';
   import {
-    collection, getDocs, query, where, onSnapshot, doc, updateDoc, serverTimestamp
+    collection, getDocs, query, where, doc, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   function toast(msg) {
@@ -147,40 +148,39 @@
     });
   });
 
-  // ── PLAYERS ──
-  async function loadPlayers() {
+  // ── PLAYERS — real-time ──
+  let playersListenerStarted = false;
+  function loadPlayers() {
+    if (playersListenerStarted) return;
+    playersListenerStarted = true;
     const el = document.getElementById('players-list');
-    const players = await getAllPlayers();
-    const total   = players.length;
-    const approved = players.filter(p => p.status === 'approved').length;
-    const pending  = players.filter(p => p.status === 'pending').length;
-    document.getElementById('st-total').textContent   = total;
-    document.getElementById('st-approved').textContent = approved;
-    document.getElementById('st-pending').textContent  = pending;
-
-    if (!players.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">👥</span><p>No registrations yet.</p></div>';
-      return;
-    }
-    el.innerHTML = players.map(p => `
-      <div class="player-item">
-        <div class="player-avatar">${p.name[0].toUpperCase()}</div>
-        <div style="flex:1">
-          <div class="player-name">${esc(p.name)}</div>
-          <div class="player-sub">⚽ ${esc(p.efootballId)}${p.phone ? ' · 📱 ' + esc(p.phone) : ''}</div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <span class="badge badge-${p.status === 'approved' ? 'green' : p.status === 'rejected' ? 'red' : 'amber'}">${p.status}</span>
-          ${p.status === 'pending' ? `
-            <button class="btn btn-sm btn-primary" onclick="approvePlayer('${p.id}')">✓</button>
-            <button class="btn btn-sm btn-danger" onclick="rejectPlayer('${p.id}')">✗</button>
-          ` : ''}
-        </div>
-      </div>`).join('');
+    onPlayers(players => {
+      document.getElementById('st-total').textContent    = players.length;
+      document.getElementById('st-approved').textContent = players.filter(p=>p.status==='approved').length;
+      document.getElementById('st-pending').textContent  = players.filter(p=>p.status==='pending').length;
+      if (!players.length) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">👥</span><p>No registrations yet.</p></div>';
+        return;
+      }
+      el.innerHTML = players.map(p => `
+        <div class="player-item">
+          <div class="player-avatar">${p.name[0].toUpperCase()}</div>
+          <div style="flex:1">
+            <div class="player-name">${esc(p.name)}</div>
+            <div class="player-sub">⚽ ${esc(p.efootballId)}${p.phone?' · 📱 '+esc(p.phone):''}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="badge badge-${p.status==='approved'?'green':p.status==='rejected'?'red':'amber'}">${p.status}</span>
+            ${p.status==='pending'?`
+              <button class="btn btn-sm btn-primary" onclick="approvePlayer('${p.id}')">✓</button>
+              <button class="btn btn-sm btn-danger" onclick="rejectPlayer('${p.id}')">✗</button>`:''}
+          </div>
+        </div>`).join('');
+    });
   }
 
-  window.approvePlayer = async (id) => { await updatePlayerStatus(id, 'approved'); toast('Player approved!'); loadPlayers(); };
-  window.rejectPlayer  = async (id) => { await updatePlayerStatus(id, 'rejected'); toast('Player rejected.'); loadPlayers(); };
+  window.approvePlayer = async (id) => { await updatePlayerStatus(id, 'approved'); toast('Player approved! ✅'); };
+  window.rejectPlayer  = async (id) => { await updatePlayerStatus(id, 'rejected'); toast('Player rejected.'); };
 
   // ── GROUPS ──
   async function loadGroups() {

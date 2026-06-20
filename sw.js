@@ -12,6 +12,7 @@ const ASSETS = [
   './js/tournament.js',
   './js/matches.js',
   './js/notify.js',
+  './js/realtime.js',
   './manifest.json',
   './assets/icon-192.png',
   './assets/icon-512.png',
