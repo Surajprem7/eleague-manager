@@ -146,6 +146,8 @@
     location.reload();
   });
 
+  let currentAdminEmail = '';
+
   onAdminAuth(user => {
     if (user) {
       document.getElementById('login-screen').style.display = 'none';
@@ -220,7 +222,6 @@
     const groupsExist = !groupsSnap.empty;
 
     if (groupsExist) {
-      // Show existing groups with standings
       const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const matches = await getMatches('group');
       let html = '<div class="group-grid">';
@@ -248,7 +249,6 @@
       return;
     }
 
-    // Group builder UI
     const groupSize = 4;
     const numGroups = Math.ceil(players.length / groupSize);
     let groupMap = {};
@@ -256,7 +256,6 @@
       const letter = String.fromCharCode(65 + i);
       groupMap[letter] = players.slice(i * groupSize, (i + 1) * groupSize);
     }
-
     renderGroupBuilder(groupMap, el);
   }
 
@@ -304,7 +303,6 @@
       el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>Generate groups first to see the match schedule.</p></div>';
       return;
     }
-    const players = await getAllPlayers();
     const groups = [...new Set(matches.map(m => m.group))].sort();
     let html = '';
     groups.forEach(g => {
@@ -445,7 +443,7 @@
     el.innerHTML = done.map(m => `
       <div class="match-card">
         <div class="match-teams">
-          <div class="match-player ${m.winner==='home'?'':''" style="${m.winner==='home'?'color:var(--green-dark)':''}">${esc(m.homeName)}</div>
+          <div class="match-player" style="${m.winner==='home'?'color:var(--green-dark)':''}">${esc(m.homeName)}</div>
           <div class="match-vs">${m.homeScore} – ${m.awayScore}</div>
           <div class="match-player" style="${m.winner==='away'?'color:var(--green-dark)':''}">${esc(m.awayName)}</div>
         </div>
@@ -540,7 +538,6 @@
   }
 
   // ── ADMINS MANAGEMENT ──
-  let currentAdminEmail = '';
   async function loadAdmins() {
     const el = document.getElementById('admins-panel');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
