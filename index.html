@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1D9E75" />
+  <meta name="description" content="eLeague Manager — eFootball Tournament" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="eLeague" />
+  <title>eLeague Manager</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splash">
+  <span class="splash-icon">⚽</span>
+  <h1>eLeague Manager</h1>
+  <p>Loading tournament...</p>
+</div>
+
+<!-- Offline Banner -->
+<div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="container">
+    <div class="logo">⚽</div>
+    <div>
+      <h1>eLeague Manager</h1>
+      <p id="tournament-phase">eFootball Tournament</p>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="page">
+  <div class="container">
+
+    <!-- HOME -->
+    <section class="section active" id="sec-home">
+      <div id="home-content">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section class="section" id="sec-register">
+      <div class="card">
+        <div class="card-title">Join the Tournament</div>
+        <div id="reg-form">
+          <div class="form-group">
+            <label class="form-label">Your full name</label>
+            <input type="text" class="form-input" id="reg-name" placeholder="Enter your name" maxlength="40" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">eFootball username / ID</label>
+            <input type="text" class="form-input" id="reg-efid" placeholder="Your in-game username" maxlength="40" />
+            <p class="form-hint">This is your username shown in eFootball app</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp number <span style="color:var(--gray-600);font-weight:400">(optional)</span></label>
+            <input type="tel" class="form-input" id="reg-phone" placeholder="+91 XXXXX XXXXX" maxlength="15" />
+          </div>
+          <button class="btn btn-primary btn-full" id="reg-submit">Register Now</button>
+          <p class="form-hint" style="margin-top:0.75rem;text-align:center">Your registration needs admin approval before you're confirmed.</p>
+        </div>
+        <div id="reg-success" style="display:none;text-align:center;padding:1rem">
+          <span style="font-size:2.5rem">✅</span>
+          <h3 style="margin:0.5rem 0">Registered!</h3>
+          <p style="color:var(--gray-600);font-size:0.9rem">Your registration is pending approval. Check back soon!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MY MATCHES -->
+    <section class="section" id="sec-matches">
+      <div class="card" style="margin-bottom:0.75rem">
+        <div class="card-title">Find my matches</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="form-input" id="player-search" placeholder="Enter your name" style="flex:1" />
+          <button class="btn btn-primary" id="search-btn">Search</button>
+        </div>
+      </div>
+      <div id="my-matches-list">
+        <div class="empty-state">
+          <span class="icon">📅</span>
+          <p>Search your name to see your matches</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOIN MATCH -->
+    <section class="section" id="sec-join">
+      <div class="card">
+        <div class="card-title">Enter Join Code</div>
+        <p style="font-size:0.88rem;color:var(--gray-600);margin-bottom:1rem">Admin will share a code when your match goes live. Enter it below to confirm you're ready.</p>
+        <div class="form-group">
+          <input type="text" class="form-input join-code-input" id="join-code-input" placeholder="e.g. GRP-A-M1" maxlength="20" />
+        </div>
+        <div class="form-group">
+          <input type="text" class="form-input" id="join-name-input" placeholder="Your name" maxlength="40" />
+        </div>
+        <button class="btn btn-primary btn-full" id="join-btn">Confirm Ready ✓</button>
+        <div id="join-result" style="margin-top:1rem"></div>
+      </div>
+    </section>
+
+    <!-- STANDINGS -->
+    <section class="section" id="sec-standings">
+      <div id="standings-content">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-section="home">
+    <span class="icon">🏠</span>
+    <span>Home</span>
+  </button>
+  <button class="nav-item" data-section="register">
+    <span class="icon">📝</span>
+    <span>Register</span>
+  </button>
+  <button class="nav-item" data-section="matches">
+    <span class="icon">📅</span>
+    <span>My Matches</span>
+  </button>
+  <button class="nav-item" data-section="join">
+    <span class="icon">🔑</span>
+    <span>Join</span>
+  </button>
+  <button class="nav-item" data-section="standings">
+    <span class="icon">🏆</span>
+    <span>Standings</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { db } from './js/firebase.js';
+  import { registerPlayer, getTournamentStatus, getPlayerMatches, joinMatch } from './js/app.js';
+  import {
+    collection, getDocs, query, where, onSnapshot, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // Splash
+  window.addEventListener('load', () => {
+    setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1200);
+  });
+
+  // Offline detection
+  const offlineBanner = document.getElementById('offline-banner');
+  window.addEventListener('offline', () => offlineBanner.classList.add('show'));
+  window.addEventListener('online',  () => offlineBanner.classList.remove('show'));
+
+  // Toast
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Navigation
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('sec-' + btn.dataset.section).classList.add('active');
+      if (btn.dataset.section === 'home') loadHome();
+      if (btn.dataset.section === 'standings') loadStandings();
+    });
+  });
+
+  // ── HOME ──
+  async function loadHome() {
+    const el = document.getElementById('home-content');
+    try {
+      const status = await getTournamentStatus();
+      if (!status) {
+        el.innerHTML = `
+          <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56)">
+            <span class="trophy">⚽</span>
+            <h2>Welcome!</h2>
+            <p>Tournament registration is open. Sign up now!</p>
+          </div>
+          <div class="card">
+            <div class="card-title">How it works</div>
+            <div class="player-item"><div class="player-avatar">1</div><div><div class="player-name">Register</div><div class="player-sub">Fill in your details to join</div></div></div>
+            <div class="player-item"><div class="player-avatar">2</div><div><div class="player-name">Get approved</div><div class="player-sub">Admin confirms your spot</div></div></div>
+            <div class="player-item"><div class="player-avatar">3</div><div><div class="player-name">Play matches</div><div class="player-sub">Join with your match code</div></div></div>
+            <div class="player-item"><div class="player-avatar">4</div><div><div class="player-name">Win the league!</div><div class="player-sub">Group stage → Knockout → Final</div></div></div>
+          </div>`;
+        return;
+      }
+
+      if (status.phase === 'done' && status.winner) {
+        el.innerHTML = `
+          <div class="winner-banner">
+            <span class="trophy">🏆</span>
+            <h2>${status.winner}</h2>
+            <p>Tournament Champion!</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Final Results</div>
+            <div class="player-item"><div class="player-avatar">🥇</div><div><div class="player-name">${status.winner}</div><div class="player-sub">Champion</div></div></div>
+            ${status.second ? `<div class="player-item"><div class="player-avatar">🥈</div><div><div class="player-name">${status.second}</div><div class="player-sub">Runner-up</div></div></div>` : ''}
+            ${status.third  ? `<div class="player-item"><div class="player-avatar">🥉</div><div><div class="player-name">${status.third}</div><div class="player-sub">Third place</div></div></div>` : ''}
+          </div>`;
+        return;
+      }
+
+      // Live matches
+      const liveSnap = await getDocs(query(collection(db, 'matches'), where('status', '==', 'live')));
+      const liveMatches = liveSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      let liveHtml = '';
+      if (liveMatches.length) {
+        liveHtml = `<div class="card"><div class="card-title">🔴 Live Now</div>` +
+          liveMatches.map(m => `
+            <div class="match-card" style="border-left:3px solid var(--green)">
+              <div class="match-teams">
+                <div class="match-player">${m.homeName}</div>
+                <div class="match-vs">LIVE</div>
+                <div class="match-player">${m.awayName}</div>
+              </div>
+              <div class="match-meta"><span class="match-code">🔑 ${m.joinCode}</span><span class="badge badge-green">Live</span></div>
+            </div>`).join('') + `</div>`;
+      }
+
+      el.innerHTML = `
+        <div class="phase-banner" style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
+          ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
+        </div>
+        ${liveHtml}
+        <div class="card">
+          <div class="card-title">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=matches]').click()">📅 View my schedule</button>
+            <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=join]').click()">🔑 Enter join code</button>
+            <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=standings]').click()">📊 See standings</button>
+          </div>
+        </div>`;
+    } catch (e) {
+      el.innerHTML = `<div class="empty-state"><span class="icon">⚠️</span><p>Could not load data. Check your connection.</p></div>`;
+    }
+  }
+
+  // ── REGISTER ──
+  document.getElementById('reg-submit').addEventListener('click', async () => {
+    const name    = document.getElementById('reg-name').value.trim();
+    const efid    = document.getElementById('reg-efid').value.trim();
+    const phone   = document.getElementById('reg-phone').value.trim();
+    if (!name || !efid) { toast('Please fill in name and eFootball ID'); return; }
+    const btn = document.getElementById('reg-submit');
+    btn.textContent = 'Registering...'; btn.disabled = true;
+    try {
+      await registerPlayer({ name, efootballId: efid, phone });
+      document.getElementById('reg-form').style.display = 'none';
+      document.getElementById('reg-success').style.display = 'block';
+    } catch (e) {
+      toast(e.message || 'Registration failed. Try again.');
+    }
+    btn.textContent = 'Register Now'; btn.disabled = false;
+  });
+
+  // ── MY MATCHES ──
+  document.getElementById('search-btn').addEventListener('click', async () => {
+    const name = document.getElementById('player-search').value.trim();
+    if (!name) { toast('Enter your name to search'); return; }
+    const el = document.getElementById('my-matches-list');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
+      if (snap.empty) { el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found. Check your name or register first.</p></div>'; return; }
+      const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      const matches = await getPlayerMatches(player.id);
+      if (!matches.length) { el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet. Check back soon!</p></div>'; return; }
+      el.innerHTML = matches.map(m => {
+        const isHome = m.homeId === player.id;
+        const opp = isHome ? m.awayName : m.homeName;
+        const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
+        return `<div class="match-card">
+          <div class="match-teams">
+            <div class="match-player" style="color:var(--green-dark)">${player.name}</div>
+            <div class="match-vs">vs</div>
+            <div class="match-player">${opp}</div>
+          </div>
+          <div class="match-meta">
+            <span>📅 ${date}</span>
+            <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
+          </div>
+          ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:0.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+          ${m.status === 'live' ? `<div class="match-meta" style="margin-top:0.5rem"><span class="match-code">🔑 ${m.joinCode}</span></div>` : ''}
+        </div>`;
+      }).join('');
+    } catch (e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading matches.</p></div>';
+    }
+  });
+
+  // ── JOIN MATCH ──
+  document.getElementById('join-btn').addEventListener('click', async () => {
+    const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+    const name = document.getElementById('join-name-input').value.trim();
+    const result = document.getElementById('join-result');
+    if (!code || !name) { toast('Enter both your name and the join code'); return; }
+    result.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    const res = await joinMatch(code, name);
+    if (!res.success) {
+      result.innerHTML = `<div class="empty-state"><span class="icon">❌</span><p>${res.message}</p></div>`;
+    } else {
+      result.innerHTML = `
+        <div style="text-align:center;padding:1rem">
+          <span style="font-size:2.5rem">✅</span>
+          <h3 style="margin:0.5rem 0">You're confirmed!</h3>
+          <p style="color:var(--gray-600);font-size:0.88rem">${res.match.homeName} vs ${res.match.awayName}</p>
+          <p style="font-size:0.85rem;margin-top:0.5rem">Go play on eFootball — good luck! 🎮</p>
+        </div>`;
+    }
+  });
+
+  // ── STANDINGS ──
+  async function loadStandings() {
+    const el = document.getElementById('standings-content');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const groupsSnap = await getDocs(collection(db, 'groups'));
+      const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!groups.length) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>Standings will appear after groups are drawn.</p></div>';
+        return;
+      }
+      const playersSnap = await getDocs(collection(db, 'players'));
+      const players = playersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const matchesSnap = await getDocs(query(collection(db, 'matches'), where('phase', '==', 'group')));
+      const matches = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const { computeStandings } = await import('./js/tournament.js');
+
+      let html = '';
+      groups.sort((a, b) => a.letter.localeCompare(b.letter)).forEach(g => {
+        const gPlayers = players.filter(p => g.players.includes(p.id));
+        const gMatches = matches.filter(m => m.group === g.letter);
+        const standings = computeStandings(gPlayers, gMatches);
+        html += `
+          <div class="card">
+            <div class="card-title">Group ${g.letter}</div>
+            <table class="standings-table">
+              <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+              <tbody>${standings.map((r, i) => `
+                <tr class="${i < 2 ? 'qualify' : ''}">
+                  <td>${r.name}${i < 2 ? ' <span style="color:var(--green);font-size:0.7rem">✓</span>' : ''}</td>
+                  <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
+                  <td>${r.gd > 0 ? '+' + r.gd : r.gd}</td>
+                  <td><strong>${r.pts}</strong></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+            <p style="font-size:0.72rem;color:var(--gray-600);margin-top:0.5rem">✓ = qualifies for knockout</p>
+          </div>`;
+      });
+      el.innerHTML = html;
+    } catch (e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load standings.</p></div>';
+    }
+  }
+
+  // Init
+  loadHome();
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>

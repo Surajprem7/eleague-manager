@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0F6E56" />
+  <title>Admin — eLeague Manager</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen" class="login-screen">
+  <div class="logo-big">⚽</div>
+  <h1>eLeague Manager</h1>
+  <p>Admin access only.<br>Sign in with your Google account to continue.</p>
+  <button class="btn btn-primary" id="google-login-btn" style="gap:10px">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" /> Sign in with Google
+  </button>
+</div>
+
+<!-- Admin App -->
+<div id="admin-app" style="display:none">
+
+  <header class="admin-header">
+    <div>
+      <h1>⚽ eLeague Admin</h1>
+      <span id="admin-email" style="font-size:0.72rem;opacity:0.8"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="badge-admin">Admin</span>
+      <button class="btn btn-sm btn-secondary" id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <div class="admin-tabs">
+    <button class="admin-tab active" data-tab="players">Players</button>
+    <button class="admin-tab" data-tab="groups">Groups</button>
+    <button class="admin-tab" data-tab="matches">Matches</button>
+    <button class="admin-tab" data-tab="knockout">Knockout</button>
+    <button class="admin-tab" data-tab="results">Results</button>
+  </div>
+
+  <main class="page">
+    <div class="container">
+
+      <!-- PLAYERS TAB -->
+      <div class="tab-content active" id="tab-players">
+        <div class="stat-grid" id="stats-grid">
+          <div class="stat-box"><div class="num" id="st-total">—</div><div class="lbl">Registered</div></div>
+          <div class="stat-box"><div class="num" id="st-approved">—</div><div class="lbl">Approved</div></div>
+          <div class="stat-box"><div class="num" id="st-pending">—</div><div class="lbl">Pending</div></div>
+        </div>
+        <div id="players-list">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- GROUPS TAB -->
+      <div class="tab-content" id="tab-groups" style="display:none">
+        <div id="groups-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- MATCHES TAB -->
+      <div class="tab-content" id="tab-matches" style="display:none">
+        <div id="matches-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- KNOCKOUT TAB -->
+      <div class="tab-content" id="tab-knockout" style="display:none">
+        <div id="knockout-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- RESULTS TAB -->
+      <div class="tab-content" id="tab-results" style="display:none">
+        <div id="results-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { auth, db } from './js/firebase.js';
+  import { loginWithGoogle, logout, onAdminAuth } from './js/auth.js';
+  import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, scheduleMatch, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
+  import { getMatches, updateMatch } from './js/matches.js';
+  import { computeStandings } from './js/tournament.js';
+  import { generateMatchAlert, generateWinnerAlert } from './js/notify.js';
+  import {
+    collection, getDocs, query, where, onSnapshot, doc, updateDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // Auth
+  document.getElementById('google-login-btn').addEventListener('click', loginWithGoogle);
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await logout();
+    location.reload();
+  });
+
+  onAdminAuth(user => {
+    if (user) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-app').style.display = 'block';
+      document.getElementById('admin-email').textContent = user.email;
+      loadPlayers();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('admin-app').style.display = 'none';
+    }
+  });
+
+  // Tab switching
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+      tab.classList.add('active');
+      const panel = document.getElementById('tab-' + tab.dataset.tab);
+      panel.style.display = 'block';
+      if (tab.dataset.tab === 'players')  loadPlayers();
+      if (tab.dataset.tab === 'groups')   loadGroups();
+      if (tab.dataset.tab === 'matches')  loadMatches();
+      if (tab.dataset.tab === 'knockout') loadKnockout();
+      if (tab.dataset.tab === 'results')  loadResults();
+    });
+  });
+
+  // ── PLAYERS ──
+  async function loadPlayers() {
+    const el = document.getElementById('players-list');
+    const players = await getAllPlayers();
+    const total   = players.length;
+    const approved = players.filter(p => p.status === 'approved').length;
+    const pending  = players.filter(p => p.status === 'pending').length;
+    document.getElementById('st-total').textContent   = total;
+    document.getElementById('st-approved').textContent = approved;
+    document.getElementById('st-pending').textContent  = pending;
+
+    if (!players.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">👥</span><p>No registrations yet.</p></div>';
+      return;
+    }
+    el.innerHTML = players.map(p => `
+      <div class="player-item">
+        <div class="player-avatar">${p.name[0].toUpperCase()}</div>
+        <div style="flex:1">
+          <div class="player-name">${esc(p.name)}</div>
+          <div class="player-sub">⚽ ${esc(p.efootballId)}${p.phone ? ' · 📱 ' + esc(p.phone) : ''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge badge-${p.status === 'approved' ? 'green' : p.status === 'rejected' ? 'red' : 'amber'}">${p.status}</span>
+          ${p.status === 'pending' ? `
+            <button class="btn btn-sm btn-primary" onclick="approvePlayer('${p.id}')">✓</button>
+            <button class="btn btn-sm btn-danger" onclick="rejectPlayer('${p.id}')">✗</button>
+          ` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  window.approvePlayer = async (id) => { await updatePlayerStatus(id, 'approved'); toast('Player approved!'); loadPlayers(); };
+  window.rejectPlayer  = async (id) => { await updatePlayerStatus(id, 'rejected'); toast('Player rejected.'); loadPlayers(); };
+
+  // ── GROUPS ──
+  async function loadGroups() {
+    const el = document.getElementById('groups-panel');
+    const players = (await getAllPlayers()).filter(p => p.status === 'approved');
+    const groupsSnap = await getDocs(collection(db, 'groups'));
+    const groupsExist = !groupsSnap.empty;
+
+    if (groupsExist) {
+      // Show existing groups with standings
+      const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const matches = await getMatches('group');
+      let html = '<div class="group-grid">';
+      groups.sort((a,b) => a.letter.localeCompare(b.letter)).forEach(g => {
+        const gPlayers = players.filter(p => g.players.includes(p.id));
+        const gMatches = matches.filter(m => m.group === g.letter);
+        const standings = computeStandings(gPlayers, gMatches);
+        html += `<div class="group-box">
+          <div class="group-box-title">Group ${g.letter}</div>
+          <table class="standings-table">
+            <thead><tr><th>Player</th><th>Pts</th><th>GD</th></tr></thead>
+            <tbody>${standings.map((r,i)=>`<tr class="${i<2?'qualify':''}"><td>${esc(r.name)}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>`;
+      });
+      html += '</div>';
+      const done = await checkAndGenerateKnockout();
+      if (done) { toast('All group matches done! Knockout generated.'); }
+      el.innerHTML = html;
+      return;
+    }
+
+    if (!players.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">👥</span><p>Approve players first before drawing groups.</p></div>';
+      return;
+    }
+
+    // Group builder UI
+    const groupSize = 4;
+    const numGroups = Math.ceil(players.length / groupSize);
+    let groupMap = {};
+    for (let i = 0; i < numGroups; i++) {
+      const letter = String.fromCharCode(65 + i);
+      groupMap[letter] = players.slice(i * groupSize, (i + 1) * groupSize);
+    }
+
+    renderGroupBuilder(groupMap, el);
+  }
+
+  function renderGroupBuilder(groupMap, el) {
+    let html = `<div class="card"><div class="card-title">Assign players to groups</div>
+      <p style="font-size:0.82rem;color:var(--gray-600);margin-bottom:1rem">Review groups below. You can move players between groups before saving.</p>
+      <div class="group-grid" id="group-builder">`;
+    Object.entries(groupMap).forEach(([letter, players]) => {
+      html += `<div class="group-box" data-group="${letter}">
+        <div class="group-box-title">Group ${letter} <span style="font-weight:400;color:var(--gray-600)">${players.length}p</span></div>
+        <div class="group-players" id="gp-${letter}">
+          ${players.map(p => `<div class="drag-player" data-id="${p.id}" data-name="${esc(p.name)}">${esc(p.name)}</div>`).join('')}
+        </div>
+      </div>`;
+    });
+    html += `</div>
+      <button class="btn btn-primary btn-full confirm-btn" id="save-groups-btn">Save Groups & Generate Schedule</button>
+    </div>`;
+    el.innerHTML = html;
+
+    document.getElementById('save-groups-btn').addEventListener('click', async () => {
+      const finalGroups = {};
+      document.querySelectorAll('[data-group]').forEach(box => {
+        const letter = box.dataset.group;
+        const pls = [...box.querySelectorAll('.drag-player')].map(d => ({
+          id: d.dataset.id, name: d.dataset.name
+        }));
+        if (pls.length) finalGroups[letter] = pls;
+      });
+      try {
+        await saveGroupsAndGenerateMatches(finalGroups);
+        toast('Groups saved! Match schedule generated. ✅');
+        loadGroups();
+      } catch (e) {
+        toast('Error: ' + e.message);
+      }
+    });
+  }
+
+  // ── MATCHES ──
+  async function loadMatches() {
+    const el = document.getElementById('matches-panel');
+    const matches = await getMatches('group');
+    if (!matches.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>Generate groups first to see the match schedule.</p></div>';
+      return;
+    }
+    const players = await getAllPlayers();
+    const groups = [...new Set(matches.map(m => m.group))].sort();
+    let html = '';
+    groups.forEach(g => {
+      const gMatches = matches.filter(m => m.group === g);
+      html += `<div style="margin-bottom:1.25rem">
+        <div class="card-title" style="margin-bottom:0.5rem">Group ${g}</div>
+        ${gMatches.map(m => matchAdminCard(m)).join('')}
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  function matchAdminCard(m) {
+    const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : '';
+    const statusColor = m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue';
+    return `<div class="match-card" style="margin-bottom:0.75rem">
+      <div class="match-teams">
+        <div class="match-player">${esc(m.homeName)}</div>
+        <div class="match-vs">${m.status === 'completed' ? m.homeScore+' – '+m.awayScore : 'vs'}</div>
+        <div class="match-player">${esc(m.awayName)}</div>
+      </div>
+      <div class="match-meta" style="margin-bottom:0.75rem">
+        <span class="match-code">🔑 ${m.joinCode}</span>
+        <span class="badge badge-${statusColor}">${m.status}</span>
+      </div>
+      ${m.status === 'scheduled' ? `
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <input type="datetime-local" class="form-input" style="flex:1;min-height:40px;font-size:0.82rem" id="dt-${m.id}" value="${date}" />
+          <button class="btn btn-secondary btn-sm" onclick="saveSchedule('${m.id}')">📅 Schedule</button>
+          <button class="btn btn-primary btn-sm" onclick="goLive('${m.id}')">🔴 Go Live</button>
+          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}')">📲 Notify</button>
+        </div>` : ''}
+      ${m.status === 'live' ? `
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="score-inputs">
+            <input type="number" class="score-input" id="hs-${m.id}" placeholder="0" min="0" max="99" />
+            <span class="score-dash">–</span>
+            <input type="number" class="score-input" id="as-${m.id}" placeholder="0" min="0" max="99" />
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">✓ Save Score</button>
+          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}')">📲 Notify</button>
+        </div>` : ''}
+    </div>`;
+  }
+
+  window.saveSchedule = async (id) => {
+    const val = document.getElementById('dt-' + id)?.value;
+    if (!val) { toast('Pick a date and time first'); return; }
+    await updateMatch(id, { scheduledAt: new Date(val) });
+    toast('Match scheduled! ✅'); loadMatches();
+  };
+  window.goLive = async (id) => {
+    try { await setMatchLive(id); toast('Match is now live! 🔴'); loadMatches(); }
+    catch (e) { toast(e.message); }
+  };
+  window.saveScore = async (id) => {
+    const hs = parseInt(document.getElementById('hs-' + id)?.value);
+    const as = parseInt(document.getElementById('as-' + id)?.value);
+    if (isNaN(hs) || isNaN(as)) { toast('Enter both scores'); return; }
+    await enterScore(id, hs, as);
+    toast('Score saved! ✅'); loadMatches();
+    await checkAndGenerateKnockout();
+  };
+  window.notifyWA = (id, home, away, code) => {
+    const m = { homePlayer: home, awayPlayer: away, date: 'TBA', time: 'TBA', joinCode: code };
+    window.open(generateMatchAlert(m), '_blank');
+  };
+
+  // ── KNOCKOUT ──
+  async function loadKnockout() {
+    const el = document.getElementById('knockout-panel');
+    const rounds = ['r32','r16','qf','sf','3rd','final'];
+    const labels = { r32:'Round of 32', r16:'Round of 16', qf:'Quarter-finals', sf:'Semi-finals', '3rd':'3rd Place Playoff', final:'Final' };
+    let html = '';
+    let hasAny = false;
+
+    for (const round of rounds) {
+      const matches = await getMatches(round);
+      if (!matches.length) continue;
+      hasAny = true;
+      html += `<div class="bracket-round">
+        <div class="bracket-label">${labels[round]}</div>
+        ${matches.map(m => `
+          <div class="bracket-match">
+            <div class="bracket-team ${m.winner==='home'?'winner':''}">${esc(m.homeName)}</div>
+            ${m.status==='completed' ? `<span class="match-vs">${m.homeScore}–${m.awayScore}</span>` : '<span class="match-vs">vs</span>'}
+            <div class="bracket-team ${m.winner==='away'?'winner':''}" style="text-align:right">${esc(m.awayName)}</div>
+            ${m.status!=='completed' ? `
+              <div style="display:flex;gap:4px;align-items:center;margin-left:8px">
+                ${m.status==='scheduled'?`<button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">Live</button>`:''}
+                ${m.status==='live'?`
+                  <input type="number" class="score-input" id="khs-${m.id}" placeholder="0" style="width:40px" />
+                  <span>–</span>
+                  <input type="number" class="score-input" id="kas-${m.id}" placeholder="0" style="width:40px" />
+                  <button class="btn btn-primary btn-sm" onclick="koSaveScore('${m.id}','${round}')">✓</button>`:''}
+              </div>` : '<span class="badge badge-green" style="margin-left:8px">Done</span>'}
+          </div>`).join('')}
+      </div>`;
+    }
+
+    if (!hasAny) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">🏆</span><p>Knockout rounds appear here after group stage is complete.</p></div>';
+      return;
+    }
+    el.innerHTML = html;
+  }
+
+  window.koGoLive = async (id) => {
+    try { await setMatchLive(id); toast('Match live! 🔴'); loadKnockout(); }
+    catch (e) { toast(e.message); }
+  };
+  window.koSaveScore = async (id, round) => {
+    const hs = parseInt(document.getElementById('khs-' + id)?.value);
+    const as = parseInt(document.getElementById('kas-' + id)?.value);
+    if (isNaN(hs)||isNaN(as)) { toast('Enter both scores'); return; }
+    if (hs === as) { toast('No draws in knockout! Adjust the score.'); return; }
+    await enterScore(id, hs, as);
+    await advanceKnockout(round);
+    toast('Score saved! ✅'); loadKnockout();
+  };
+
+  // ── RESULTS ──
+  async function loadResults() {
+    const el = document.getElementById('results-panel');
+    const matches = await getMatches();
+    const done = matches.filter(m => m.status === 'completed');
+    if (!done.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>No completed matches yet.</p></div>';
+      return;
+    }
+    const phaseLabels = { group:'Group', r32:'R32', r16:'R16', qf:'QF', sf:'SF', '3rd':'3rd', final:'Final' };
+    el.innerHTML = done.map(m => `
+      <div class="match-card">
+        <div class="match-teams">
+          <div class="match-player ${m.winner==='home'?'':''" style="${m.winner==='home'?'color:var(--green-dark)':''}">${esc(m.homeName)}</div>
+          <div class="match-vs">${m.homeScore} – ${m.awayScore}</div>
+          <div class="match-player" style="${m.winner==='away'?'color:var(--green-dark)':''}">${esc(m.awayName)}</div>
+        </div>
+        <div class="match-meta">
+          <span class="badge badge-gray">${phaseLabels[m.phase] || m.phase}${m.group?' '+m.group:''}</span>
+          <span class="badge badge-green">✓ Completed</span>
+        </div>
+      </div>`).join('');
+  }
+</script>
+</body>
+</html>
