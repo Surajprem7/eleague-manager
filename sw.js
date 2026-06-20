@@ -13,6 +13,8 @@ const ASSETS = [
   './js/matches.js',
   './js/notify.js',
   './js/realtime.js',
+  './js/stats.js',
+  './stats.html',
   './manifest.json',
   './assets/icon-192.png',
   './assets/icon-512.png',
