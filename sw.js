@@ -14,6 +14,8 @@ const ASSETS = [
   './js/notify.js',
   './js/realtime.js',
   './js/stats.js',
+  './js/activitylog.js',
+  './js/dispute.js',
   './stats.html',
   './manifest.json',
   './assets/icon-192.png',

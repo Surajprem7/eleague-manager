@@ -2,39 +2,53 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Admin check
-    function isAdmin(request) {
-      return request.auth != null && request.auth.token.email == 'surajkp7@gmail.com';
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'YOUR_GMAIL@gmail.com';
     }
 
     // Players — anyone can read & create, only admin can update/delete
     match /players/{id} {
       allow read: if true;
       allow create: if true;
-      allow update, delete: if isAdmin(request);
+      allow update, delete: if isAdmin();
     }
 
     // Groups — anyone can read, only admin can write
     match /groups/{id} {
       allow read: if true;
-      allow write: if isAdmin(request);
+      allow write: if isAdmin();
     }
 
     // Matches — anyone can read, only admin can write
     match /matches/{id} {
       allow read: if true;
-      allow write: if isAdmin(request);
+      allow write: if isAdmin();
     }
 
     // Tournament — anyone can read, only admin can write
     match /tournament/{id} {
       allow read: if true;
-      allow write: if isAdmin(request);
+      allow write: if isAdmin();
     }
 
     // Admins — only admin can read/write
     match /admins/{id} {
-      allow read, write: if isAdmin(request);
+      allow read, write: if isAdmin();
+    }
+
+    // Activity log — anyone can read, anyone can create (for dispute logging), only admin can delete
+    match /activity_log/{id} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // Disputes — anyone can read & create, only admin can update (resolve)
+    match /disputes/{id} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }
