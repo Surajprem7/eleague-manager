@@ -45,6 +45,7 @@
     <button class="admin-tab" data-tab="disputes">Disputes</button>
     <button class="admin-tab" data-tab="log">Activity Log</button>
     <button class="admin-tab" data-tab="admins">👥 Admins</button>
+    <button class="admin-tab" data-tab="help">❔ Help</button>
   </div>
 
   <main class="page">
@@ -108,6 +109,60 @@
       <div class="tab-content" id="tab-admins" style="display:none">
         <div id="admins-panel">
           <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- HELP TAB -->
+      <div class="tab-content" id="tab-help" style="display:none">
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-title">Step 1 — Approve Players</div>
+          <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
+            <li>Open the <strong>Players</strong> tab.</li>
+            <li>New registrations show up as <strong>pending</strong>.</li>
+            <li>Click <strong>✓</strong> to approve or <strong>✗</strong> to reject.</li>
+          </ol>
+          <p style="font-size:.8rem;color:var(--gray-600)">Only approved players can be placed into groups.</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-title">Step 2 — Create Groups</div>
+          <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
+            <li>Open the <strong>Groups</strong> tab. Approved players are auto-split into groups.</li>
+            <li>Move a player into a different group if you want a specific split.</li>
+            <li>Click <strong>Save Groups & Generate Schedule</strong>.</li>
+          </ol>
+          <p style="font-size:.8rem;color:var(--gray-600)">This auto-creates the full round-robin schedule — no need to add matches manually.</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-title">Step 3 — Run a Match (Match Day)</div>
+          <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
+            <li>Open the <strong>Matches</strong> tab and pick a match.</li>
+            <li>Click <strong>Set Live</strong>. Only 2 matches can be live at once.</li>
+            <li>Share the <strong>Join Code</strong> (e.g. <code>GRP-A-M1</code>) with both players.</li>
+            <li>Tell them: "Go to league.getgol.in → Join tab → enter the code and your name."</li>
+            <li>They play the match in the eFootball app directly.</li>
+            <li>Come back, find the match, enter the score, and Save.</li>
+          </ol>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-title">Step 4 — Standings & Knockout</div>
+          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Standings update automatically as scores are entered — no manual calculation. Once <strong>every</strong> group match is completed, the knockout bracket is generated automatically from each group's top finishers. The <strong>Knockout</strong> tab works exactly like Matches: set live, share the code, enter the score. Semifinal losers automatically get a 3rd place match. The winner is announced when the Final completes.</p>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-title">Handling Problems</div>
+          <ul style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
+            <li><strong>Player disputes a score:</strong> review it under the <strong>Disputes</strong> tab and resolve with a short note.</li>
+            <li><strong>You entered a wrong score:</strong> go back to Matches/Results and re-enter it — it overwrites the old one.</li>
+            <li>Every action you take is recorded in the <strong>Activity Log</strong> tab with a timestamp.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="background:#FEF7E0;border-color:#FAC775">
+          <div class="card-title" style="color:#854F0B">Managing Other Admins</div>
+          <p style="font-size:.82rem;color:#854F0B;line-height:1.6">Only the default admin can add or remove admins, from the <strong>Admins</strong> tab. Maximum 3 admins total. New admins just sign in at league.getgol.in/admin.html with their own Google account — no password to share.</p>
         </div>
       </div>
 
