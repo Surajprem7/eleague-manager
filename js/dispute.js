@@ -1,16 +1,16 @@
 import { db } from './firebase.js';
 import { addLog, LOG } from './activitylog.js';
 import {
-  collection, addDoc, getDocs, doc, updateDoc,
+  collection, addDoc, getDoc, getDocs, doc, updateDoc,
   query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Player raises a dispute
 export async function raiseDispute({ matchId, playerName, reason }) {
   // Check match exists and is completed
-  const matchSnap = await getDocs(
-    query(collection(db, 'matches'), where('__name__', '==', matchId))
-  );
+  const matchSnap = await getDoc(doc(db, 'matches', matchId));
+  if (!matchSnap.exists()) throw new Error('Match not found.');
+  if (matchSnap.data().status !== 'completed') throw new Error('Only completed matches can be disputed.');
 
   // Check not already disputed
   const existing = await getDocs(
