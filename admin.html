@@ -137,7 +137,7 @@
     setTimeout(() => t.classList.remove('show'), 2500);
   }
 
-  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 
   // Auth
   document.getElementById('google-login-btn').addEventListener('click', loginWithGoogle);

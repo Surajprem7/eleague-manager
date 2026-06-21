@@ -1,4 +1,4 @@
-const CACHE = 'eleague-v2';
+const CACHE = 'eleague-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -16,7 +16,6 @@ const ASSETS = [
   './js/stats.js',
   './js/activitylog.js',
   './bracket.html',
-  './setup-admin.html',
   './js/dispute.js',
   './stats.html',
   './manifest.json',

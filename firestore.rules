@@ -3,7 +3,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'YOUR_GMAIL@gmail.com';
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower().replace('[^a-z0-9]', '_')));
     }
 
     // Players — anyone can read & create, only admin can update/delete
