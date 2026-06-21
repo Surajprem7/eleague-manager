@@ -119,7 +119,7 @@
 
 <script type="module">
   import { auth, db } from './js/firebase.js';
-  import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin } from './js/auth.js';
+  import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, handleRedirectResult } from './js/auth.js';
   import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
@@ -147,6 +147,8 @@
   });
 
   let currentAdminEmail = '';
+
+  await handleRedirectResult();
 
   onAdminAuth(user => {
     if (user) {
