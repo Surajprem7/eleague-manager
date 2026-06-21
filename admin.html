@@ -562,9 +562,9 @@
               <div class="player-avatar">${a.email[0].toUpperCase()}</div>
               <div style="flex:1">
                 <div class="player-name">${esc(a.email)}</div>
-                <div class="player-sub">Added ${a.addedAt ? new Date(a.addedAt).toLocaleDateString() : 'N/A'}${a.isSuper?' · Super Admin':''}</div>
+                <div class="player-sub">Added ${a.addedAt ? new Date(a.addedAt).toLocaleDateString() : 'N/A'}</div>
               </div>
-              ${!a.isSuper ? `<button class="btn btn-sm btn-danger" onclick="removeAdminFromUI('${esc(a.email)}')">Remove</button>` : '<span class="badge badge-green">Owner</span>'}
+              <button class="btn btn-sm btn-danger" onclick="removeAdminFromUI('${esc(a.email)}')">Remove</button>
             </div>`).join('') : '<p style="font-size:.85rem;color:var(--gray-600)">No admins found.</p>'}
         </div>
         <div class="card" style="background:#FEF7E0;border-color:#FAC775">
