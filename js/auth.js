@@ -1,23 +1,19 @@
 import { auth, db } from './firebase.js';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, getDocs, getDoc, doc, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Cache admin list to avoid repeated DB reads
-let adminCache = null;
-let adminCacheTime = 0;
-const CACHE_TTL = 60000; // 1 minute
+export const DEFAULT_ADMIN_EMAIL = 'surajtxglive@gmail.com';
+const MAX_ADMINS = 3;
+
+function adminDocId(email) {
+  return email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+}
 
 // Check if an email is in the admins collection
 async function isAdminEmail(email) {
-  const now = Date.now();
-  if (adminCache && (now - adminCacheTime) < CACHE_TTL) {
-    return adminCache.includes(email);
-  }
   try {
-    const snap = await getDocs(collection(db, 'admins'));
-    adminCache = snap.docs.map(d => d.data().email);
-    adminCacheTime = now;
-    return adminCache.includes(email);
+    const snap = await getDoc(doc(db, 'admins', adminDocId(email)));
+    return snap.exists();
   } catch(e) {
     console.error('Admin check failed', e);
     return false;
@@ -38,7 +34,6 @@ export async function loginWithGoogle() {
 
 // Logout
 export function logout() {
-  adminCache = null;
   return signOut(auth);
 }
 
@@ -53,29 +48,41 @@ export function onAdminAuth(callback) {
 
 // ── Admin management functions ──
 
-// Get all admins
-export async function getAdmins() {
-  const snap = await getDocs(collection(db, 'admins'));
+// Get all admins. Non-default admins can't see the default admin in the list.
+export async function getAdmins(currentUserEmail) {
+  const isDefault = currentUserEmail?.trim().toLowerCase() === DEFAULT_ADMIN_EMAIL;
+  const snap = isDefault
+    ? await getDocs(collection(db, 'admins'))
+    : await getDocs(query(collection(db, 'admins'), where('isDefault', '==', false)));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Add a new admin by email
-export async function addAdmin(email) {
+// Add a new admin by email — only the default admin can do this
+export async function addAdmin(email, currentUserEmail) {
+  if (currentUserEmail?.trim().toLowerCase() !== DEFAULT_ADMIN_EMAIL) {
+    throw new Error('Only the default admin can add admins.');
+  }
   email = email.trim().toLowerCase();
   if (!email.includes('@')) throw new Error('Enter a valid email address.');
-  // Check if already exists
-  const existing = await getDocs(query(collection(db, 'admins'), where('email', '==', email)));
-  if (!existing.empty) throw new Error('This email is already an admin.');
-  const id = email.replace(/[^a-z0-9]/g, '_');
-  await setDoc(doc(db, 'admins', id), { email, addedAt: new Date().toISOString() });
-  adminCache = null; // Clear cache
+  if (email === DEFAULT_ADMIN_EMAIL) throw new Error('This email is already the default admin.');
+  const id = adminDocId(email);
+  const existing = await getDoc(doc(db, 'admins', id));
+  if (existing.exists()) throw new Error('This email is already an admin.');
+  const all = await getDocs(collection(db, 'admins'));
+  if (all.size >= MAX_ADMINS) throw new Error(`Maximum of ${MAX_ADMINS} admins reached.`);
+  await setDoc(doc(db, 'admins', id), { email, addedAt: new Date().toISOString(), isDefault: false });
 }
 
-// Remove an admin by email
+// Remove an admin by email — only the default admin can do this, and the default
+// admin itself can never be removed (enforced here and in firestore.rules).
 export async function removeAdmin(email, currentUserEmail) {
-  if (email === currentUserEmail) throw new Error("You can't remove yourself as admin.");
-  const snap = await getDocs(query(collection(db, 'admins'), where('email', '==', email)));
-  if (snap.empty) throw new Error('Admin not found.');
-  await deleteDoc(doc(db, 'admins', snap.docs[0].id));
-  adminCache = null; // Clear cache
+  if (currentUserEmail?.trim().toLowerCase() !== DEFAULT_ADMIN_EMAIL) {
+    throw new Error('Only the default admin can remove admins.');
+  }
+  email = email.trim().toLowerCase();
+  if (email === DEFAULT_ADMIN_EMAIL) throw new Error("The default admin can't be removed.");
+  const id = adminDocId(email);
+  const snap = await getDoc(doc(db, 'admins', id));
+  if (!snap.exists()) throw new Error('Admin not found.');
+  await deleteDoc(doc(db, 'admins', id));
 }

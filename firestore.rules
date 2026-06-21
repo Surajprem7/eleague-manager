@@ -7,6 +7,10 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower().replace('[^a-z0-9]', '_')));
     }
 
+    function isDefaultAdmin() {
+      return request.auth != null && request.auth.token.email.lower() == 'surajtxglive@gmail.com';
+    }
+
     // Players — anyone can read & create, only admin can update/delete
     match /players/{id} {
       allow read: if true;
@@ -37,9 +41,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Admins — only admin can read/write
+    // Admins — the default admin (surajtxglive@gmail.com) is always visible to itself,
+    // hidden from other admins' listings, and can never be removed. Only the default
+    // admin can add or remove other admins.
     match /admins/{id} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() && (resource.data.isDefault == false || isDefaultAdmin());
+      allow create: if isDefaultAdmin() &&
+        request.resource.data.isDefault == false &&
+        request.resource.data.keys().hasOnly(['email', 'addedAt', 'isDefault']);
+      allow delete: if isDefaultAdmin() && resource.data.isDefault == false;
+      allow update: if false;
     }
 
     // Activity log — anyone can read, anyone can create (for dispute logging), only admin can delete
