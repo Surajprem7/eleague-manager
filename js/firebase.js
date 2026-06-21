@@ -3,7 +3,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebas
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC9RxSRTauZy08bdTJpvCYHFafjWT8HoUY",
+  apiKey: "AIzaSyD8MBfHSwlrk642rs6FWZWeknWc5V5Z4Uc",
   authDomain: "eleague-manager.firebaseapp.com",
   projectId: "eleague-manager",
   storageBucket: "eleague-manager.firebasestorage.app",
