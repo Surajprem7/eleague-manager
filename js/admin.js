@@ -3,7 +3,7 @@ import { generateGroupMatches, generateKnockoutRound, getQualifiers, computeStan
 import { updateMatch, getLiveMatchCount } from './matches.js';
 import { addLog, LOG } from './activitylog.js';
 import {
-  collection, doc, getDocs, updateDoc, setDoc,
+  collection, doc, getDoc, getDocs, updateDoc, setDoc,
   query, where, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -15,8 +15,8 @@ export async function getAllPlayers() {
 
 // Approve / reject player
 export async function updatePlayerStatus(playerId, status) {
-  const snap = await getDocs(query(collection(db, 'players'), where('__name__', '==', playerId)));
-  const name = snap.empty ? playerId : snap.docs[0].data().name;
+  const snap = await getDoc(doc(db, 'players', playerId));
+  const name = snap.exists() ? snap.data().name : playerId;
   await updateDoc(doc(db, 'players', playerId), { status });
   const logType = status === 'approved' ? LOG.PLAYER_APPROVE : LOG.PLAYER_REJECT;
   await addLog(logType, `Player "${name}" was ${status}`, { playerId, status });
@@ -56,8 +56,8 @@ export async function setMatchLive(matchId) {
   await updateMatch(matchId, { status: 'live' });
 
   // Get match details for log
-  const snap = await getDocs(query(collection(db, 'matches'), where('__name__', '==', matchId)));
-  const m = snap.empty ? {} : snap.docs[0].data();
+  const snap = await getDoc(doc(db, 'matches', matchId));
+  const m = snap.exists() ? snap.data() : {};
   await addLog(LOG.MATCH_LIVE, `Match went LIVE: ${m.homeName||'?'} vs ${m.awayName||'?'}`, { matchId, joinCode: m.joinCode });
 }
 
@@ -69,8 +69,8 @@ export async function scheduleMatch(matchId, scheduledAt) {
 
 // Enter score and complete match
 export async function enterScore(matchId, homeScore, awayScore) {
-  const snap = await getDocs(query(collection(db, 'matches'), where('__name__', '==', matchId)));
-  const m = snap.empty ? {} : snap.docs[0].data();
+  const snap = await getDoc(doc(db, 'matches', matchId));
+  const m = snap.exists() ? snap.data() : {};
   const winner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
   await updateMatch(matchId, { homeScore, awayScore, status: 'completed', winner });
   await addLog(
