@@ -1,4 +1,4 @@
-const CACHE = 'eleague-v4';
+const CACHE = 'eleague-v5';
 const ASSETS = [
   './',
   './index.html',

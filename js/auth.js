@@ -1,5 +1,5 @@
 import { auth, db } from './firebase.js';
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { collection, getDocs, doc, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Cache admin list to avoid repeated DB reads
@@ -27,16 +27,11 @@ async function isAdminEmail(email) {
 // Google login
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
-  await signInWithRedirect(auth, provider);
-}
-
-// Handle the result after redirect back from Google
-export async function handleRedirectResult() {
   try {
-    const result = await getRedirectResult(auth);
-    return result ? result.user : null;
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
   } catch(e) {
-    console.error('Redirect result error', e);
+    console.error('Login failed', e);
     return null;
   }
 }
