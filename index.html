@@ -225,6 +225,7 @@
 <script type="module">
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
+  import { submitTeamSetup } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
   import {
     onLiveMatches, onTournamentStatus, onGroupMatches,
@@ -631,13 +632,36 @@
     if (!res.success) {
       result.innerHTML = `<div class="empty-state"><span class="icon">❌</span><p>${esc(res.message)}</p></div>`;
     } else {
+      const side = res.match.homeName === name ? 'home' : 'away';
+      const existingSetup = res.match[side + 'TeamSetup'];
       result.innerHTML = `
         <div style="text-align:center;padding:1rem">
           <span style="font-size:2.5rem">✅</span>
           <h3 style="margin:0.5rem 0">You're confirmed!</h3>
           <p style="color:var(--gray-600);font-size:0.88rem">${esc(res.match.homeName)} vs ${esc(res.match.awayName)}</p>
           <p style="font-size:0.85rem;margin-top:0.5rem">Go play on eFootball — good luck! 🎮</p>
+        </div>
+        <div class="card" style="margin-top:1rem">
+          <div class="card-title">Your Team / Manager Setup</div>
+          <p style="font-size:.8rem;color:var(--gray-600);margin-bottom:.75rem">Share your manager name, formation, and team — so admins can verify it matches what you played with.</p>
+          <textarea class="form-input" id="team-setup-input" rows="3" style="resize:none;height:70px" placeholder="e.g. Manager: John Smith, Formation: 4-3-3, Team: Barcelona">${esc(existingSetup || '')}</textarea>
+          <button class="btn btn-primary btn-full" id="team-setup-submit" style="margin-top:.5rem">${existingSetup ? 'Update Setup' : 'Submit Setup'}</button>
+          <div id="team-setup-result" style="margin-top:.5rem;font-size:.82rem"></div>
         </div>`;
+
+      document.getElementById('team-setup-submit').addEventListener('click', async () => {
+        const setupText = document.getElementById('team-setup-input').value.trim();
+        const setupResult = document.getElementById('team-setup-result');
+        if (!setupText) { toast('Enter your team/manager setup'); return; }
+        try {
+          await submitTeamSetup(res.match.id, side, setupText);
+          setupResult.style.color = '#1D9E75';
+          setupResult.textContent = '✅ Setup submitted!';
+        } catch(e) {
+          setupResult.style.color = '#D93025';
+          setupResult.textContent = '❌ ' + e.message;
+        }
+      });
     }
   });
 

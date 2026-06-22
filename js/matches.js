@@ -39,3 +39,13 @@ export async function getLiveMatchCount() {
   const snap = await getDocs(q);
   return snap.size;
 }
+
+// Submit team/manager setup for a match. side must be 'home' or 'away' —
+// firestore.rules only allows public writes to these specific fields.
+export async function submitTeamSetup(matchId, side, setupText) {
+  if (side !== 'home' && side !== 'away') throw new Error('Invalid side.');
+  await updateDoc(doc(db, 'matches', matchId), {
+    [`${side}TeamSetup`]: setupText.trim(),
+    [`${side}TeamSetupAt`]: serverTimestamp()
+  });
+}

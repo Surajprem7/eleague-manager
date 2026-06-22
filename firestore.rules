@@ -29,10 +29,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Matches — anyone can read, only admin can write
+    // Matches — anyone can read. Only admin can create/delete or change anything
+    // beyond team setup. Players (unauthenticated) can submit their own team/manager
+    // setup text, but the rule restricts that write to ONLY those specific fields —
+    // they can never touch score, status, winner, etc. through this path.
     match /matches/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['homeTeamSetup', 'awayTeamSetup', 'homeTeamSetupAt', 'awayTeamSetupAt']);
     }
 
     // Tournament — anyone can read, only admin can write

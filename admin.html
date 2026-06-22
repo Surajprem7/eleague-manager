@@ -389,6 +389,11 @@
         <span class="match-code">🔑 ${m.joinCode}</span>
         <span class="badge badge-${statusColor}">${m.status}</span>
       </div>
+      ${(m.homeTeamSetup || m.awayTeamSetup) ? `
+        <div style="background:var(--gray-50,#f7f7f7);border-radius:8px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:var(--gray-700)">
+          ${m.homeTeamSetup ? `<div><strong>${esc(m.homeName)}:</strong> ${esc(m.homeTeamSetup)}</div>` : `<div style="color:var(--gray-600)"><strong>${esc(m.homeName)}:</strong> not submitted yet</div>`}
+          ${m.awayTeamSetup ? `<div><strong>${esc(m.awayName)}:</strong> ${esc(m.awayTeamSetup)}</div>` : `<div style="color:var(--gray-600)"><strong>${esc(m.awayName)}:</strong> not submitted yet</div>`}
+        </div>` : ''}
       ${m.status === 'scheduled' ? `
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <input type="datetime-local" class="form-input" style="flex:1;min-height:40px;font-size:0.82rem" id="dt-${m.id}" value="${date}" />
