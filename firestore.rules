@@ -29,16 +29,31 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Matches — anyone can read. Only admin can create/delete or change anything
-    // beyond team setup. Players (unauthenticated) can submit their own team/manager
-    // setup text, but the rule restricts that write to ONLY those specific fields —
-    // they can never touch score, status, winner, etc. through this path.
+    // Matches — anyone can read. Only admin can create/delete. Players
+    // (unauthenticated) can: (1) submit their own team/manager setup text,
+    // (2) submit their own report of the final score, and (3) trigger
+    // auto-completion ONLY when the official score being written exactly
+    // matches both players' already-stored reports. Every other field
+    // (manual admin score entry, status changes outside this narrow path,
+    // etc.) still requires isAdmin().
     match /matches/{id} {
       allow read: if true;
       allow create, delete: if isAdmin();
       allow update: if isAdmin() ||
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['homeTeamSetup', 'awayTeamSetup', 'homeTeamSetupAt', 'awayTeamSetupAt']);
+          .hasOnly(['homeTeamSetup', 'awayTeamSetup', 'homeTeamSetupAt', 'awayTeamSetupAt']) ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['homeReportH', 'homeReportA', 'homeReportAt', 'awayReportH', 'awayReportA', 'awayReportAt', 'scoreMismatch']) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['homeScore', 'awayScore', 'status', 'winner']) &&
+          'homeReportH' in resource.data && 'awayReportH' in resource.data &&
+          resource.data.homeReportH == resource.data.awayReportH &&
+          resource.data.homeReportA == resource.data.awayReportA &&
+          request.resource.data.homeScore == resource.data.homeReportH &&
+          request.resource.data.awayScore == resource.data.homeReportA &&
+          request.resource.data.status == 'completed' &&
+          ((request.resource.data.winner == 'home' && request.resource.data.homeScore > request.resource.data.awayScore) ||
+           (request.resource.data.winner == 'away' && request.resource.data.awayScore > request.resource.data.homeScore) ||
+           (request.resource.data.winner == 'draw' && request.resource.data.homeScore == request.resource.data.awayScore)));
     }
 
     // Tournament — anyone can read, only admin can write

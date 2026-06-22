@@ -72,7 +72,7 @@ export async function enterScore(matchId, homeScore, awayScore) {
   const snap = await getDoc(doc(db, 'matches', matchId));
   const m = snap.exists() ? snap.data() : {};
   const winner = homeScore > awayScore ? 'home' : homeScore < awayScore ? 'away' : 'draw';
-  await updateMatch(matchId, { homeScore, awayScore, status: 'completed', winner });
+  await updateMatch(matchId, { homeScore, awayScore, status: 'completed', winner, scoreMismatch: false });
   await addLog(
     LOG.SCORE_SAVED,
     `Score saved: ${m.homeName||'?'} ${homeScore}–${awayScore} ${m.awayName||'?'}`,

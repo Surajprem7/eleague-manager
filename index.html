@@ -225,7 +225,7 @@
 <script type="module">
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
-  import { submitTeamSetup } from './js/matches.js';
+  import { submitTeamSetup, submitPlayerScore } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
   import {
     onLiveMatches, onTournamentStatus, onGroupMatches,
@@ -340,6 +340,39 @@
           toast('Link copied!');
         } catch {}
       }
+    }
+  });
+
+  // Submit match score (delegated — match cards re-render on every realtime update)
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-submit-score]');
+    if (!btn) return;
+    const matchId = btn.dataset.submitScore;
+    const side = btn.dataset.side;
+    const hInput = document.getElementById('score-h-' + matchId);
+    const aInput = document.getElementById('score-a-' + matchId);
+    const resultEl = document.getElementById('score-result-' + matchId);
+    const h = parseInt(hInput.value, 10);
+    const a = parseInt(aInput.value, 10);
+    if (isNaN(h) || isNaN(a)) { toast('Enter both scores'); return; }
+    btn.disabled = true;
+    try {
+      const outcome = await submitPlayerScore(matchId, side, h, a);
+      if (outcome === 'waiting') {
+        resultEl.style.color = 'var(--gray-600)';
+        resultEl.textContent = '✅ Submitted! Waiting for your opponent to submit their score.';
+      } else if (outcome === 'matched') {
+        resultEl.style.color = '#1D9E75';
+        resultEl.textContent = '✅ Scores matched — match completed!';
+      } else {
+        resultEl.style.color = '#D93025';
+        resultEl.textContent = '⚠️ Score not matching with your opponent\'s submission. Admin has been notified.';
+      }
+    } catch (err) {
+      resultEl.style.color = '#D93025';
+      resultEl.textContent = '❌ ' + err.message;
+    } finally {
+      btn.disabled = false;
     }
   });
 
@@ -613,6 +646,24 @@
             </div>
             ${m.status==='completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:0.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
             ${m.status==='live' ? `<div class="match-meta" style="margin-top:0.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:0.78rem;color:var(--green-dark);font-weight:500">Your match is LIVE!</span></div>` : ''}
+            ${m.status==='live' ? `
+              <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--gray-200,#eee)">
+                <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Played the match? Enter the final score below.</p>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:.5rem">
+                  <div style="flex:1;text-align:center">
+                    <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.homeName)}</label>
+                    <input type="number" class="score-input" id="score-h-${m.id}" min="0" max="99" placeholder="0" />
+                  </div>
+                  <span style="font-weight:700;margin-top:14px">–</span>
+                  <div style="flex:1;text-align:center">
+                    <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.awayName)}</label>
+                    <input type="number" class="score-input" id="score-a-${m.id}" min="0" max="99" placeholder="0" />
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-full btn-sm" data-submit-score="${m.id}" data-side="${isHome ? 'home' : 'away'}">Submit Score</button>
+                <div id="score-result-${m.id}" style="margin-top:.5rem;font-size:.8rem;text-align:center"></div>
+                ${m.scoreMismatch ? `<p style="font-size:.78rem;color:#D93025;text-align:center;margin-top:.5rem">⚠️ Score not matching — admin has been notified. Please re-check and resubmit, or contact admin.</p>` : ''}
+              </div>` : ''}
           </div>`;
         }).join('');
       });

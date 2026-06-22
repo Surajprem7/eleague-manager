@@ -388,7 +388,14 @@
       <div class="match-meta" style="margin-bottom:0.75rem">
         <span class="match-code">🔑 ${m.joinCode}</span>
         <span class="badge badge-${statusColor}">${m.status}</span>
+        ${m.scoreMismatch ? `<span class="badge badge-red" style="background:#FCE8E6;color:#D93025">⚠️ Score mismatch</span>` : ''}
       </div>
+      ${m.scoreMismatch ? `
+        <div style="background:#FCE8E6;border-radius:8px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:#D93025">
+          <strong>${esc(m.homeName)}</strong> reported ${m.homeReportH}–${m.homeReportA}, but
+          <strong>${esc(m.awayName)}</strong> reported ${m.awayReportH}–${m.awayReportA}.
+          Enter the correct score below to resolve.
+        </div>` : ''}
       ${(m.homeTeamSetup || m.awayTeamSetup) ? `
         <div style="background:var(--gray-50,#f7f7f7);border-radius:8px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:var(--gray-700)">
           ${m.homeTeamSetup ? `<div><strong>${esc(m.homeName)}:</strong> ${esc(m.homeTeamSetup)}</div>` : `<div style="color:var(--gray-600)"><strong>${esc(m.homeName)}:</strong> not submitted yet</div>`}

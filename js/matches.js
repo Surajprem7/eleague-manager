@@ -49,3 +49,29 @@ export async function submitTeamSetup(matchId, side, setupText) {
     [`${side}TeamSetupAt`]: serverTimestamp()
   });
 }
+
+// Submit a player's report of the final score (both home and away goals,
+// as that player saw them). When both players' reports agree, the match
+// auto-completes. When they disagree, scoreMismatch is flagged for admin.
+// Returns 'waiting' | 'matched' | 'mismatch'.
+export async function submitPlayerScore(matchId, side, homeGoals, awayGoals) {
+  if (side !== 'home' && side !== 'away') throw new Error('Invalid side.');
+  const ref = doc(db, 'matches', matchId);
+  const prefix = side === 'home' ? 'homeReport' : 'awayReport';
+  await updateDoc(ref, {
+    [`${prefix}H`]: homeGoals,
+    [`${prefix}A`]: awayGoals,
+    [`${prefix}At`]: serverTimestamp()
+  });
+
+  const snap = await getDoc(ref);
+  const m = snap.data();
+  if (m.homeReportH == null || m.awayReportH == null) return 'waiting';
+  if (m.homeReportH === m.awayReportH && m.homeReportA === m.awayReportA) {
+    const winner = m.homeReportH > m.homeReportA ? 'home' : m.homeReportH < m.homeReportA ? 'away' : 'draw';
+    await updateDoc(ref, { homeScore: m.homeReportH, awayScore: m.homeReportA, status: 'completed', winner });
+    return 'matched';
+  }
+  await updateDoc(ref, { scoreMismatch: true });
+  return 'mismatch';
+}
