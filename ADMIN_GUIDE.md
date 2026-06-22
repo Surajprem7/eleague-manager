@@ -37,9 +37,10 @@ Login: go to **league.getgol.in/admin.html** and sign in with your Google accoun
    - **Only 2 matches can be live at the same time.** If you try a 3rd, the app will block it — finish or wait for one of the current live matches before starting another.
 4. Once a match is live, share the **Join Code** (e.g. `GRP-A-M1`) with both players via WhatsApp/chat.
 5. Tell players: *"Open league.getgol.in, go to the Join tab, enter this code and your name to confirm you're ready."*
-6. Players play their match in the eFootball app directly (the website doesn't host the actual gameplay).
-7. After the match finishes, come back to the **Matches** tab, find that match, and **enter the score** (home goals / away goals).
-8. Click **Save**. The match moves to **completed**, standings update automatically, and the next live slot opens up.
+6. After confirming ready, players can optionally submit their **manager/team setup** (formation, team) right there — you'll see both submissions on this match's card in the Matches tab.
+7. Players play their match in eFootball directly (the website doesn't host the gameplay). One of them creates the in-game 1v1 Match Room and shares *that* code with the other player directly — that's separate from our Join Code and still needs a direct message between them (WhatsApp etc.).
+8. **Players can now enter the score themselves** from the public site's **My Matches** tab — you don't have to. If both players enter the same score, the match completes automatically and standings update with no action from you. If their scores don't match, the match card shows a **⚠️ Score mismatch** with both reported numbers — check with the players and enter the correct score yourself to resolve it.
+9. You can still enter or override any score manually at any time, same as before, from the **Matches**/**Results** tab.
 
 ---
 
@@ -59,15 +60,24 @@ Login: go to **league.getgol.in/admin.html** and sign in with your Google accoun
 
 ---
 
-## Step 6: Handling Problems
+## Step 6: Match Reminders (Push Notifications)
 
+- Players can tap **Enable** on their My Matches tab to get a phone notification ~10 minutes before their match's scheduled time — even if they don't have the app open.
+- This is fully automatic once a player opts in — nothing for you to set up per match.
+- It only works if the match has a **date and time set** (the 📅 Schedule button) — that's what the reminder timer is based on.
+
+---
+
+## Step 7: Handling Problems
+
+- **Score mismatch flagged**: see Step 3 above — check with both players and enter the correct score yourself to resolve it.
 - **A player disputes a score** ("the result entered is wrong"): they submit it from the public site's **Dispute** tab. You'll see it under your **Disputes** tab — review it and mark it resolved with a short note on what you decided.
 - **You made a mistake entering a score**: go back to the **Matches** or **Results** tab, find the match, and re-enter the correct score — it overwrites the old one.
 - **A player needs to be removed mid-tournament**: reject or contact them directly; there's currently no "withdraw" button, so handle name/group reshuffling manually if this comes up (rare).
 
 ---
 
-## Step 7: Check What Happened (Activity Log)
+## Step 8: Check What Happened (Activity Log)
 
 - Every action you take (approvals, scores, knockout generation, admin changes) is automatically logged under the **Activity Log** tab, with a timestamp.
 - Useful if a player questions something — you can show exactly when and what was done.
