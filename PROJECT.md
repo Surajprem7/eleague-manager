@@ -28,6 +28,8 @@ A PWA tournament manager for eFootball leagues, live at [league.getgol.in](https
 - **`disputes`** — `{ matchId, playerName, reason, status: open|resolved, resolution, createdAt, resolvedAt }`. Anyone can raise; only admins resolve.
 - **`activity_log`** — append-only audit trail of every admin action. Anyone can create (so dispute-raising can log itself), only admins can read or delete.
 
+Additional player-writable fields on `matches` (narrowly-scoped via `firestore.rules`, never opening up score/status/winner to non-admins except the one auto-finalize case below): `homeTeamSetup`/`awayTeamSetup` (manager/formation text), `homeReportH`/`homeReportA`/`awayReportH`/`awayReportA` (each player's independent score report — when both agree, a rule allows the client to write the official `homeScore`/`awayScore`/`status`/`winner` directly; when they disagree, `scoreMismatch` is flagged for admin review). `players` docs additionally carry an admin-only-readable `fcmToken`/`fcmTokenAt` pair, settable by the player themselves, for push notifications.
+
 ## How admin access works
 
 There's no separate "admin" auth system — any Google account can sign in, but `js/auth.js`'s `onAdminAuth()` only treats a signed-in user as an admin if their email exists in the `admins` collection. The check happens twice, independently:
@@ -52,6 +54,16 @@ Google sign-in uses `signInWithPopup`, **not** `signInWithRedirect`. This matter
 7. **Winner** — final match completion triggers the winner announcement flow (`notify.js`'s `generateWinnerAlert`, used for WhatsApp share text).
 
 Live match updates, standings, and the bracket are pushed to the UI via Firestore's real-time listeners (`js/realtime.js`), not polling.
+
+## Match-day reminder notifications
+
+Players who tap "Enable" on the My Matches tab get a push notification ~10 minutes before their match's `scheduledAt` time, even if the app isn't open — handled by Firebase Cloud Messaging (FCM) on the client, but **the trigger lives outside this repo**, since Firebase's own scheduler (Cloud Functions + Cloud Scheduler) requires the paid Blaze plan and this project stays on the free Spark plan.
+
+- **Client side** (`js/push.js`, `js/firebase.js`'s `messagingReady`, the background handler merged into `sw.js`): requests notification permission, gets an FCM token via the VAPID key (Firebase Console → Project Settings → Cloud Messaging → Web Push certificates), and saves it on the player's own document (`fcmToken`).
+- **Trigger side**: a separate Cloudflare Worker project at `C:\Users\User\Documents\eleague-notifier` (not part of this git repo — has its own `wrangler.toml`), deployed to `https://eleague-notifier.<account>.workers.dev`. Runs on a Cron Trigger every 2 minutes, authenticates to Firestore + FCM's HTTP v1 send API via a Firebase service-account JWT bearer flow (implemented by hand with Web Crypto, since Cloudflare Workers can't use Node's `google-auth-library` directly), finds matches with `scheduledAt` in the next ~11 minutes that haven't been notified yet, sends a push to each player's `fcmToken`, then marks the match `notified10Min: true` so it's never re-sent.
+- **Credentials**: the Firebase service-account key used by the Worker is stored only as Cloudflare Worker secrets (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) — never committed anywhere, the downloaded JSON key file was deleted locally once the secrets were set. The service account bypasses `firestore.rules` entirely (standard behavior for trusted server/service-account access), so it can read all matches/players and write the official score fields on auto-finalize without needing any rule changes.
+- **Manual test trigger**: `https://eleague-notifier.<account>.workers.dev/?key=<TEST_KEY>` runs the check on demand and returns a JSON summary (`{checked, notified, errors}}`) — useful for verifying without waiting for the cron tick. The `TEST_KEY` value isn't recorded anywhere after being set; regenerate via `wrangler secret put TEST_KEY` if needed.
+- To redeploy after changing the Worker: `cd` into that folder, `export CLOUDFLARE_API_TOKEN=<token>`, `npx wrangler deploy`.
 
 ## Deployment
 
