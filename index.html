@@ -274,10 +274,12 @@
 
     if (!status) {
       el.innerHTML = `
-        <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:1rem">
-          <img src="assets/banner.png" alt="eLeague" style="width:100%;max-width:340px;border-radius:12px;margin-bottom:0.75rem;display:block;margin-left:auto;margin-right:auto" onerror="this.style.display='none'" />
-          <h2>Welcome!</h2>
-          <p>Tournament registration is open. Sign up now!</p>
+        <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:0;overflow:hidden">
+          <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
+          <div style="padding:1.25rem 1.5rem 1.5rem">
+            <h2>Welcome!</h2>
+            <p>Tournament registration is open. Sign up now!</p>
+          </div>
         </div>
         <div class="card">
           <div class="card-title">How it works</div>
