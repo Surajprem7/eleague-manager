@@ -128,6 +128,7 @@
           <button class="btn btn-primary" id="search-btn">Search</button>
         </div>
       </div>
+      <div id="notif-prompt" style="display:none;margin-bottom:0.75rem"></div>
       <div id="my-matches-list">
         <div class="empty-state">
           <span class="icon">📅</span>
@@ -226,6 +227,7 @@
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
   import { submitTeamSetup, submitPlayerScore } from './js/matches.js';
+  import { enableMatchNotifications } from './js/push.js';
   import { computeStandings } from './js/tournament.js';
   import {
     onLiveMatches, onTournamentStatus, onGroupMatches,
@@ -622,6 +624,23 @@
       }
       const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
       currentPlayerId = player.id;
+
+      const notifPrompt = document.getElementById('notif-prompt');
+      if (player.fcmToken) {
+        notifPrompt.style.display = 'none';
+      } else if ('Notification' in window && Notification.permission !== 'denied') {
+        notifPrompt.style.display = 'block';
+        notifPrompt.innerHTML = `
+          <div class="card" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+            <p style="font-size:.82rem;color:var(--gray-600);margin:0">🔔 Get notified 10 minutes before your match starts.</p>
+            <button class="btn btn-primary btn-sm" id="enable-notif-btn">Enable</button>
+          </div>`;
+        document.getElementById('enable-notif-btn').addEventListener('click', async () => {
+          const ok = await enableMatchNotifications(player.id);
+          if (ok) { toast('Notifications enabled! 🔔'); notifPrompt.style.display = 'none'; }
+          else { toast('Could not enable notifications on this device/browser.'); }
+        });
+      }
 
       // Real-time listener for this player's matches
       onPlayerMatches(player.id, matches => {

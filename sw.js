@@ -1,4 +1,34 @@
-const CACHE = 'eleague-v20';
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyD8MBfHSwlrk642rs6FWZWeknWc5V5Z4Uc",
+  authDomain: "eleague-manager.firebaseapp.com",
+  projectId: "eleague-manager",
+  storageBucket: "eleague-manager.firebasestorage.app",
+  messagingSenderId: "474066590801",
+  appId: "1:474066590801:web:25d29be98362b64c212c70"
+});
+
+const messaging = firebase.messaging.isSupported() ? firebase.messaging() : null;
+if (messaging) {
+  messaging.onBackgroundMessage(payload => {
+    const { title, body } = payload.notification || {};
+    if (!title) return;
+    self.registration.showNotification(title, {
+      body,
+      icon: './assets/icon-192.png',
+      badge: './assets/icon-192.png'
+    });
+  });
+}
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.openWindow('./'));
+});
+
+const CACHE = 'eleague-v21';
 const ASSETS = [
   './',
   './index.html',
@@ -12,6 +42,7 @@ const ASSETS = [
   './js/tournament.js',
   './js/matches.js',
   './js/notify.js',
+  './js/push.js',
   './js/realtime.js',
   './js/stats.js',
   './js/activitylog.js',
