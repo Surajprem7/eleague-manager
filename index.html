@@ -306,6 +306,42 @@
     video.addEventListener('ended', close);
   })();
 
+  // Share button — shares the intro video for the best first impression,
+  // with fallbacks for browsers that can't share files or don't support
+  // the Web Share API at all.
+  document.addEventListener('click', async (e) => {
+    if (!e.target.closest('#banner-share-btn')) return;
+    const shareData = {
+      title: 'eLeague Manager',
+      text: 'Join our eFootball tournament! Register now:',
+      url: location.origin + location.pathname
+    };
+    try {
+      if (navigator.canShare) {
+        const res = await fetch('assets/intro.mp4');
+        const blob = await res.blob();
+        const file = new File([blob], 'eleague-intro.mp4', { type: 'video/mp4' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ ...shareData, files: [file] });
+          return;
+        }
+      }
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      await navigator.clipboard.writeText(shareData.url);
+      toast('Link copied!');
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(shareData.url);
+          toast('Link copied!');
+        } catch {}
+      }
+    }
+  });
+
   // Offline detection
   const offlineBanner = document.getElementById('offline-banner');
   window.addEventListener('offline', () => offlineBanner.classList.add('show'));
@@ -362,6 +398,9 @@
               <span style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
                 <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0F6E56;margin-left:5px"></span>
               </span>
+            </button>
+            <button id="banner-share-btn" aria-label="Share" style="position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </button>
           </div>
           <div style="padding:1.25rem 1.5rem 1.5rem">
