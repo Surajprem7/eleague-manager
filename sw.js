@@ -1,4 +1,4 @@
-const CACHE = 'eleague-v11';
+const CACHE = 'eleague-v12';
 const ASSETS = [
   './',
   './index.html',
@@ -22,7 +22,8 @@ const ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/banner.png',
-  './assets/intro.mp4'
+  './assets/intro.mp4',
+  './assets/instructions.mp4'
 ];
 
 self.addEventListener('install', e => {

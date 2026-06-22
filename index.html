@@ -56,6 +56,12 @@
   <button id="intro-skip-btn" style="position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:99px;padding:8px 16px;font-size:0.85rem;font-weight:600;cursor:pointer">Skip ▶</button>
 </div>
 
+<!-- Instructions Video -->
+<div id="instructions-video-overlay" style="position:fixed;inset:0;background:#000;z-index:9999;display:none;align-items:center;justify-content:center">
+  <video id="instructions-video" src="assets/instructions.mp4" controls playsinline style="width:100%;height:100%;object-fit:contain"></video>
+  <button id="instructions-close-btn" aria-label="Close" style="position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:99px;padding:8px 16px;font-size:0.85rem;font-weight:600;cursor:pointer">✕ Close</button>
+</div>
+
 <!-- Offline Banner -->
 <div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
 
@@ -248,6 +254,28 @@
     skipBtn.addEventListener('click', dismiss);
   })();
 
+  // Instructions video (opened from the play button on the home banner)
+  (function() {
+    const overlay = document.getElementById('instructions-video-overlay');
+    const video = document.getElementById('instructions-video');
+    const closeBtn = document.getElementById('instructions-close-btn');
+    function open() {
+      overlay.style.display = 'flex';
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    }
+    function close() {
+      overlay.style.display = 'none';
+      video.pause();
+    }
+    // Delegated listener: the play button is inside dynamically-rendered home content
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#instructions-play-btn')) open();
+    });
+    closeBtn.addEventListener('click', close);
+    video.addEventListener('ended', close);
+  })();
+
   // Offline detection
   const offlineBanner = document.getElementById('offline-banner');
   window.addEventListener('offline', () => offlineBanner.classList.add('show'));
@@ -298,7 +326,14 @@
     if (!status) {
       el.innerHTML = `
         <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:0;overflow:hidden">
-          <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
+          <div style="position:relative">
+            <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
+            <button id="instructions-play-btn" aria-label="Watch instructions" style="position:absolute;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+              <span style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
+                <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0F6E56;margin-left:5px"></span>
+              </span>
+            </button>
+          </div>
           <div style="padding:1.25rem 1.5rem 1.5rem">
             <h2>Welcome!</h2>
             <p>Tournament registration is open. Sign up now!</p>
