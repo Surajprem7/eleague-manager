@@ -186,16 +186,22 @@
     collection, getDocs, query, where, doc, updateDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  function toast(msg) {
+  function toast(msg, duration = 2500) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+    setTimeout(() => t.classList.remove('show'), duration);
   }
 
   function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 
   // Auth
-  document.getElementById('google-login-btn').addEventListener('click', loginWithGoogle);
+  document.getElementById('google-login-btn').addEventListener('click', async () => {
+    try {
+      await loginWithGoogle();
+    } catch(e) {
+      toast(e.message, 6000);
+    }
+  });
   document.getElementById('logout-btn').addEventListener('click', async () => {
     await logout();
     location.reload();

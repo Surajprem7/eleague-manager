@@ -20,7 +20,8 @@ async function isAdminEmail(email) {
   }
 }
 
-// Google login
+// Google login. Throws a friendly Error on failure (except when the user
+// closed the popup themselves, which isn't a real error).
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
   try {
@@ -28,7 +29,13 @@ export async function loginWithGoogle() {
     return result.user;
   } catch(e) {
     console.error('Login failed', e);
-    return null;
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      return null;
+    }
+    if (e.code === 'auth/popup-blocked') {
+      throw new Error('Your browser blocked the sign-in popup. Please allow popups for this site in your browser settings, then try again.');
+    }
+    throw new Error('Sign-in failed. If you opened this link inside an app like WhatsApp or Instagram, try opening it in your regular browser instead.');
   }
 }
 
