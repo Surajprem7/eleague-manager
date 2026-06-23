@@ -73,6 +73,12 @@
   <button id="update-reload-btn" style="background:#fff;color:#0F6E56;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
 </div>
 
+<!-- iOS Install Banner (Safari has no programmatic install prompt) -->
+<div id="ios-install-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(130px + env(safe-area-inset-bottom));z-index:9996;background:#0F6E56;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;gap:10px">
+  <span style="font-size:.82rem;flex:1">📲 Tap <strong>Share</strong> <span style="display:inline-block">⬆️</span> then <strong>Add to Home Screen</strong> to install this app.</span>
+  <button id="ios-install-dismiss-btn" aria-label="Dismiss" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:26px;height:26px;border-radius:50%;font-size:.85rem;cursor:pointer;flex-shrink:0">✕</button>
+</div>
+
 <!-- Header -->
 <header class="app-header">
   <div class="container">
@@ -310,7 +316,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v33';
+  const APP_VERSION = 'v34';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -402,6 +408,23 @@
     });
     closeBtn.addEventListener('click', close);
     video.addEventListener('ended', close);
+  })();
+
+  // iOS install banner — Safari has no programmatic install prompt
+  // (no beforeinstallprompt support), so this is the only reliable way
+  // iOS users discover "Add to Home Screen" without hunting for it.
+  (function() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (!isIOS || isStandalone) return;
+    if (sessionStorage.getItem('iosInstallBannerDismissed')) return;
+
+    const banner = document.getElementById('ios-install-banner');
+    banner.style.display = 'flex';
+    document.getElementById('ios-install-dismiss-btn').addEventListener('click', () => {
+      banner.style.display = 'none';
+      sessionStorage.setItem('iosInstallBannerDismissed', '1');
+    });
   })();
 
   // Share button — shares the intro video for the best first impression,
