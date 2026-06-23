@@ -290,7 +290,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v29';
+  const APP_VERSION = 'v30';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -714,13 +714,22 @@
       }
       const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
       currentPlayerId = player.id;
-      reportAppVersion(player.id);
-      // Catches players who registered before the "already registered" check
-      // existed — their device never had this flag set at registration time.
-      localStorage.setItem('myRegisteredName', player.name);
+
+      // This search box can look up ANY player (e.g. checking an opponent's
+      // schedule) — only treat it as "this is me" if no identity is set yet,
+      // or it matches the one already known. Otherwise we'd silently hijack
+      // this device's profile/dashboard/notifications to whoever was searched.
+      const existingFlag = localStorage.getItem('myRegisteredName');
+      const isSelf = !existingFlag || existingFlag === player.name;
+      if (isSelf) {
+        reportAppVersion(player.id);
+        if (!existingFlag) localStorage.setItem('myRegisteredName', player.name);
+      }
 
       const notifPrompt = document.getElementById('notif-prompt');
-      if (player.fcmToken) {
+      if (!isSelf) {
+        notifPrompt.style.display = 'none';
+      } else if (player.fcmToken) {
         notifPrompt.style.display = 'none';
       } else if ('Notification' in window && Notification.permission !== 'denied') {
         notifPrompt.style.display = 'block';
