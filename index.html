@@ -157,11 +157,30 @@
           </div>
           <button class="btn btn-primary btn-full" id="reg-submit">Register Now</button>
           <p class="form-hint" style="margin-top:0.75rem;text-align:center">Your registration needs admin approval before you're confirmed.</p>
+          <p style="text-align:center;margin-top:1rem">
+            <button id="show-verify-btn" style="background:none;border:none;color:var(--green-dark);font-size:.85rem;text-decoration:underline;cursor:pointer;padding:0">Already registered? Verify here</button>
+          </p>
         </div>
         <div id="reg-success" style="display:none;text-align:center;padding:1rem">
           <span style="font-size:2.5rem">✅</span>
           <h3 style="margin:0.5rem 0">Registered!</h3>
           <p style="color:var(--gray-600);font-size:0.9rem">Your registration is pending approval. Check back soon!</p>
+        </div>
+
+        <!-- VERIFY (for players already in the admin's list but not recognized on this device) -->
+        <div id="verify-form" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--gray-200,#eee)">
+          <div class="card-title">Verify Your Registration</div>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter the exact name and eFootball ID you registered with.</p>
+          <div class="form-group">
+            <label class="form-label">Your full name</label>
+            <input type="text" class="form-input" id="verify-name" placeholder="Enter your name" maxlength="40" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">eFootball username / ID</label>
+            <input type="text" class="form-input" id="verify-efid" placeholder="Your in-game username" maxlength="40" />
+          </div>
+          <button class="btn btn-secondary btn-full" id="verify-submit">Verify</button>
+          <div id="verify-result" style="margin-top:.5rem;font-size:.82rem"></div>
         </div>
       </div>
 
@@ -291,7 +310,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v31';
+  const APP_VERSION = 'v32';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -696,6 +715,38 @@
       toast(e.message || 'Registration failed. Try again.');
     }
     btn.textContent = 'Register Now'; btn.disabled = false;
+  });
+
+  // ── VERIFY (re-link this device to an existing registration) ──
+  document.getElementById('show-verify-btn').addEventListener('click', () => {
+    const vf = document.getElementById('verify-form');
+    vf.style.display = vf.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.getElementById('verify-submit').addEventListener('click', async () => {
+    const name = document.getElementById('verify-name').value.trim();
+    const efid = document.getElementById('verify-efid').value.trim();
+    const result = document.getElementById('verify-result');
+    if (!name || !efid) { toast('Enter both your name and eFootball ID'); return; }
+    const btn = document.getElementById('verify-submit');
+    btn.textContent = 'Verifying...'; btn.disabled = true;
+    try {
+      const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
+      const match = snap.docs.find(d => (d.data().efootballId || '').toLowerCase() === efid.toLowerCase());
+      if (!match) {
+        result.style.color = '#D93025';
+        result.textContent = "❌ No match found. Check your name and eFootball ID exactly (case doesn't matter for ID), or register below.";
+      } else {
+        localStorage.setItem('myRegisteredName', match.data().name);
+        result.style.color = '#1D9E75';
+        result.textContent = '✅ Verified! Loading your profile...';
+        setTimeout(() => location.reload(), 600);
+      }
+    } catch (e) {
+      result.style.color = '#D93025';
+      result.textContent = '❌ ' + (e.message || 'Verification failed.');
+    }
+    btn.textContent = 'Verify'; btn.disabled = false;
   });
 
   // ── MY MATCHES — real-time ──
