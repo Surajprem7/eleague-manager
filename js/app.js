@@ -6,8 +6,17 @@ import {
 
 // Register a player
 export async function registerPlayer({ name, efootballId, phone }) {
-  const existing = await getDocs(query(collection(db, 'players'), where('efootballId', '==', efootballId)));
-  if (!existing.empty) throw new Error('This eFootball ID is already registered.');
+  const existingId = await getDocs(query(collection(db, 'players'), where('efootballId', '==', efootballId)));
+  if (!existingId.empty) throw new Error('This eFootball ID is already registered.');
+
+  // Name uniqueness is checked case-insensitively client-side since the app
+  // looks players up by exact name elsewhere (My Matches, Join, team setup) —
+  // two players with the same display name would otherwise collide.
+  const allPlayers = await getDocs(collection(db, 'players'));
+  const normalized = name.trim().toLowerCase();
+  const nameTaken = allPlayers.docs.some(d => (d.data().name || '').trim().toLowerCase() === normalized);
+  if (nameTaken) throw new Error('This name is already taken. Please use a different name (e.g. add your last name or a number).');
+
   return addDoc(collection(db, 'players'), {
     name, efootballId, phone: phone || '',
     status: 'pending', group: null,
