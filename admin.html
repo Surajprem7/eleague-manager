@@ -184,6 +184,9 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+  // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
+  const CURRENT_APP_VERSION = 'v26';
+
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
   import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
@@ -272,6 +275,13 @@
           <div style="flex:1">
             <div class="player-name">${esc(p.name)}</div>
             <div class="player-sub">⚽ ${esc(p.efootballId)}${p.phone?' · 📱 '+esc(p.phone):''}</div>
+            <div style="font-size:.7rem;margin-top:2px">${
+              !p.appVersion
+                ? '<span style="color:var(--gray-600)">App version: unknown</span>'
+                : p.appVersion === CURRENT_APP_VERSION
+                  ? `<span style="color:#1D9E75">✓ Latest (${esc(p.appVersion)})</span>`
+                  : `<span style="color:#D93025">⚠️ Outdated (${esc(p.appVersion)})</span>`
+            }</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span class="badge badge-${p.status==='approved'?'green':p.status==='rejected'?'red':'amber'}">${p.status}</span>
