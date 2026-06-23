@@ -259,27 +259,27 @@
     <span class="icon">📝</span>
     <span>Register</span>
   </button>
-  <button class="nav-item" data-section="matches">
+  <button class="nav-item nav-registered-only" data-section="matches">
     <span class="icon">📅</span>
     <span>My Matches</span>
   </button>
-  <button class="nav-item" data-section="join">
+  <button class="nav-item nav-registered-only" data-section="join">
     <span class="icon">🔑</span>
     <span>Join</span>
   </button>
-  <button class="nav-item" data-section="standings">
+  <button class="nav-item nav-registered-only" data-section="standings">
     <span class="icon">🏆</span>
     <span>Standings</span>
   </button>
-  <button class="nav-item" data-section="dispute">
+  <button class="nav-item nav-registered-only" data-section="dispute">
     <span class="icon">⚠️</span>
     <span>Dispute</span>
   </button>
-  <a href="stats.html" class="nav-item" style="text-decoration:none">
+  <a href="stats.html" class="nav-item nav-registered-only" style="text-decoration:none">
     <span class="icon">📊</span>
     <span>Stats</span>
   </a>
-  <a href="bracket.html" class="nav-item" style="text-decoration:none">
+  <a href="bracket.html" class="nav-item nav-registered-only" style="text-decoration:none">
     <span class="icon">🏆</span>
     <span>Bracket</span>
   </a>
@@ -290,7 +290,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v28';
+  const APP_VERSION = 'v29';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -507,6 +507,7 @@
   let cachedLiveMatches = [];
 
   function renderHome() {
+    if (localStorage.getItem('myRegisteredName')) { renderMyDashboard(); return; }
     const el = document.getElementById('home-content');
     const status = cachedStatus;
     const liveMatches = cachedLiveMatches;
@@ -622,6 +623,7 @@
   let cachedGroupMatches = [];
 
   function renderStandings() {
+    if (currentSection === 'home' && localStorage.getItem('myRegisteredName')) renderMyDashboard();
     const el = document.getElementById('standings-content');
     if (!cachedGroups.length) {
       el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>Standings will appear after groups are drawn.</p></div>';
@@ -830,12 +832,16 @@
   // ── INIT ──
   startHomeListeners();
 
-  // If this device already registered, skip the form and show their
-  // profile instead — no point registering twice or seeing a blank message.
+  // If this device already registered, skip the form, show their profile,
+  // reveal the rest of the nav, and build their personal Home dashboard.
+  let myPlayer = null;
+  let myMatches = [];
   const myRegisteredName = localStorage.getItem('myRegisteredName');
   if (myRegisteredName) {
     document.getElementById('reg-form').style.display = 'none';
+    document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
     loadMyProfile(myRegisteredName);
+    startStandingsListener();
   }
 
   async function loadMyProfile(name) {
@@ -845,9 +851,11 @@
       if (snap.empty) {
         // Stale localStorage (e.g. admin deleted the player) — fall back to the form.
         document.getElementById('reg-form').style.display = 'block';
+        document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'none');
         return;
       }
-      const p = snap.docs[0].data();
+      const p = { id: snap.docs[0].id, ...snap.docs[0].data() };
+      myPlayer = p;
       document.getElementById('profile-avatar').textContent = p.name[0].toUpperCase();
       document.getElementById('profile-name').textContent = p.name;
       document.getElementById('profile-efid').textContent = p.efootballId;
@@ -877,9 +885,70 @@
       }
 
       profileCard.style.display = 'block';
+
+      onPlayerMatches(p.id, matches => {
+        myMatches = matches;
+        if (currentSection === 'home') renderHome();
+      });
+      if (currentSection === 'home') renderHome();
     } catch {
       document.getElementById('reg-form').style.display = 'block';
+      document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'none');
     }
+  }
+
+  // Personal dashboard shown on Home once a returning player is recognized.
+  function renderMyDashboard() {
+    const el = document.getElementById('home-content');
+    if (!myPlayer) { el.innerHTML = '<div class="loader"><div class="spinner"></div></div>'; return; }
+
+    let rankHtml = '';
+    if (myPlayer.group && cachedGroups.length) {
+      const gPlayers = cachedPlayers.filter(p => p.group === myPlayer.group);
+      const gMatches = cachedGroupMatches.filter(m => m.group === myPlayer.group);
+      const standings = computeStandings(gPlayers, gMatches);
+      const idx = standings.findIndex(r => r.id === myPlayer.id);
+      if (idx !== -1) {
+        rankHtml = `<div class="player-item"><div class="player-avatar">#${idx+1}</div><div><div class="player-name">${idx+1} of ${standings.length} in Group ${esc(myPlayer.group)}</div><div class="player-sub">${standings[idx].pts} pts · ${standings[idx].w}W ${standings[idx].d}D ${standings[idx].l}L</div></div></div>`;
+      }
+    }
+
+    const upcoming = myMatches.filter(m => m.status !== 'completed').sort((a,b) => (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0));
+    const next = upcoming[0];
+    let nextHtml = '<p style="font-size:.85rem;color:var(--gray-600)">No upcoming match scheduled yet.</p>';
+    if (next) {
+      const opp = next.homeId === myPlayer.id ? next.awayName : next.homeName;
+      const when = next.status === 'live' ? '🔴 LIVE NOW' : (next.scheduledAt ? new Date(next.scheduledAt.seconds*1000).toLocaleString() : 'Time TBA');
+      nextHtml = `<div class="match-card" style="${next.status==='live'?'border-left:3px solid var(--green)':''}">
+        <div class="match-teams">
+          <div class="match-player" style="color:var(--green-dark)">${esc(myPlayer.name)}</div>
+          <div class="match-vs">vs</div>
+          <div class="match-player">${esc(opp)}</div>
+        </div>
+        <div class="match-meta"><span>📅 ${when}</span>${next.status==='live'?`<span class="match-code">🔑 ${esc(next.joinCode)}</span>`:''}</div>
+      </div>`;
+    }
+
+    const scheduleRows = myMatches.slice().sort((a,b) => (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0))
+      .map(m => {
+        const opp = m.homeId === myPlayer.id ? m.awayName : m.homeName;
+        const result = m.status === 'completed' ? `${m.homeScore}–${m.awayScore}` : (m.status === 'live' ? 'LIVE' : (m.scheduledAt ? new Date(m.scheduledAt.seconds*1000).toLocaleDateString() : 'TBA'));
+        return `<div class="player-item"><div class="player-avatar">${esc(opp[0]?.toUpperCase()||'?')}</div><div><div class="player-name">vs ${esc(opp)}</div><div class="player-sub">${result}</div></div></div>`;
+      }).join('');
+
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-title">👋 Hi, ${esc(myPlayer.name)}</div>
+        ${rankHtml || '<p style="font-size:.85rem;color:var(--gray-600)">Standings will appear once groups are drawn.</p>'}
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-title">Next Match</div>
+        ${nextHtml}
+      </div>
+      <div class="card">
+        <div class="card-title">My Schedule</div>
+        ${scheduleRows || '<p style="font-size:.85rem;color:var(--gray-600)">No matches yet.</p>'}
+      </div>`;
   }
 
   // ── DISPUTE ──

@@ -102,6 +102,7 @@ p  { font-size: 0.95rem; }
 }
 .nav-item .icon { font-size: 1.3rem; }
 .nav-item.active { color: var(--green); }
+.nav-registered-only { display: none; }
 
 /* ===== SECTIONS ===== */
 .section { display: none; padding-top: 1rem; }
