@@ -164,6 +164,23 @@
           <p style="color:var(--gray-600);font-size:0.9rem">Your registration is pending approval. Check back soon!</p>
         </div>
       </div>
+
+      <!-- PROFILE (shown instead of the form for already-registered players) -->
+      <div id="profile-card" class="card" style="display:none">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+          <div class="player-avatar" id="profile-avatar" style="width:48px;height:48px;font-size:1.2rem">?</div>
+          <div>
+            <div class="player-name" id="profile-name" style="font-size:1.05rem"></div>
+            <span class="badge" id="profile-status-badge"></span>
+          </div>
+        </div>
+        <div style="font-size:.88rem;color:var(--gray-700);line-height:1.9">
+          <div>⚽ <span id="profile-efid"></span></div>
+          <div id="profile-phone-row" style="display:none">📱 <span id="profile-phone"></span></div>
+          <div id="profile-group-row" style="display:none">👥 Group <span id="profile-group"></span></div>
+        </div>
+        <p id="profile-status-msg" style="font-size:.85rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200,#eee)"></p>
+      </div>
     </section>
 
     <!-- MY MATCHES -->
@@ -273,7 +290,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v27';
+  const APP_VERSION = 'v28';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -813,14 +830,56 @@
   // ── INIT ──
   startHomeListeners();
 
-  // If this device already registered, skip the form and show the
-  // "already registered" message instead — no point registering twice.
+  // If this device already registered, skip the form and show their
+  // profile instead — no point registering twice or seeing a blank message.
   const myRegisteredName = localStorage.getItem('myRegisteredName');
   if (myRegisteredName) {
     document.getElementById('reg-form').style.display = 'none';
-    const successEl = document.getElementById('reg-success');
-    successEl.style.display = 'block';
-    successEl.querySelector('p').textContent = `You're already registered as "${myRegisteredName}". Check the Home tab for approval status.`;
+    loadMyProfile(myRegisteredName);
+  }
+
+  async function loadMyProfile(name) {
+    const profileCard = document.getElementById('profile-card');
+    try {
+      const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
+      if (snap.empty) {
+        // Stale localStorage (e.g. admin deleted the player) — fall back to the form.
+        document.getElementById('reg-form').style.display = 'block';
+        return;
+      }
+      const p = snap.docs[0].data();
+      document.getElementById('profile-avatar').textContent = p.name[0].toUpperCase();
+      document.getElementById('profile-name').textContent = p.name;
+      document.getElementById('profile-efid').textContent = p.efootballId;
+
+      const phoneRow = document.getElementById('profile-phone-row');
+      if (p.phone) { phoneRow.style.display = 'block'; document.getElementById('profile-phone').textContent = p.phone; }
+      else phoneRow.style.display = 'none';
+
+      const groupRow = document.getElementById('profile-group-row');
+      if (p.group) { groupRow.style.display = 'block'; document.getElementById('profile-group').textContent = p.group; }
+      else groupRow.style.display = 'none';
+
+      const badge = document.getElementById('profile-status-badge');
+      const msg = document.getElementById('profile-status-msg');
+      if (p.status === 'approved') {
+        badge.className = 'badge badge-green';
+        badge.textContent = 'approved';
+        msg.textContent = "You're confirmed! Check My Matches for your schedule once it's live.";
+      } else if (p.status === 'rejected') {
+        badge.className = 'badge badge-red';
+        badge.textContent = 'rejected';
+        msg.textContent = 'Your registration wasn\'t approved. Contact the admin if you think this is a mistake.';
+      } else {
+        badge.className = 'badge badge-amber';
+        badge.textContent = 'pending';
+        msg.textContent = "Waiting for admin approval — check back soon!";
+      }
+
+      profileCard.style.display = 'block';
+    } catch {
+      document.getElementById('reg-form').style.display = 'block';
+    }
   }
 
   // ── DISPUTE ──
