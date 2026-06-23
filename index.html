@@ -651,6 +651,7 @@
     btn.textContent = 'Registering...'; btn.disabled = true;
     try {
       await registerPlayer({ name, efootballId: efid, phone });
+      localStorage.setItem('myRegisteredName', name);
       document.getElementById('reg-form').style.display = 'none';
       document.getElementById('reg-success').style.display = 'block';
     } catch (e) {
@@ -789,6 +790,16 @@
 
   // ── INIT ──
   startHomeListeners();
+
+  // If this device already registered, skip the form and show the
+  // "already registered" message instead — no point registering twice.
+  const myRegisteredName = localStorage.getItem('myRegisteredName');
+  if (myRegisteredName) {
+    document.getElementById('reg-form').style.display = 'none';
+    const successEl = document.getElementById('reg-success');
+    successEl.style.display = 'block';
+    successEl.querySelector('p').textContent = `You're already registered as "${myRegisteredName}". Check the Home tab for approval status.`;
+  }
 
   // ── DISPUTE ──
   import { raiseDispute } from './js/dispute.js';
