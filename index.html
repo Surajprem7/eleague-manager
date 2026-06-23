@@ -180,6 +180,7 @@
           <div id="profile-group-row" style="display:none">👥 Group <span id="profile-group"></span></div>
         </div>
         <p id="profile-status-msg" style="font-size:.85rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200,#eee)"></p>
+        <button id="not-me-btn" style="background:none;border:none;color:var(--gray-600);font-size:.78rem;text-decoration:underline;cursor:pointer;margin-top:.5rem;padding:0">Not you? Switch account</button>
       </div>
     </section>
 
@@ -290,7 +291,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v30';
+  const APP_VERSION = 'v31';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -840,6 +841,12 @@
 
   // ── INIT ──
   startHomeListeners();
+
+  document.getElementById('not-me-btn').addEventListener('click', () => {
+    if (!confirm("Reset this device? You'll see the registration form again — only do this if this profile isn't actually you.")) return;
+    localStorage.removeItem('myRegisteredName');
+    location.reload();
+  });
 
   // If this device already registered, skip the form, show their profile,
   // reveal the rest of the nav, and build their personal Home dashboard.
