@@ -67,6 +67,12 @@
 <!-- Offline Banner -->
 <div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
 
+<!-- Update Available Banner -->
+<div id="update-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9997;background:#1D9E75;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;justify-content:space-between;gap:10px">
+  <span style="font-size:.85rem">🔄 A new version is available.</span>
+  <button id="update-reload-btn" style="background:#fff;color:#0F6E56;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
+</div>
+
 <!-- Header -->
 <header class="app-header">
   <div class="container">
@@ -827,9 +833,47 @@
     btn.textContent = 'Submit Dispute'; btn.disabled = false;
   });
 
-  // Service Worker
+  // Service Worker — detect updates and prompt the user to refresh,
+  // since installed PWAs / open tabs can otherwise sit on stale code
+  // indefinitely without the user knowing a new version exists.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    navigator.serviceWorker.register('./sw.js').then(registration => {
+      function showUpdateBanner() {
+        document.getElementById('update-banner').style.display = 'flex';
+      }
+      // A worker may already be waiting from before this page loaded.
+      if (registration.waiting && navigator.serviceWorker.controller) showUpdateBanner();
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner();
+          }
+        });
+      });
+
+      // Proactively check for updates when the app regains focus —
+      // covers PWAs reopened from the home screen after sitting idle.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') registration.update().catch(() => {});
+      });
+
+      // skipWaiting() in sw.js makes installed→activating very fast, so the
+      // statechange listener above can race past 'installed'. controllerchange
+      // is a more reliable backstop signal that an update actually took over.
+      let alreadyShown = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (alreadyShown) return;
+        alreadyShown = true;
+        showUpdateBanner();
+      });
+    }).catch(() => {});
+
+    document.getElementById('update-reload-btn').addEventListener('click', () => {
+      location.reload();
+    });
   }
 </script>
 </body>
