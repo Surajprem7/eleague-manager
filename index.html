@@ -273,7 +273,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v26';
+  const APP_VERSION = 'v27';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -696,6 +696,9 @@
       const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
       currentPlayerId = player.id;
       reportAppVersion(player.id);
+      // Catches players who registered before the "already registered" check
+      // existed — their device never had this flag set at registration time.
+      localStorage.setItem('myRegisteredName', player.name);
 
       const notifPrompt = document.getElementById('notif-prompt');
       if (player.fcmToken) {
