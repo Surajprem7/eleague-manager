@@ -1,6 +1,6 @@
 # eLeague Manager — Project Status
 
-Last updated: June 2026 | App version: `v34` | Branch: `main`
+Last updated: June 2026 | App version: `v35` | Branch: `main`
 
 Live at [league.getgol.in](https://league.getgol.in) — deployed automatically via GitHub Pages on every push to `main`.
 
@@ -32,7 +32,7 @@ Default admin email: `surajtxglive@gmail.com`
 | Hosting | GitHub Pages + Cloudflare DNS (grey-cloud / DNS-only, no proxying) |
 | Match reminders | Separate Cloudflare Worker (`eleague-notifier`), cron every 2 min |
 | Firebase project | `eleague-manager` (Spark / free tier — no Cloud Functions, no Storage) |
-| PWA | Service worker (`sw.js`, cache key `eleague-v34`), installable on Android + iOS |
+| PWA | Service worker (`sw.js`, cache key `eleague-v35`), installable on Android + iOS |
 
 ---
 
@@ -45,7 +45,7 @@ eleague-manager/
 ├── bracket.html            Shareable knockout bracket
 ├── stats.html              Leaderboard & player stats
 ├── manifest.json           PWA config (name: "eLeague Manager", theme: #1D9E75)
-├── sw.js                   Service worker (cache: eleague-v34)
+├── sw.js                   Service worker (cache: eleague-v35)
 ├── firestore.rules         Firestore security rules
 ├── firebase.json           Firebase CLI config
 ├── .firebaserc             Firebase project mapping
@@ -120,12 +120,14 @@ eleague-manager/
 - Standings tab: group-by-group, tiebreakers (Points → GD → GF), top 2 qualified marked
 - Dispute tab: flag wrong results (match ID + reason)
 - In-app Help modal: step-by-step guide (register → confirm → play → report → standings → notifications)
+- **⚙️ Admin** nav button at the end of the bottom nav — navigates to `admin.html` directly from the player app (always visible, no login required to reach the admin login screen)
 
 ### Admin Panel (`admin.html`)
 
 - Google sign-in (popup-based — see Gotchas)
 - Default-admin governance: `surajtxglive@gmail.com` is permanent; only default admin can add/remove others; max 3 admins; other admins cannot see default admin in the list (enforced in both `auth.js` and `firestore.rules`)
-- **Players tab**: approve/reject registrations; see eFootball ID, phone, group; green "Latest" / red "Outdated" app version badge per player
+- **👤 Player** switch button in admin header — navigates to `index.html` without logging out; Google session stays active so returning to admin via ⚙️ skips the login screen
+- **Players tab**: approve/reject registrations; see eFootball ID, phone, group; green "Latest" / red "Outdated" app version badge per player; **🗑️ remove button** permanently deletes a player with confirmation prompt (logged to Activity Log)
 - **Groups tab**: drag-and-drop assignment; "Save & Generate Schedule" auto-generates full round-robin per group
 - **Matches tab**: Set Live (max 2 concurrent enforced); Schedule with date/time (triggers push reminders); Enter Score; view team setups; see score mismatches with both submitted scores; status badges
 - **Knockout tab**: same as Matches; winners auto-advance; 3rd place match generated from SF losers
@@ -231,6 +233,9 @@ Shareable knockout bracket view, canvas image export
 | **iOS "Add to Home Screen" banner never seen** — only shown when user tapped the instructions video play button | `index.html`, `js/app.js` | Now shows as a standalone dismissible banner on page load (iOS Safari, not already installed) |
 | **Stale cached code in installed PWAs/open tabs** — users wouldn't know a new version existed | `sw.js`, `index.html`, `js/app.js` | App detects new service worker takeover via `statechange` + `controllerchange` events; shows "Update available" one-tap reload banner |
 | **Browser HTTP caching outlasts deploys** — stale JS served after push even though `curl` shows new file | `sw.js` | Service worker cache version bump (`eleague-vN`) forces refresh for returning visitors; documented: hard-refresh resolves for immediate testing |
+| **No way to access admin panel from the installed PWA** — admin had to type the URL manually | `index.html`, `manifest.json` | Added ⚙️ Admin nav button in player app bottom nav + PWA manifest shortcut (long-press app icon on Android shows "Admin Panel" quick-launch) |
+| **No way to switch from admin back to player view without logging out** — disruptive if you manage the tournament and play in it | `admin.html` | Added 👤 Player button in admin header; navigates to player app without ending the Google session so returning to admin is instant |
+| **No way to remove a registered player** — rejected players remained in the list permanently | `admin.html`, `js/admin.js` | Added 🗑️ remove button on every player card; confirms before deleting; permanently removes from Firestore and logs the action |
 
 ---
 
@@ -256,7 +261,7 @@ Shareable knockout bracket view, canvas image export
 |---|---|
 | App code | Push to `main` → GitHub Pages auto-deploys (no build step) |
 | Firestore rules | `firebase deploy --only firestore:rules` — manual, not touched by GitHub Pages |
-| New version rollout | Bump `CACHE` constant in `sw.js` (e.g. `eleague-v34` → `eleague-v35`) before pushing |
+| New version rollout | Bump `CACHE` constant in `sw.js` (e.g. `eleague-v35` → `eleague-v36`) before pushing |
 | Push notification Worker | `cd eleague-notifier && export CLOUDFLARE_API_TOKEN=<token> && npx wrangler deploy` |
 
 ---
@@ -276,6 +281,10 @@ Shareable knockout bracket view, canvas image export
 
 | Commit | Message |
 |---|---|
+| `7e184d4` | Add Player View switch button to admin header |
+| `446e780` | Add remove player option to admin Players tab |
+| `d09188a` | Add Admin nav link to player app and PWA shortcut |
+| `98883ad` | Add PROJECT_STATUS.md — full project history, bugs fixed, architecture decisions |
 | `26d1603` | Show iOS Add to Home Screen banner on load, not hidden behind a video |
 | `90d6d80` | Let verification accept phone OR eFootball ID, not just ID |
 | `7bf9d8a` | Add explicit verify option for players already in the admin's list |
