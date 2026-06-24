@@ -309,6 +309,10 @@
     <span class="icon">🏆</span>
     <span>Bracket</span>
   </a>
+  <a href="admin.html" class="nav-item" style="text-decoration:none">
+    <span class="icon">⚙️</span>
+    <span>Admin</span>
+  </a>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -316,7 +320,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v34';
+  const APP_VERSION = 'v35';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';

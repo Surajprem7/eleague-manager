@@ -22,5 +22,14 @@
     }
   ],
   "categories": ["sports", "utilities"],
-  "lang": "en"
+  "lang": "en",
+  "shortcuts": [
+    {
+      "name": "Admin Panel",
+      "short_name": "Admin",
+      "description": "Open the admin dashboard",
+      "url": "/admin.html",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }
