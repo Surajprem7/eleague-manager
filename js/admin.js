@@ -3,7 +3,7 @@ import { generateGroupMatches, generateKnockoutRound, getQualifiers, computeStan
 import { updateMatch, getLiveMatchCount } from './matches.js';
 import { addLog, LOG } from './activitylog.js';
 import {
-  collection, doc, getDoc, getDocs, updateDoc, setDoc,
+  collection, doc, getDoc, getDocs, updateDoc, setDoc, deleteDoc,
   query, where, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -11,6 +11,14 @@ import {
 export async function getAllPlayers() {
   const snap = await getDocs(collection(db, 'players'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// Delete a player permanently
+export async function deletePlayer(playerId) {
+  const snap = await getDoc(doc(db, 'players', playerId));
+  const name = snap.exists() ? snap.data().name : playerId;
+  await deleteDoc(doc(db, 'players', playerId));
+  await addLog(LOG.PLAYER_REJECT, `Player "${name}" was removed`, { playerId, action: 'deleted' });
 }
 
 // Approve / reject player

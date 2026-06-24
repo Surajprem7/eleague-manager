@@ -185,11 +185,11 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v34';
+  const CURRENT_APP_VERSION = 'v35';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
-  import { getAllPlayers, updatePlayerStatus, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
+  import { getAllPlayers, updatePlayerStatus, deletePlayer, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
   import { generateMatchAlert, generateWinnerAlert } from './js/notify.js';
@@ -288,6 +288,7 @@
             ${p.status==='pending'?`
               <button class="btn btn-sm btn-primary" onclick="approvePlayer('${p.id}')">✓</button>
               <button class="btn btn-sm btn-danger" onclick="rejectPlayer('${p.id}')">✗</button>`:''}
+            <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}','${esc(p.name)}')" title="Remove player">🗑️</button>
           </div>
         </div>`).join('');
     });
@@ -295,6 +296,11 @@
 
   window.approvePlayer = async (id) => { await updatePlayerStatus(id, 'approved'); toast('Player approved! ✅'); };
   window.rejectPlayer  = async (id) => { await updatePlayerStatus(id, 'rejected'); toast('Player rejected.'); };
+  window.removePlayer  = async (id, name) => {
+    if (!confirm(`Remove "${name}" permanently? This cannot be undone.`)) return;
+    await deletePlayer(id);
+    toast(`${name} removed.`);
+  };
 
   // ── GROUPS ──
   async function loadGroups() {
