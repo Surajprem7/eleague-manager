@@ -396,12 +396,51 @@
     document.getElementById('apply-format-btn').addEventListener('click', () => {
       const fmt = el.querySelector('input[name="group-format"]:checked').value;
       const groupMap = buildGroupMap(players, fmt);
+      localStorage.removeItem('eleague_group_draft');
       renderGroupBuilder(groupMap, document.getElementById('group-builder-wrap'));
       document.getElementById('apply-format-btn').textContent = 'Re-apply Format';
     });
 
-    const groupMap = buildGroupMap(players, '4');
-    renderGroupBuilder(groupMap, document.getElementById('group-builder-wrap'));
+    // Restore draft if one exists, otherwise default to groups of 4
+    const draft = loadGroupDraft();
+    if (draft) {
+      // Only restore if all player IDs still exist in the approved list
+      const approvedIds = new Set(players.map(p => p.id));
+      const draftPlayers = Object.values(draft).flat();
+      const valid = draftPlayers.every(p => approvedIds.has(p.id)) && draftPlayers.length === players.length;
+      if (valid) {
+        renderGroupBuilder(draft, document.getElementById('group-builder-wrap'));
+        showDraftBanner(el);
+      } else {
+        localStorage.removeItem('eleague_group_draft');
+        renderGroupBuilder(buildGroupMap(players, '4'), document.getElementById('group-builder-wrap'));
+      }
+    } else {
+      renderGroupBuilder(buildGroupMap(players, '4'), document.getElementById('group-builder-wrap'));
+    }
+  }
+
+  const DRAFT_KEY = 'eleague_group_draft';
+  function saveGroupDraft() {
+    const groups = readGroupsFromDOM();
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(groups));
+  }
+  function loadGroupDraft() {
+    try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch { return null; }
+  }
+  function clearGroupDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+  }
+  function showDraftBanner(container) {
+    const existing = document.getElementById('draft-banner');
+    if (existing) return;
+    const wrap = (container || document.getElementById('group-builder-wrap'));
+    const banner = document.createElement('div');
+    banner.id = 'draft-banner';
+    banner.style.cssText = 'display:flex;align-items:center;gap:8px;background:#FEF7E0;border:1px solid #FAC775;border-radius:8px;padding:8px 12px;font-size:.8rem;color:#854F0B;margin-bottom:.75rem';
+    banner.innerHTML = '📋 <strong>Draft restored.</strong> Your last saved arrangement has been loaded.';
+    const builderWrap = document.getElementById('group-builder-wrap');
+    if (builderWrap) builderWrap.insertAdjacentElement('beforebegin', banner);
   }
 
   // Returns current group state from the DOM as { letter: [{id,name},...] }
@@ -506,9 +545,12 @@
       </div>`;
     });
     html += `</div>
-      <button class="btn btn-primary btn-full confirm-btn" id="save-groups-btn" disabled style="opacity:0.45;margin-top:1rem">
-        Save Groups & Generate Schedule (0/${letters.length} approved)
-      </button>
+      <div style="display:flex;gap:8px;margin-top:1rem">
+        <button class="btn btn-secondary" id="save-draft-btn" style="flex:1">💾 Save Draft</button>
+        <button class="btn btn-primary confirm-btn" id="save-groups-btn" disabled style="opacity:0.45;flex:2">
+          Save Groups & Generate Schedule (0/${letters.length} approved)
+        </button>
+      </div>
     </div>`;
     el.innerHTML = html;
 
@@ -546,6 +588,15 @@
 
     updateSaveBtn();
 
+    document.getElementById('save-draft-btn').addEventListener('click', () => {
+      saveGroupDraft();
+      const btn = document.getElementById('save-draft-btn');
+      btn.textContent = '✅ Draft Saved!';
+      btn.style.color = 'var(--primary)';
+      setTimeout(() => { btn.textContent = '💾 Save Draft'; btn.style.color = ''; }, 2000);
+      document.getElementById('draft-banner') && (document.getElementById('draft-banner').remove());
+    });
+
     document.getElementById('save-groups-btn').addEventListener('click', async () => {
       const finalGroups = {};
       document.querySelectorAll('#group-builder [data-group]').forEach(box => {
@@ -557,6 +608,7 @@
       });
       try {
         await saveGroupsAndGenerateMatches(finalGroups);
+        clearGroupDraft();
         toast('Groups saved! Match schedule generated. ✅');
         loadGroups();
       } catch (e) {
