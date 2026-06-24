@@ -128,7 +128,12 @@ eleague-manager/
 - Default-admin governance: `surajtxglive@gmail.com` is permanent; only default admin can add/remove others; max 3 admins; other admins cannot see default admin in the list (enforced in both `auth.js` and `firestore.rules`)
 - **👤 Player** switch button in admin header — navigates to `index.html` without logging out; Google session stays active so returning to admin via ⚙️ skips the login screen
 - **Players tab**: approve/reject registrations; see eFootball ID, phone, group; green "Latest" / red "Outdated" app version badge per player; **🗑️ remove button** permanently deletes a player with confirmation prompt (logged to Activity Log)
-- **Groups tab**: drag-and-drop assignment; "Save & Generate Schedule" auto-generates full round-robin per group
+- **Groups tab**:
+  - Format picker — choose **4 Player Group** (default), **3 Player Group**, or **2 Groups** (all players split evenly into Group A & B) before building
+  - **Move → dropdown** on every player tile to reassign them to another group instantly; group counts update live
+  - **✓ Approve Group** button per group — toggles green ✅ when confirmed, auto-resets if a player is moved in/out
+  - **Save Groups & Generate Schedule** is disabled until every group is approved (shows progress e.g. `2/4 approved`), preventing accidental saves
+  - Auto-generates full round-robin per group on save
 - **Matches tab**: Set Live (max 2 concurrent enforced); Schedule with date/time (triggers push reminders); Enter Score; view team setups; see score mismatches with both submitted scores; status badges
 - **Knockout tab**: same as Matches; winners auto-advance; 3rd place match generated from SF losers
 - **Results tab**: all completed matches, score override
@@ -234,6 +239,9 @@ Shareable knockout bracket view, canvas image export
 | **Stale cached code in installed PWAs/open tabs** — users wouldn't know a new version existed | `sw.js`, `index.html`, `js/app.js` | App detects new service worker takeover via `statechange` + `controllerchange` events; shows "Update available" one-tap reload banner |
 | **Browser HTTP caching outlasts deploys** — stale JS served after push even though `curl` shows new file | `sw.js` | Service worker cache version bump (`eleague-vN`) forces refresh for returning visitors; documented: hard-refresh resolves for immediate testing |
 | **No way to access admin panel from the installed PWA** — admin had to type the URL manually | `index.html`, `manifest.json` | Added ⚙️ Admin nav button in player app bottom nav + PWA manifest shortcut (long-press app icon on Android shows "Admin Panel" quick-launch) |
+| **Group builder had no way to move players between groups** — only drag-and-drop which didn't work well on mobile | `admin.html` | Added Move → dropdown on every player tile; picks another group and moves them instantly with live count updates |
+| **No per-group confirmation before saving** — easy to accidentally save a wrong group split | `admin.html` | Added ✓ Approve Group button per group; Save button locked until all groups approved |
+| **Format labels were unclear** ("Groups of 4/3") | `admin.html` | Renamed to "4 Player Group", "3 Player Group", and "2 Groups" with clearer descriptions |
 | **No way to switch from admin back to player view without logging out** — disruptive if you manage the tournament and play in it | `admin.html` | Added 👤 Player button in admin header; navigates to player app without ending the Google session so returning to admin is instant |
 | **No way to remove a registered player** — rejected players remained in the list permanently | `admin.html`, `js/admin.js` | Added 🗑️ remove button on every player card; confirms before deleting; permanently removes from Firestore and logs the action |
 
@@ -281,6 +289,8 @@ Shareable knockout bracket view, canvas image export
 
 | Commit | Message |
 |---|---|
+| `74dc971` | Improve group builder — rename formats, move player, per-group approve |
+| `fc393ea` | Add group format picker — groups of 4, groups of 3, or 2 groups |
 | `7e184d4` | Add Player View switch button to admin header |
 | `446e780` | Add remove player option to admin Players tab |
 | `d09188a` | Add Admin nav link to player app and PWA shortcut |
