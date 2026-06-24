@@ -362,8 +362,8 @@
   function renderGroupFormatPicker(players, el) {
     const n = players.length;
     const formats = [
-      { value: '4', label: `Groups of 4`, desc: `${Math.ceil(n/4)} groups` },
-      { value: '3', label: `Groups of 3`, desc: `${Math.ceil(n/3)} groups` },
+      { value: '4', label: `4 Player Group`, desc: `${Math.ceil(n/4)} groups · 4 players each` },
+      { value: '3', label: `3 Player Group`, desc: `${Math.ceil(n/3)} groups · 3 players each` },
       { value: '2groups', label: `2 Groups`, desc: `~${Math.ceil(n/2)} players each` },
     ];
 
@@ -386,7 +386,6 @@
     <div id="group-builder-wrap"></div>`;
     el.innerHTML = html;
 
-    // highlight selected label
     el.querySelectorAll('input[name="group-format"]').forEach(radio => {
       radio.addEventListener('change', () => {
         el.querySelectorAll('[id^="fmt-label-"]').forEach(l => l.style.borderColor = 'var(--gray-200)');
@@ -401,31 +400,155 @@
       document.getElementById('apply-format-btn').textContent = 'Re-apply Format';
     });
 
-    // auto-apply default (groups of 4)
     const groupMap = buildGroupMap(players, '4');
     renderGroupBuilder(groupMap, document.getElementById('group-builder-wrap'));
   }
 
+  // Returns current group state from the DOM as { letter: [{id,name},...] }
+  function readGroupsFromDOM() {
+    const groups = {};
+    document.querySelectorAll('#group-builder [data-group]').forEach(box => {
+      const letter = box.dataset.group;
+      groups[letter] = [...box.querySelectorAll('.drag-player')].map(d => ({ id: d.dataset.id, name: d.dataset.name }));
+    });
+    return groups;
+  }
+
+  // Move a player tile to another group and re-render just the counts + move dropdowns
+  function movePlayer(playerId, fromLetter, toLetter) {
+    const fromList = document.getElementById('gp-' + fromLetter);
+    const toList   = document.getElementById('gp-' + toLetter);
+    const tile = fromList.querySelector(`[data-id="${playerId}"]`);
+    if (!tile || !toList) return;
+    toList.appendChild(tile);
+    refreshGroupUI();
+  }
+
+  function refreshGroupUI() {
+    document.querySelectorAll('#group-builder [data-group]').forEach(box => {
+      const letter = box.dataset.group;
+      const players = [...box.querySelectorAll('.drag-player')];
+      const allLetters = [...document.querySelectorAll('#group-builder [data-group]')].map(b => b.dataset.group);
+
+      // Update count badge
+      const countEl = box.querySelector('.gb-count');
+      if (countEl) countEl.textContent = players.length + 'P';
+
+      // Refresh move dropdowns on each tile
+      players.forEach(tile => {
+        const pid = tile.dataset.id;
+        const pname = tile.dataset.name;
+        const sel = tile.querySelector('.move-select');
+        if (!sel) return;
+        sel.innerHTML = `<option value="">Move →</option>` +
+          allLetters.filter(l => l !== letter).map(l => `<option value="${l}">Group ${l}</option>`).join('');
+        // re-bind (remove old, add new)
+        const newSel = sel.cloneNode(true);
+        sel.replaceWith(newSel);
+        newSel.addEventListener('change', () => {
+          if (newSel.value) movePlayer(pid, letter, newSel.value);
+        });
+      });
+
+      // Update approve button state
+      const approveBtn = box.querySelector('.approve-group-btn');
+      if (approveBtn && approveBtn.dataset.approved === 'true') {
+        approveBtn.dataset.approved = 'false';
+        approveBtn.textContent = '✓ Approve Group';
+        approveBtn.style.background = '';
+        approveBtn.style.color = '';
+        approveBtn.style.borderColor = '';
+      }
+      updateSaveBtn();
+    });
+  }
+
+  function updateSaveBtn() {
+    const total = [...document.querySelectorAll('#group-builder [data-group]')].length;
+    const approved = [...document.querySelectorAll('.approve-group-btn[data-approved="true"]')].length;
+    const btn = document.getElementById('save-groups-btn');
+    if (!btn) return;
+    if (approved === total) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.45';
+      btn.textContent = `Save Groups & Generate Schedule (${approved}/${total} approved)`;
+    }
+  }
+
   function renderGroupBuilder(groupMap, el) {
+    const letters = Object.keys(groupMap);
     let html = `<div class="card"><div class="card-title">Assign players to groups</div>
-      <p style="font-size:0.82rem;color:var(--gray-600);margin-bottom:1rem">Review groups below. You can move players between groups before saving.</p>
+      <p style="font-size:0.82rem;color:var(--gray-600);margin-bottom:1rem">Use <strong>Move →</strong> on each player to reassign them. Approve each group when ready.</p>
       <div class="group-grid" id="group-builder">`;
-    Object.entries(groupMap).forEach(([letter, players]) => {
+    letters.forEach(letter => {
+      const players = groupMap[letter];
       html += `<div class="group-box" data-group="${letter}">
-        <div class="group-box-title">Group ${letter} <span style="font-weight:400;color:var(--gray-600)">${players.length}p</span></div>
+        <div class="group-box-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Group ${letter} <span class="gb-count" style="font-weight:400;color:var(--gray-600)">${players.length}P</span></span>
+          <button class="approve-group-btn btn btn-sm" data-group="${letter}" data-approved="false"
+            style="font-size:.72rem;padding:3px 10px;border:1.5px solid var(--primary);color:var(--primary);background:transparent;border-radius:99px;cursor:pointer">
+            ✓ Approve Group
+          </button>
+        </div>
         <div class="group-players" id="gp-${letter}">
-          ${players.map(p => `<div class="drag-player" data-id="${p.id}" data-name="${esc(p.name)}">${esc(p.name)}</div>`).join('')}
+          ${players.map(p => `
+            <div class="drag-player" data-id="${p.id}" data-name="${esc(p.name)}" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <span>${esc(p.name)}</span>
+              <select class="move-select" style="font-size:.72rem;border:1px solid var(--gray-200);border-radius:6px;padding:2px 4px;background:#fff;color:var(--gray-700);cursor:pointer">
+                <option value="">Move →</option>
+                ${letters.filter(l => l !== letter).map(l => `<option value="${l}">Group ${l}</option>`).join('')}
+              </select>
+            </div>`).join('')}
         </div>
       </div>`;
     });
     html += `</div>
-      <button class="btn btn-primary btn-full confirm-btn" id="save-groups-btn">Save Groups & Generate Schedule</button>
+      <button class="btn btn-primary btn-full confirm-btn" id="save-groups-btn" disabled style="opacity:0.45;margin-top:1rem">
+        Save Groups & Generate Schedule (0/${letters.length} approved)
+      </button>
     </div>`;
     el.innerHTML = html;
 
+    // Wire up move dropdowns
+    el.querySelectorAll('.move-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        if (!sel.value) return;
+        const tile = sel.closest('.drag-player');
+        const pid = tile.dataset.id;
+        const fromBox = tile.closest('[data-group]');
+        movePlayer(pid, fromBox.dataset.group, sel.value);
+      });
+    });
+
+    // Wire up approve buttons
+    el.querySelectorAll('.approve-group-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const isApproved = btn.dataset.approved === 'true';
+        if (!isApproved) {
+          btn.dataset.approved = 'true';
+          btn.textContent = '✅ Approved';
+          btn.style.background = 'var(--primary)';
+          btn.style.color = '#fff';
+          btn.style.borderColor = 'var(--primary)';
+        } else {
+          btn.dataset.approved = 'false';
+          btn.textContent = '✓ Approve Group';
+          btn.style.background = 'transparent';
+          btn.style.color = 'var(--primary)';
+          btn.style.borderColor = 'var(--primary)';
+        }
+        updateSaveBtn();
+      });
+    });
+
+    updateSaveBtn();
+
     document.getElementById('save-groups-btn').addEventListener('click', async () => {
       const finalGroups = {};
-      document.querySelectorAll('[data-group]').forEach(box => {
+      document.querySelectorAll('#group-builder [data-group]').forEach(box => {
         const letter = box.dataset.group;
         const pls = [...box.querySelectorAll('.drag-player')].map(d => ({
           id: d.dataset.id, name: d.dataset.name
