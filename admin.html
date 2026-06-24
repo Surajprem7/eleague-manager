@@ -338,14 +338,72 @@
       return;
     }
 
-    const groupSize = 4;
-    const numGroups = Math.ceil(players.length / groupSize);
+    renderGroupFormatPicker(players, el);
+  }
+
+  function buildGroupMap(players, format) {
+    const shuffled = [...players];
     let groupMap = {};
-    for (let i = 0; i < numGroups; i++) {
-      const letter = String.fromCharCode(65 + i);
-      groupMap[letter] = players.slice(i * groupSize, (i + 1) * groupSize);
+    if (format === '2groups') {
+      const half = Math.ceil(shuffled.length / 2);
+      groupMap['A'] = shuffled.slice(0, half);
+      groupMap['B'] = shuffled.slice(half);
+    } else {
+      const size = format === '3' ? 3 : 4;
+      const numGroups = Math.ceil(shuffled.length / size);
+      for (let i = 0; i < numGroups; i++) {
+        const letter = String.fromCharCode(65 + i);
+        groupMap[letter] = shuffled.slice(i * size, (i + 1) * size);
+      }
     }
-    renderGroupBuilder(groupMap, el);
+    return groupMap;
+  }
+
+  function renderGroupFormatPicker(players, el) {
+    const n = players.length;
+    const formats = [
+      { value: '4', label: `Groups of 4`, desc: `${Math.ceil(n/4)} groups` },
+      { value: '3', label: `Groups of 3`, desc: `${Math.ceil(n/3)} groups` },
+      { value: '2groups', label: `2 Groups`, desc: `~${Math.ceil(n/2)} players each` },
+    ];
+
+    let html = `<div class="card" style="margin-bottom:1rem">
+      <div class="card-title">Choose group format</div>
+      <p style="font-size:0.82rem;color:var(--gray-600);margin-bottom:1rem">${n} approved players</p>
+      <div style="display:flex;flex-direction:column;gap:10px">`;
+    formats.forEach((f, i) => {
+      html += `<label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid ${i===0?'var(--primary)':'var(--gray-200)'};border-radius:10px;cursor:pointer;transition:border-color .15s" id="fmt-label-${f.value}">
+        <input type="radio" name="group-format" value="${f.value}" ${i===0?'checked':''} style="accent-color:var(--primary);width:16px;height:16px">
+        <div>
+          <div style="font-weight:600;font-size:.9rem">${f.label}</div>
+          <div style="font-size:.78rem;color:var(--gray-600)">${f.desc}</div>
+        </div>
+      </label>`;
+    });
+    html += `</div>
+      <button class="btn btn-primary btn-full confirm-btn" id="apply-format-btn" style="margin-top:1rem">Apply Format</button>
+    </div>
+    <div id="group-builder-wrap"></div>`;
+    el.innerHTML = html;
+
+    // highlight selected label
+    el.querySelectorAll('input[name="group-format"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        el.querySelectorAll('[id^="fmt-label-"]').forEach(l => l.style.borderColor = 'var(--gray-200)');
+        document.getElementById('fmt-label-' + radio.value).style.borderColor = 'var(--primary)';
+      });
+    });
+
+    document.getElementById('apply-format-btn').addEventListener('click', () => {
+      const fmt = el.querySelector('input[name="group-format"]:checked').value;
+      const groupMap = buildGroupMap(players, fmt);
+      renderGroupBuilder(groupMap, document.getElementById('group-builder-wrap'));
+      document.getElementById('apply-format-btn').textContent = 'Re-apply Format';
+    });
+
+    // auto-apply default (groups of 4)
+    const groupMap = buildGroupMap(players, '4');
+    renderGroupBuilder(groupMap, document.getElementById('group-builder-wrap'));
   }
 
   function renderGroupBuilder(groupMap, el) {
