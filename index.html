@@ -1079,7 +1079,10 @@
   // indefinitely without the user knowing a new version exists.
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(registration => {
+      let alreadyShown = false;
       function showUpdateBanner() {
+        if (alreadyShown) return;
+        alreadyShown = true;
         document.getElementById('update-banner').style.display = 'flex';
       }
       // A worker may already be waiting from before this page loaded.
@@ -1101,15 +1104,8 @@
         if (document.visibilityState === 'visible') registration.update().catch(() => {});
       });
 
-      // skipWaiting() in sw.js makes installed→activating very fast, so the
-      // statechange listener above can race past 'installed'. controllerchange
-      // is a more reliable backstop signal that an update actually took over.
-      let alreadyShown = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (alreadyShown) return;
-        alreadyShown = true;
-        showUpdateBanner();
-      });
+      // controllerchange is a reliable backstop for when statechange races past 'installed'.
+      navigator.serviceWorker.addEventListener('controllerchange', () => showUpdateBanner());
     }).catch(() => {});
 
     document.getElementById('update-reload-btn').addEventListener('click', () => {
