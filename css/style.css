@@ -8,12 +8,12 @@
   --green-mid: #1a6b4a;
   --white: #ffffff;
   /* Dark theme surface colours */
-  --gray-50: #1E1E1E;
-  --gray-100: #2A2A2A;
-  --gray-200: #333333;
-  --gray-400: #555555;
-  --gray-600: #999999;
-  --gray-900: #F0F0F0;
+  --gray-50: #242424;
+  --gray-100: #2E2E2E;
+  --gray-200: #3D3D3D;
+  --gray-400: #666666;
+  --gray-600: #AAAAAA;
+  --gray-900: #EEEEEE;
   --blue: #4DA3FF;
   --blue-light: #1a2a3d;
   --red: #FF6B6B;
@@ -77,8 +77,8 @@ p  { font-size: 0.95rem; }
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: #1E1E1E;
-  border-top: 1px solid var(--gray-200);
+  background: #242424;
+  border-top: 1px solid #3D3D3D;
   display: flex;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom);
@@ -111,7 +111,8 @@ p  { font-size: 0.95rem; }
 
 /* ===== CARDS ===== */
 .card {
-  background: #1E1E1E;
+  background: #242424;
+  border: 1px solid #333333;
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   margin-bottom: 1rem;
@@ -132,12 +133,12 @@ p  { font-size: 0.95rem; }
 .form-input, .form-select {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1.5px solid var(--gray-200);
+  border: 1.5px solid #3D3D3D;
   border-radius: var(--radius-md);
   font-size: 0.95rem;
   font-family: var(--font);
-  background: #2A2A2A;
-  color: var(--gray-900);
+  background: #2E2E2E;
+  color: #EEEEEE;
   transition: border-color 0.15s;
   -webkit-appearance: none;
   min-height: 48px;
@@ -193,7 +194,8 @@ p  { font-size: 0.95rem; }
 
 /* ===== MATCH CARD ===== */
 .match-card {
-  background: #1E1E1E;
+  background: #242424;
+  border: 1px solid #333333;
   border-radius: var(--radius-lg);
   padding: 1rem;
   margin-bottom: 0.75rem;
@@ -323,7 +325,8 @@ p  { font-size: 0.95rem; }
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #1E1E1E;
+  background: #242424;
+  border: 1px solid #333333;
   border-radius: var(--radius-md);
   padding: 0.75rem;
   margin-bottom: 0.5rem;

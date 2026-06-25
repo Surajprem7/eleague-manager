@@ -25,8 +25,8 @@
 .admin-tabs {
   display: flex;
   gap: 0;
-  background: #1E1E1E;
-  border-bottom: 1px solid var(--gray-200);
+  background: #242424;
+  border-bottom: 1px solid #3D3D3D;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   position: sticky;
@@ -81,13 +81,13 @@
   width: 52px;
   text-align: center;
   padding: 0.5rem;
-  border: 1.5px solid var(--gray-200);
+  border: 1.5px solid #3D3D3D;
   border-radius: var(--radius-sm);
   font-size: 1.1rem;
   font-weight: 700;
   font-family: var(--font);
-  background: #2A2A2A;
-  color: var(--gray-900);
+  background: #2E2E2E;
+  color: #EEEEEE;
 }
 .score-dash { font-size: 1.2rem; color: var(--gray-400); }
 
@@ -97,7 +97,8 @@
   gap: 0.75rem;
 }
 .group-box {
-  background: #1E1E1E;
+  background: #242424;
+  border: 1px solid #333333;
   border-radius: var(--radius-lg);
   padding: 1rem;
   box-shadow: var(--shadow-sm);
@@ -138,7 +139,8 @@
   margin-bottom: 1rem;
 }
 .stat-box {
-  background: #1E1E1E;
+  background: #242424;
+  border: 1px solid #333333;
   border-radius: var(--radius-lg);
   padding: 1rem;
   text-align: center;
