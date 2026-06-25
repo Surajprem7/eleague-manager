@@ -403,16 +403,27 @@
 
     // Restore draft if one exists, otherwise default to groups of 4
     const draft = loadGroupDraft();
-    if (draft) {
-      // Only restore if all player IDs still exist in the approved list
+    const draftGroups = draft?.groups ?? draft; // support old format (plain object) and new {format, groups}
+    const draftFormat = draft?.format ?? '4';
+    if (draftGroups && typeof draftGroups === 'object') {
       const approvedIds = new Set(players.map(p => p.id));
-      const draftPlayers = Object.values(draft).flat();
-      const valid = draftPlayers.every(p => approvedIds.has(p.id)) && draftPlayers.length === players.length;
+      const draftPlayers = Object.values(draftGroups).flat();
+      const valid = draftPlayers.length > 0 &&
+        draftPlayers.every(p => approvedIds.has(p.id)) &&
+        draftPlayers.length === players.length;
       if (valid) {
-        renderGroupBuilder(draft, document.getElementById('group-builder-wrap'));
+        // Restore the radio to the saved format
+        const radio = el.querySelector(`input[name="group-format"][value="${draftFormat}"]`);
+        if (radio) {
+          radio.checked = true;
+          el.querySelectorAll('[id^="fmt-label-"]').forEach(l => l.style.borderColor = 'var(--gray-200)');
+          const lbl = document.getElementById('fmt-label-' + draftFormat);
+          if (lbl) lbl.style.borderColor = 'var(--primary)';
+        }
+        renderGroupBuilder(draftGroups, document.getElementById('group-builder-wrap'));
         showDraftBanner(el);
       } else {
-        localStorage.removeItem('eleague_group_draft');
+        clearGroupDraft();
         renderGroupBuilder(buildGroupMap(players, '4'), document.getElementById('group-builder-wrap'));
       }
     } else {
@@ -423,7 +434,8 @@
   const DRAFT_KEY = 'eleague_group_draft';
   function saveGroupDraft() {
     const groups = readGroupsFromDOM();
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(groups));
+    const fmt = document.querySelector('input[name="group-format"]:checked')?.value || '4';
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ format: fmt, groups }));
   }
   function loadGroupDraft() {
     try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch { return null; }
