@@ -320,7 +320,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v38';
+  const APP_VERSION = 'v39';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -1098,8 +1098,13 @@
         });
       });
 
-      // Proactively check for updates when the app regains focus —
-      // covers PWAs reopened from the home screen after sitting idle.
+      // Check for a new SW immediately on load, and again every 60 s —
+      // without this the browser only checks on navigation, so long-lived
+      // PWA sessions never know a new version exists.
+      registration.update().catch(() => {});
+      setInterval(() => registration.update().catch(() => {}), 60000);
+
+      // Also check when the app comes back into focus (home screen reopen).
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') registration.update().catch(() => {});
       });
