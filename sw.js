@@ -28,7 +28,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.openWindow('./'));
 });
 
-const CACHE = 'eleague-v35';
+const CACHE = 'eleague-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -74,20 +74,34 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  const url = e.request.url;
+
   // Network first for Firebase requests
   if (
-    e.request.url.includes('firestore.googleapis.com') ||
-    e.request.url.includes('identitytoolkit') ||
-    e.request.url.includes('securetoken') ||
-    e.request.url.includes('firebaseapp.com')
+    url.includes('firestore.googleapis.com') ||
+    url.includes('identitytoolkit') ||
+    url.includes('securetoken') ||
+    url.includes('firebaseapp.com')
   ) {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
+
+  // Network first for HTML pages — always get the latest markup, fall back to cache offline
+  if (e.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/')) {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
+      fetch(e.request).then(res => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => caches.match(e.request))
     );
     return;
   }
 
-  // Cache first for all other assets
+  // Cache first for JS, CSS, images, fonts, and other static assets
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
