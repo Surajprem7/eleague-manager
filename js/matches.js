@@ -65,6 +65,7 @@ export async function submitPlayerScore(matchId, side, homeGoals, awayGoals) {
   });
 
   const snap = await getDoc(ref);
+  if (!snap.exists()) return 'waiting';
   const m = snap.data();
   if (m.homeReportH == null || m.awayReportH == null) return 'waiting';
   if (m.homeReportH === m.awayReportH && m.homeReportA === m.awayReportA) {

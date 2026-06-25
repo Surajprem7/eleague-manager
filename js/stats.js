@@ -1,17 +1,17 @@
 import { db } from './firebase.js';
 import {
-  collection, getDocs, query, where
+  collection, doc, getDoc, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Get full stats for a player
 export async function getPlayerStats(playerId) {
   const [matchSnap, playerSnap] = await Promise.all([
     getDocs(collection(db, 'matches')),
-    getDocs(query(collection(db, 'players'), where('__name__', '==', playerId)))
+    getDoc(doc(db, 'players', playerId))
   ]);
 
   const allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const player = playerSnap.empty ? null : { id: playerSnap.docs[0].id, ...playerSnap.docs[0].data() };
+  const player = playerSnap.exists() ? { id: playerSnap.id, ...playerSnap.data() } : null;
 
   const myMatches = allMatches.filter(m =>
     (m.homeId === playerId || m.awayId === playerId) && m.status === 'completed'

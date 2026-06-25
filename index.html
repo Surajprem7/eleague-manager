@@ -953,7 +953,7 @@
       }
       const p = { id: snap.docs[0].id, ...snap.docs[0].data() };
       myPlayer = p;
-      document.getElementById('profile-avatar').textContent = p.name[0].toUpperCase();
+      document.getElementById('profile-avatar').textContent = p.name?.[0]?.toUpperCase() || '?';
       document.getElementById('profile-name').textContent = p.name;
       document.getElementById('profile-efid').textContent = p.efootballId;
 
