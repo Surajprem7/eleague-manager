@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#1D9E75" />
+  <meta name="theme-color" content="#21F1A8" />
   <meta name="description" content="eLeague Manager — eFootball Tournament" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -18,7 +18,7 @@
   <style>
     .live-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: #1D9E75; display: inline-block;
+      background: #21F1A8; display: inline-block;
       animation: pulse 1.2s ease-in-out infinite;
       margin-right: 6px;
     }
@@ -28,15 +28,15 @@
     }
     .realtime-badge {
       display: inline-flex; align-items: center;
-      font-size: 0.7rem; color: #1D9E75;
-      background: #E1F5EE; padding: 2px 8px;
+      font-size: 0.7rem; color: #0DB87E;
+      background: #D0FDF0; padding: 2px 8px;
       border-radius: 99px; margin-left: 8px;
     }
     .update-flash {
       animation: flash 0.6s ease-out;
     }
     @keyframes flash {
-      0% { background: #E1F5EE; }
+      0% { background: #D0FDF0; }
       100% { background: transparent; }
     }
   </style>
@@ -68,13 +68,13 @@
 <div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
 
 <!-- Update Available Banner -->
-<div id="update-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9997;background:#1D9E75;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;justify-content:space-between;gap:10px">
+<div id="update-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9997;background:#21F1A8;color:#171717;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;justify-content:space-between;gap:10px">
   <span style="font-size:.85rem">🔄 A new version is available.</span>
-  <button id="update-reload-btn" style="background:#fff;color:#0F6E56;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
+  <button id="update-reload-btn" style="background:#fff;color:#0DB87E;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
 </div>
 
 <!-- iOS Install Banner (Safari has no programmatic install prompt) -->
-<div id="ios-install-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(130px + env(safe-area-inset-bottom));z-index:9996;background:#0F6E56;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;gap:10px">
+<div id="ios-install-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(130px + env(safe-area-inset-bottom));z-index:9996;background:#0DB87E;color:#171717;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;gap:10px">
   <span style="font-size:.82rem;flex:1">📲 Tap <strong>Share</strong> <span style="display:inline-block">⬆️</span> then <strong>Add to Home Screen</strong> to install this app.</span>
   <button id="ios-install-dismiss-btn" aria-label="Dismiss" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:26px;height:26px;border-radius:50%;font-size:.85rem;cursor:pointer;flex-shrink:0">✕</button>
 </div>
@@ -320,7 +320,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v36';
+  const APP_VERSION = 'v37';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -486,7 +486,7 @@
         resultEl.style.color = 'var(--gray-600)';
         resultEl.textContent = '✅ Submitted! Waiting for your opponent to submit their score.';
       } else if (outcome === 'matched') {
-        resultEl.style.color = '#1D9E75';
+        resultEl.style.color = '#21F1A8';
         resultEl.textContent = '✅ Scores matched — match completed!';
       } else {
         resultEl.style.color = '#D93025';
@@ -561,12 +561,12 @@
 
     if (!status) {
       el.innerHTML = `
-        <div class="winner-banner" style="background:linear-gradient(135deg,#1D9E75,#0F6E56);padding:0;overflow:hidden">
+        <div class="winner-banner" style="background:linear-gradient(135deg,#171717,#0DB87E);padding:0;overflow:hidden">
           <div style="position:relative">
             <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
             <button id="instructions-play-btn" aria-label="Watch instructions" style="position:absolute;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
               <span style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
-                <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0F6E56;margin-left:5px"></span>
+                <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0DB87E;margin-left:5px"></span>
               </span>
             </button>
             <button id="banner-share-btn" aria-label="Share" style="position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2">
@@ -768,7 +768,7 @@
         result.textContent = "❌ No match found. Check your name and phone/eFootball ID exactly, or register below.";
       } else {
         localStorage.setItem('myRegisteredName', match.data().name);
-        result.style.color = '#1D9E75';
+        result.style.color = '#21F1A8';
         result.textContent = '✅ Verified! Loading your profile...';
         setTimeout(() => location.reload(), 600);
       }
@@ -910,7 +910,7 @@
         if (!setupText) { toast('Enter your team/manager setup'); return; }
         try {
           await submitTeamSetup(res.match.id, side, setupText);
-          setupResult.style.color = '#1D9E75';
+          setupResult.style.color = '#21F1A8';
           setupResult.textContent = '✅ Setup submitted!';
         } catch(e) {
           setupResult.style.color = '#D93025';

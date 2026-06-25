@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#1D9E75" />
+  <meta name="theme-color" content="#21F1A8" />
   <meta name="description" content="eLeague Manager — Player Stats" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Stats — eLeague Manager</title>
@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     .stat-hero {
-      background: linear-gradient(135deg, #1D9E75, #0F6E56);
+      background: linear-gradient(135deg, #21F1A8, #0DB87E);
       border-radius: var(--radius-xl);
       padding: 1.5rem;
       color: #fff;
@@ -73,7 +73,7 @@
       overflow: hidden;
       margin: 6px 0 2px;
     }
-    .win-bar { height: 100%; background: #1D9E75; border-radius: 4px; transition: width 0.6s ease; }
+    .win-bar { height: 100%; background: #21F1A8; border-radius: 4px; transition: width 0.6s ease; }
     .leaderboard-row {
       display: flex;
       align-items: center;
@@ -94,7 +94,7 @@
     .rank-3 { background: #CD7F32; color: #fff; }
     .rank-n { background: var(--gray-100); color: var(--gray-600); }
     .lb-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
-    .lb-goals { font-size: 1rem; font-weight: 700; color: #1D9E75; }
+    .lb-goals { font-size: 1rem; font-weight: 700; color: #0DB87E; }
     .lb-played { font-size: 0.75rem; color: var(--gray-600); }
     .tab-row {
       display: flex; gap: 4px;
@@ -117,7 +117,7 @@
     }
     .back-btn {
       display: flex; align-items: center; gap: 6px;
-      color: #1D9E75; font-size: 0.85rem;
+      color: #0DB87E; font-size: 0.85rem;
       font-weight: 500; text-decoration: none;
       margin-bottom: 1rem;
     }
@@ -231,7 +231,7 @@
       const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
       const stats = await getPlayerStats(player.id);
 
-      const resultColors = { W:'#1D9E75', D:'#888', L:'#D93025' };
+      const resultColors = { W:'#0DB87E', D:'#888', L:'#D93025' };
 
       el.innerHTML = `
         <div class="stat-hero">
@@ -243,7 +243,7 @@
 
         <div class="stat-grid-4">
           <div class="mini-stat"><div class="num">${stats.played}</div><div class="lbl">Played</div></div>
-          <div class="mini-stat"><div class="num" style="color:#1D9E75">${stats.w}</div><div class="lbl">Won</div></div>
+          <div class="mini-stat"><div class="num" style="color:#0DB87E">${stats.w}</div><div class="lbl">Won</div></div>
           <div class="mini-stat"><div class="num" style="color:#888">${stats.d}</div><div class="lbl">Drawn</div></div>
           <div class="mini-stat"><div class="num" style="color:#D93025">${stats.l}</div><div class="lbl">Lost</div></div>
         </div>
@@ -251,9 +251,9 @@
         <div class="card" style="margin-bottom:0.75rem">
           <div class="card-title">Goals</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
-            <div><div style="font-size:1.4rem;font-weight:700;color:#1D9E75">${stats.gf}</div><div style="font-size:0.72rem;color:var(--gray-600)">Scored</div></div>
+            <div><div style="font-size:1.4rem;font-weight:700;color:#0DB87E">${stats.gf}</div><div style="font-size:0.72rem;color:var(--gray-600)">Scored</div></div>
             <div><div style="font-size:1.4rem;font-weight:700;color:#D93025">${stats.ga}</div><div style="font-size:0.72rem;color:var(--gray-600)">Conceded</div></div>
-            <div><div style="font-size:1.4rem;font-weight:700;color:${stats.gd>=0?'#1D9E75':'#D93025'}">${stats.gd>0?'+':''}${stats.gd}</div><div style="font-size:0.72rem;color:var(--gray-600)">Difference</div></div>
+            <div><div style="font-size:1.4rem;font-weight:700;color:${stats.gd>=0?'#0DB87E':'#D93025'}">${stats.gd>0?'+':''}${stats.gd}</div><div style="font-size:0.72rem;color:var(--gray-600)">Difference</div></div>
           </div>
           <div style="margin-top:1rem">
             <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--gray-600)">
@@ -273,7 +273,7 @@
                 <div style="font-size:0.88rem;font-weight:500">vs ${esc(m.opponent)}</div>
                 <div style="font-size:0.72rem;color:var(--gray-600)">${m.phase}${m.group?' · Group '+m.group:''}</div>
               </div>
-              <div style="font-size:1rem;font-weight:700;color:${m.result==='W'?'#1D9E75':m.result==='L'?'#D93025':'#888'}">${m.myScore} – ${m.oppScore}</div>
+              <div style="font-size:1rem;font-weight:700;color:${m.result==='W'?'#21F1A8':m.result==='L'?'#D93025':'#888'}">${m.myScore} – ${m.oppScore}</div>
             </div>`).join('')}
         </div>` : ''}`;
     } catch(e) {

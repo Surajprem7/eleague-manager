@@ -2,10 +2,10 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --green: #1D9E75;
-  --green-dark: #0F6E56;
-  --green-light: #E1F5EE;
-  --green-mid: #9FE1CB;
+  --green: #21F1A8;
+  --green-dark: #0DB87E;
+  --green-light: #D0FDF0;
+  --green-mid: #7AEFC8;
   --white: #ffffff;
   --gray-50: #F8F9FA;
   --gray-100: #F1F3F4;
@@ -49,7 +49,7 @@ p  { font-size: 0.95rem; }
 
 /* ===== HEADER ===== */
 .app-header {
-  background: var(--green);
+  background: #171717;
   color: var(--white);
   padding: 1rem;
   position: sticky;
@@ -165,7 +165,7 @@ p  { font-size: 0.95rem; }
   text-decoration: none;
 }
 .btn:active { transform: scale(0.97); }
-.btn-primary { background: var(--green); color: var(--white); }
+.btn-primary { background: var(--green); color: #171717; }
 .btn-primary:hover { background: var(--green-dark); }
 .btn-secondary { background: var(--gray-100); color: var(--gray-900); }
 .btn-secondary:hover { background: var(--gray-200); }
@@ -297,7 +297,7 @@ p  { font-size: 0.95rem; }
 
 /* ===== WINNER BANNER ===== */
 .winner-banner {
-  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  background: linear-gradient(135deg, #171717, var(--green-dark));
   color: var(--white);
   border-radius: var(--radius-xl);
   padding: 2rem 1.5rem;

@@ -4,8 +4,8 @@
   "description": "eFootball Tournament Manager",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1D9E75",
-  "theme_color": "#1D9E75",
+  "background_color": "#171717",
+  "theme_color": "#21F1A8",
   "orientation": "portrait",
   "icons": [
     {

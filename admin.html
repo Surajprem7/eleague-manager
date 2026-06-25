@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0F6E56" />
+  <meta name="theme-color" content="#171717" />
   <title>Admin — eLeague Manager</title>
   <link rel="stylesheet" href="css/admin.css" />
   <link rel="manifest" href="manifest.json" />
@@ -183,16 +183,16 @@
 </div>
 
 <!-- Update Available Banner -->
-<div id="update-banner" style="display:none;position:fixed;left:12px;right:12px;top:12px;z-index:9997;background:#1D9E75;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;justify-content:space-between;gap:10px">
+<div id="update-banner" style="display:none;position:fixed;left:12px;right:12px;top:12px;z-index:9997;background:#21F1A8;color:#171717;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;justify-content:space-between;gap:10px">
   <span style="font-size:.85rem">🔄 A new version is available.</span>
-  <button id="update-reload-btn" style="background:#fff;color:#0F6E56;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
+  <button id="update-reload-btn" style="background:#fff;color:#0DB87E;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v36';
+  const CURRENT_APP_VERSION = 'v37';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -287,7 +287,7 @@
               !p.appVersion
                 ? '<span style="color:var(--gray-600)">App version: unknown</span>'
                 : p.appVersion === CURRENT_APP_VERSION
-                  ? `<span style="color:#1D9E75">✓ Latest (${esc(p.appVersion)})</span>`
+                  ? `<span style="color:#0DB87E">✓ Latest (${esc(p.appVersion)})</span>`
                   : `<span style="color:#D93025">⚠️ Outdated (${esc(p.appVersion)})</span>`
             }</div>
           </div>
@@ -937,7 +937,7 @@
     if (!email) { toast('Enter an email address'); return; }
     try {
       await addAdmin(email, currentAdminEmail);
-      result.style.color = '#1D9E75';
+      result.style.color = '#21F1A8';
       result.textContent = '✅ ' + email + ' added as admin!';
       document.getElementById('new-admin-email').value = '';
       setTimeout(() => loadAdmins(), 1000);
