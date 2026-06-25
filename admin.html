@@ -398,7 +398,7 @@
       const groupMap = buildGroupMap(players, fmt);
       localStorage.removeItem('eleague_group_draft');
       renderGroupBuilder(groupMap, document.getElementById('group-builder-wrap'));
-      document.getElementById('apply-format-btn').textContent = 'Re-apply Format';
+      document.getElementById('apply-format-btn').textContent = 'Apply Format';
     });
 
     // Restore draft if one exists, otherwise default to groups of 4
@@ -504,7 +504,7 @@
 
   function updateSaveBtn() {
     const total = [...document.querySelectorAll('#group-builder [data-group]')].length;
-    const approved = [...document.querySelectorAll('.approve-group-btn[data-approved="true"]')].length;
+    const approved = [...document.querySelectorAll('.approve-group-btn[data-letter][data-approved="true"]')].length;
     const btn = document.getElementById('save-groups-btn');
     if (!btn) return;
     if (approved === total) {
@@ -527,7 +527,7 @@
       html += `<div class="group-box" data-group="${letter}">
         <div class="group-box-title" style="display:flex;justify-content:space-between;align-items:center">
           <span>Group ${letter} <span class="gb-count" style="font-weight:400;color:var(--gray-600)">${players.length}P</span></span>
-          <button class="approve-group-btn btn btn-sm" data-group="${letter}" data-approved="false"
+          <button class="approve-group-btn btn btn-sm" data-letter="${letter}" data-approved="false"
             style="font-size:.72rem;padding:3px 10px;border:1.5px solid var(--primary);color:var(--primary);background:transparent;border-radius:99px;cursor:pointer">
             ✓ Approve Group
           </button>
