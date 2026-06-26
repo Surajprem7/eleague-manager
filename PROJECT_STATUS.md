@@ -1,6 +1,6 @@
 # eLeague Manager — Project Status
 
-Last updated: June 2026 | App version: `v35` | Branch: `main`
+Last updated: June 2026 | App version: `v44` | Branch: `main`
 
 Live at [league.getgol.in](https://league.getgol.in) — deployed automatically via GitHub Pages on every push to `main`.
 
@@ -32,7 +32,23 @@ Default admin email: `surajtxglive@gmail.com`
 | Hosting | GitHub Pages + Cloudflare DNS (grey-cloud / DNS-only, no proxying) |
 | Match reminders | Separate Cloudflare Worker (`eleague-notifier`), cron every 2 min |
 | Firebase project | `eleague-manager` (Spark / free tier — no Cloud Functions, no Storage) |
-| PWA | Service worker (`sw.js`, cache key `eleague-v35`), installable on Android + iOS |
+| PWA | Service worker (`sw.js`, cache key `eleague-v44`), installable on Android + iOS |
+
+---
+
+## Colour Scheme
+
+| Role | Colour |
+|---|---|
+| Primary / Header background | Tiffany `#21F1A8` |
+| Dark accent (text on Tiffany, hover) | `#0DB87E` |
+| App background | Dark Gray `#171717` |
+| Card / nav surfaces | `#242424` |
+| Elevated inputs / dropdowns | `#2E2E2E` |
+| Body text | `#EEEEEE` |
+| Muted text | `#AAAAAA` / `#CCCCCC` |
+
+All five pages (index, admin, bracket, stats + both CSS files) use the same dark-theme variables. No white surfaces remain — all modals, dropdowns, and stat boxes use dark backgrounds.
 
 ---
 
@@ -44,8 +60,8 @@ eleague-manager/
 ├── admin.html              Admin panel
 ├── bracket.html            Shareable knockout bracket
 ├── stats.html              Leaderboard & player stats
-├── manifest.json           PWA config (name: "eLeague Manager", theme: #1D9E75)
-├── sw.js                   Service worker (cache: eleague-v35)
+├── manifest.json           PWA config (theme: #21F1A8, background: #171717)
+├── sw.js                   Service worker (cache: eleague-v44)
 ├── firestore.rules         Firestore security rules
 ├── firebase.json           Firebase CLI config
 ├── .firebaserc             Firebase project mapping
@@ -54,8 +70,8 @@ eleague-manager/
 ├── ADMIN_GUIDE.md          Step-by-step admin guide
 ├── PROJECT_STATUS.md       This file
 ├── css/
-│   ├── style.css           Player app styles
-│   └── admin.css           Admin styles
+│   ├── style.css           Player app styles (dark theme variables)
+│   └── admin.css           Admin styles (extends style.css)
 ├── js/
 │   ├── firebase.js         Firebase init & API key
 │   ├── auth.js             Google login, admin gating, default-admin governance
@@ -105,12 +121,13 @@ eleague-manager/
 - Bottom nav hides irrelevant tabs until player is recognized on device
 - Home becomes a personal dashboard once recognized: profile card, group rank, next match, full schedule
 - Live match ticker (real-time), next match preview, tournament phase display
+- **Banner image always shown at top of Home** — visible in all states (registration, active tournament, champion announced)
+- **Instructions video** — play button overlaid on banner; tapping opens full-screen instructions video in all home states
 - Intro video overlay — auto-plays muted on load, skippable, non-blocking on error
-- Instructions video accessible via play button on home banner
 - Share button on banner (native share sheet → intro video + join link; fallbacks to text/clipboard)
 - iOS "Add to Home Screen" dismissible banner shown at startup (doesn't overlap update banner)
 - Android/Edge install prompt via `beforeinstallprompt`; iOS shows manual tap-share hint
-- "Update available" one-tap reload banner when new service worker takes over
+- "Update available" one-tap reload banner — appears automatically within 60 seconds of a new deploy (SW polled on load + every 60s + visibilitychange); shows only once per update (single `alreadyShown` guard covers all three SW event paths)
 - Tournament champion announcement page when phase = `done`
 - **Score submission from My Matches**: both players report independently
   - If both agree → match auto-completes (Firestore rule enforces the transition)
@@ -120,33 +137,35 @@ eleague-manager/
 - Standings tab: group-by-group, tiebreakers (Points → GD → GF), top 2 qualified marked
 - Dispute tab: flag wrong results (match ID + reason)
 - In-app Help modal: step-by-step guide (register → confirm → play → report → standings → notifications)
-- **⚙️ Admin** nav button at the end of the bottom nav — navigates to `admin.html` directly from the player app (always visible, no login required to reach the admin login screen)
+- **⚙️ Admin** nav button at the end of the bottom nav — navigates to `admin.html` directly from the player app
 
 ### Admin Panel (`admin.html`)
 
 - Google sign-in (popup-based — see Gotchas)
-- Default-admin governance: `surajtxglive@gmail.com` is permanent; only default admin can add/remove others; max 3 admins; other admins cannot see default admin in the list (enforced in both `auth.js` and `firestore.rules`)
-- **👤 Player** switch button in admin header — navigates to `index.html` without logging out; Google session stays active so returning to admin via ⚙️ skips the login screen
-- **Players tab**: approve/reject registrations; see eFootball ID, phone, group; green "Latest" / red "Outdated" app version badge per player; **🗑️ remove button** permanently deletes a player with confirmation prompt (logged to Activity Log)
+- Default-admin governance: `surajtxglive@gmail.com` is permanent; only default admin can add/remove others; max 3 admins; other admins cannot see default admin in the list
+- **👤 Player** switch button in admin header — navigates to `index.html` without logging out
+- **Players tab**: approve/reject registrations; see eFootball ID, phone, group; green "Latest" / red "Outdated" app version badge per player; **🗑️ remove button** permanently deletes a player with confirmation
 - **Groups tab**:
-  - Format picker — choose **4 Player Group** (default), **3 Player Group**, or **2 Groups** (all players split evenly into Group A & B) before building
-  - **Move → dropdown** on every player tile to reassign them to another group instantly; group counts update live
-  - **✓ Approve Group** button per group — toggles green ✅ when confirmed, auto-resets if a player is moved in/out
-  - **Save Groups & Generate Schedule** is disabled until every group is approved (shows progress e.g. `2/4 approved`), preventing accidental saves
+  - Format picker — **4 Player Group**, **3 Player Group**, or **2 Groups**
+  - **Move → dropdown** on every player tile to reassign between groups
+  - **✓ Approve Group** button per group; auto-resets if player is moved
+  - **Save Draft** — persists format + group assignments to `localStorage` key `eleague_group_draft`; survives refresh; restored on reload (validates all IDs still in approved list); cleared on final save or format reapply
+  - **Save Groups & Generate Schedule** locked until all groups approved; shows progress (e.g. `2/4 approved`)
   - Auto-generates full round-robin per group on save
-- **Matches tab**: Set Live (max 2 concurrent enforced); Schedule with date/time (triggers push reminders); Enter Score; view team setups; see score mismatches with both submitted scores; status badges
-- **Knockout tab**: same as Matches; winners auto-advance; 3rd place match generated from SF losers
+- **Matches tab**: Set Live (max 2 concurrent); Schedule with date/time; Enter Score; view team setups; score mismatches with both submitted scores; status badges
+- **Knockout tab**: same as Matches; winners auto-advance; 3rd place match from SF losers
 - **Results tab**: all completed matches, score override
 - **Disputes tab**: resolve with admin notes
-- **Activity Log tab**: append-only audit trail of all admin actions with timestamps
+- **Activity Log tab**: append-only audit trail
 - **Admins tab** (default admin only): add/remove up to 3 total
-- **In-app Help tab**: full match-day guide inline
+- **Help tab**: full match-day guide inline
+- **Update banner** — same SW update detection as player app (Tiffany banner at top of screen)
 
 ### Stats Page (`stats.html`)
-W/D/L, goals for/against, win rate, match history per player, top scorers leaderboard, knockout stage reached
+W/D/L, goals for/against, win rate, match history per player, top scorers leaderboard, knockout stage reached. Dark theme applied throughout.
 
 ### Bracket Page (`bracket.html`)
-Shareable knockout bracket view, canvas image export
+Shareable knockout bracket view, canvas image export. Dark theme applied throughout.
 
 ---
 
@@ -154,9 +173,9 @@ Shareable knockout bracket view, canvas image export
 
 1. **Registration phase** — players self-register, status `pending`
 2. Admin approves players in Players tab
-3. Admin assigns groups (drag-and-drop) → "Save & Generate Schedule" → full round-robin auto-generated
-4. **Group stage** — admin sets match live (max 2 at once), shares join code via WhatsApp; players confirm ready + submit team setup; players enter final score themselves → auto-completes or flags mismatch
-5. **Knockout auto-generated** once all group matches done — top finishers pulled into bracket (R32/R16/QF/SF/3rd/Final depending on player count)
+3. Admin assigns groups → "Save & Generate Schedule" → full round-robin auto-generated
+4. **Group stage** — admin sets match live (max 2 at once), shares join code; players confirm ready + submit team setup; players enter final score → auto-completes or flags mismatch
+5. **Knockout auto-generated** once all group matches done
 6. **Knockout** — same flow as group stage, winners auto-advance
 7. Final completed → winner announced on player app, WhatsApp share text generated
 
@@ -166,16 +185,15 @@ Shareable knockout bracket view, canvas image export
 
 **Client side** (`js/push.js`):
 - Requests permission, gets FCM token via VAPID key
-- Saves `fcmToken` + `fcmTokenAt` to player's own Firestore doc (narrowly-scoped write rule)
+- Saves `fcmToken` + `fcmTokenAt` to player's own Firestore doc
 - Background message handler merged into `sw.js`
 
 **Trigger side** (separate repo: `C:\Users\User\Documents\eleague-notifier`):
 - Cloudflare Worker with cron trigger every 2 minutes
 - Finds matches with `scheduledAt` in next ~11 minutes that haven't been notified (`notified10Min` not set)
-- Authenticates to Firestore + FCM HTTP v1 API via Firebase service-account JWT — implemented manually with Web Crypto (Workers can't use Node's `google-auth-library`)
+- Authenticates to Firestore + FCM HTTP v1 API via Firebase service-account JWT — implemented manually with Web Crypto
 - Sends push to each player's `fcmToken`, marks match `notified10Min: true`
-- Manual test: `https://eleague-notifier.<account>.workers.dev/?key=<TEST_KEY>` returns `{checked, notified, errors}`
-- Credentials stored only as Cloudflare Worker secrets (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) — never committed; downloaded JSON key deleted after setup
+- Credentials stored only as Cloudflare Worker secrets — never committed
 
 **Why not Firebase Cloud Functions**: requires paid Blaze plan; this project stays on free Spark tier.
 
@@ -183,17 +201,17 @@ Shareable knockout bracket view, canvas image export
 
 ## Security Model
 
-### Two independent auth layers (both must agree)
-1. **Client-side** `isAdminEmail()` in `auth.js` — reads `admins` collection, gates UI (UX only, not security)
-2. **Server-side** `isAdmin()` in `firestore.rules` — `exists()` check before any admin write (the actual security boundary)
+### Two independent auth layers
+1. **Client-side** `isAdminEmail()` in `auth.js` — reads `admins` collection, gates UI (UX only)
+2. **Server-side** `isAdmin()` in `firestore.rules` — `exists()` check before any admin write (actual security boundary)
 
-### What non-admins can write (narrowly scoped via `firestore.rules`)
+### What non-admins can write
 | Collection | Allowed writes |
 |---|---|
 | `players` | Own doc only: `fcmToken`, `fcmTokenAt`, `appVersion`, `appVersionAt` |
-| `matches` | Own match only: `homeTeamSetup`/`awayTeamSetup`, score report fields (`homeReportH/A`, `awayReportH/A`), and the auto-finalize transition (official score/status/winner) only when both reports agree |
-| `disputes` | Create only (anyone can raise) |
-| `activity_log` | Create only (for self-logging dispute submissions) |
+| `matches` | Own match only: team setup fields, score report fields, auto-finalize transition (only when both reports agree) |
+| `disputes` | Create only |
+| `activity_log` | Create only (self-logging dispute submissions) |
 
 ---
 
@@ -201,49 +219,55 @@ Shareable knockout bracket view, canvas image export
 
 ### Identity & Player Recognition
 
-| Bug | File(s) Changed | Fix |
-|---|---|---|
-| **Identity hijack in My Matches search** — searching any player's name overwrote the device's `myRegisteredName` flag, app-version report, and notification target to whoever was searched | `js/app.js` | Identity flag set only on first lookup (when none exists); app-version reporting and notification prompt only fire when search matches the already-known device identity |
-| **Returning players on new/cleared devices had no path to re-link** — could only stumble into My Matches search | `index.html`, `js/app.js` | Added "Already registered? Verify here" on Register tab with name + eFootball ID re-link flow |
-| **Verification only accepted eFootball ID** — locked out players who registered without memorizing their ID | `js/app.js` | Verification now accepts name + phone OR eFootball ID |
-| **`myRegisteredName` flag never set retroactively** — players who registered before this feature existed saw the registration form again on same device | `js/app.js` | Finding yourself via My Matches search also sets the flag |
-| **Registration form showed for already-registered players** on same device | `index.html`, `js/app.js` | `myRegisteredName` localStorage flag added; form hidden for recognized players; falls back gracefully if lookup fails or record deleted |
-| **No profile shown for recognized players** — just a static "you're registered" sentence | `index.html`, `js/app.js` | Recognized players now see a real profile card (name, eFootball ID, phone, group, status badge) |
-| **No path to re-link from Register tab** — only via My Matches search | `index.html`, `js/app.js` | Explicit "Already registered? Verify here" link added to Register tab |
+| Bug | Fix |
+|---|---|
+| Identity hijack in My Matches search | Flag set only on first lookup; version reporting fires only for known device identity |
+| No re-link path on new/cleared devices | "Already registered? Verify here" flow on Register tab |
+| Verification only accepted eFootball ID | Now accepts name + phone OR eFootball ID |
+| `myRegisteredName` never set retroactively | Finding yourself via My Matches also sets the flag |
+| Registration form showed for already-registered players | `myRegisteredName` localStorage flag added |
+| No profile shown for recognized players | Real profile card (name, ID, phone, group, status badge) |
 
 ### Security & Auth
 
-| Bug | File(s) Changed | Fix |
-|---|---|---|
-| **Firebase API key stopped working** (`auth/api-key-not-valid`) with no obvious cause | `js/firebase.js` | Generated a new API key scoped to Identity Toolkit + Token Service + Cloud Firestore APIs |
-| **Google sign-in redirect broken** — `getRedirectResult()` returned `null` silently due to Chrome cross-origin storage partitioning (custom domain vs Firebase `authDomain`) | `js/auth.js` | Switched to `signInWithPopup`; documented to never switch back without solving the cross-origin issue |
-| **Google sign-in popup errors swallowed silently** — `loginWithGoogle()` returned `null` on failure with no feedback | `js/auth.js` | Now throws a friendly `Error` for real failures (popup blocked, in-app browser issues), surfaced via toast |
-| **Admin collection read broken under new privacy rules** — `isAdminEmail()` did a full collection scan, which the default-admin privacy filter would break | `js/auth.js` | Switched to single-document `get()` instead of collection scan |
-| **Default admin could be removed** — no governance model existed | `js/auth.js`, `firestore.rules` | Default admin (`surajtxglive@gmail.com`) hardcoded as permanent in both layers; only default admin can add/remove others; max 3 admins total; other admins cannot see default admin in list |
-| **`setup-admin.html` exposed in public repo** — utility page for bootstrapping admin access | (file deleted) | Removed from repository entirely |
-| **Critical security/audit findings** — discovered during a full security audit | `firestore.rules`, multiple `js/` files | Fixed across commits `e63cefb` and `49a5a97` |
-| **Minor follow-up audit findings** | `firestore.rules`, `js/` files | Fixed in `cf63ff7` |
-| **Dead `isSuper`/`Owner` badge UI** — field was never set by any code, dead markup remained | `admin.html`, `js/admin.js` | Removed dead badge elements |
+| Bug | Fix |
+|---|---|
+| Firebase API key stopped working | New key scoped to correct APIs |
+| Google sign-in redirect broken (cross-origin storage partitioning) | Switched permanently to `signInWithPopup` |
+| Sign-in popup errors swallowed silently | Throws friendly error, surfaced via toast |
+| Admin collection read broken under privacy rules | Switched to single-document `get()` |
+| No default-admin governance | Hardcoded in both `auth.js` and `firestore.rules`; max 3 admins |
+| `setup-admin.html` in public repo | Deleted entirely |
+| Critical security/audit findings | Fixed across multiple commits |
 
 ### Data Integrity
 
-| Bug | File(s) Changed | Fix |
-|---|---|---|
-| **Duplicate player names allowed** — multiple flows look up players by exact name, taking first result; two same-named players would collide | `js/app.js` | Registration blocks duplicate names (case-insensitive) the same way it blocks duplicate eFootball IDs |
+| Bug | Fix |
+|---|---|
+| Duplicate player names allowed | Registration blocks duplicate names (case-insensitive) |
+| `snap.data()` called without `snap.exists()` check in `submitPlayerScore()` | Added exists check; returns `'waiting'` if doc missing |
+| `stats.js` using `where('__name__', '==', id)` collection query | Replaced with `getDoc()` single-document read |
 
-### UX & PWA
+### PWA / Service Worker
 
-| Bug | File(s) Changed | Fix |
-|---|---|---|
-| **iOS "Add to Home Screen" banner never seen** — only shown when user tapped the instructions video play button | `index.html`, `js/app.js` | Now shows as a standalone dismissible banner on page load (iOS Safari, not already installed) |
-| **Stale cached code in installed PWAs/open tabs** — users wouldn't know a new version existed | `sw.js`, `index.html`, `js/app.js` | App detects new service worker takeover via `statechange` + `controllerchange` events; shows "Update available" one-tap reload banner |
-| **Browser HTTP caching outlasts deploys** — stale JS served after push even though `curl` shows new file | `sw.js` | Service worker cache version bump (`eleague-vN`) forces refresh for returning visitors; documented: hard-refresh resolves for immediate testing |
-| **No way to access admin panel from the installed PWA** — admin had to type the URL manually | `index.html`, `manifest.json` | Added ⚙️ Admin nav button in player app bottom nav + PWA manifest shortcut (long-press app icon on Android shows "Admin Panel" quick-launch) |
-| **Group builder had no way to move players between groups** — only drag-and-drop which didn't work well on mobile | `admin.html` | Added Move → dropdown on every player tile; picks another group and moves them instantly with live count updates |
-| **No per-group confirmation before saving** — easy to accidentally save a wrong group split | `admin.html` | Added ✓ Approve Group button per group; Save button locked until all groups approved |
-| **Format labels were unclear** ("Groups of 4/3") | `admin.html` | Renamed to "4 Player Group", "3 Player Group", and "2 Groups" with clearer descriptions |
-| **No way to switch from admin back to player view without logging out** — disruptive if you manage the tournament and play in it | `admin.html` | Added 👤 Player button in admin header; navigates to player app without ending the Google session so returning to admin is instant |
-| **No way to remove a registered player** — rejected players remained in the list permanently | `admin.html`, `js/admin.js` | Added 🗑️ remove button on every player card; confirms before deleting; permanently removes from Firestore and logs the action |
+| Bug | Fix |
+|---|---|
+| F5 served stale `admin.html` from SW cache | HTML/navigation requests use network-first strategy; static assets remain cache-first |
+| SW update only checked on `visibilitychange` | Now checks immediately on load + every 60 seconds |
+| Duplicate update banners on same screen | Single `alreadyShown` guard inside `showUpdateBanner()` covers all three SW event paths (`waiting`, `statechange`, `controllerchange`) |
+| No update banner on `admin.html` | Full SW update detection added to admin page |
+
+### UX
+
+| Bug | Fix |
+|---|---|
+| iOS "Add to Home Screen" banner hidden behind play button | Standalone dismissible banner shown on page load |
+| No admin access from installed PWA | ⚙️ Admin nav button + PWA manifest shortcut |
+| No way to move players between groups on mobile | Move → dropdown per player tile |
+| No per-group confirmation before saving | ✓ Approve Group per group; Save locked until all approved |
+| Group draft not saved across refresh | Save Draft → `localStorage`; restored on reload |
+| Draft only saved group data, not format | Draft now saves `{format, groups}`; radio button restored on load |
+| Banner/instructions video hidden once tournament started | Banner + play button always shown at top of Home in all states |
 
 ---
 
@@ -251,15 +275,15 @@ Shareable knockout bracket view, canvas image export
 
 | Decision | Why |
 |---|---|
-| No framework (vanilla JS) | No build step = simple GitHub Pages deploy; fast loads; no dependency churn |
-| No Firebase Cloud Functions | Requires paid Blaze plan; free Spark tier used; push trigger moved to Cloudflare Worker |
-| No Firebase Hosting | GitHub Pages + Cloudflare DNS is simpler and free; no server-side logic needed |
-| No Firebase Storage for screenshots | Would require Blaze plan; screenshot disputes handled via WhatsApp instead |
-| `signInWithPopup` not `signInWithRedirect` | Redirect sign-in broken by Chrome cross-origin storage partitioning between custom domain and Firebase authDomain |
-| Player-side score reporting + auto-finalize | Reduces admin workload — admin only intervenes on mismatches |
-| Two independent auth layers (client + Firestore rules) | Client-side is UX only; rules are the actual security boundary — both independently enforce access |
+| No framework (vanilla JS) | No build step = simple GitHub Pages deploy; fast loads |
+| No Firebase Cloud Functions | Requires paid Blaze plan; push trigger moved to Cloudflare Worker |
+| No Firebase Hosting | GitHub Pages + Cloudflare DNS is simpler and free |
+| `signInWithPopup` not `signInWithRedirect` | Redirect broken by Chrome cross-origin storage partitioning |
+| Player-side score reporting + auto-finalize | Reduces admin workload |
+| Two independent auth layers | Client-side is UX only; rules are the actual security boundary |
 | Service-account JWT built manually with Web Crypto | Cloudflare Workers can't use Node's `google-auth-library` |
-| Default admin hardcoded in both `auth.js` and `firestore.rules` | Governance can't be bypassed even if one layer is edited |
+| Default admin hardcoded in both layers | Governance can't be bypassed even if one layer is edited |
+| Dark theme via CSS variables | Single source of truth; all pages import `style.css` |
 
 ---
 
@@ -267,93 +291,57 @@ Shareable knockout bracket view, canvas image export
 
 | What | How |
 |---|---|
-| App code | Push to `main` → GitHub Pages auto-deploys (no build step) |
-| Firestore rules | `firebase deploy --only firestore:rules` — manual, not touched by GitHub Pages |
-| New version rollout | Bump `CACHE` constant in `sw.js` (e.g. `eleague-v35` → `eleague-v36`) before pushing |
-| Push notification Worker | `cd eleague-notifier && export CLOUDFLARE_API_TOKEN=<token> && npx wrangler deploy` |
+| App code | Push to `main` → GitHub Pages auto-deploys |
+| Firestore rules | `firebase deploy --only firestore:rules` — manual |
+| New version rollout | Bump `CACHE` in `sw.js` + `APP_VERSION` in `index.html` + `CURRENT_APP_VERSION` in `admin.html` |
+| Push notification Worker | `cd eleague-notifier && npx wrangler deploy` |
 
 ---
 
-## Known Gotchas (Learned the Hard Way)
+## Known Gotchas
 
-1. **Browser HTTP caching outlasts deploys** — GitHub Pages can't set custom HTTP headers; service worker cache version bump is the only lever
-2. **Firebase API key can randomly stop working** — generate a new one scoped to the right APIs; don't troubleshoot the same restriction screens
-3. **Redirect sign-in is broken** — always use `signInWithPopup`; do not switch back without solving the cross-origin storage partitioning issue
-4. **Firestore rules must be manually deployed** — `firebase deploy --only firestore:rules`; GitHub Pages only serves static files
-5. **Cloudflare Worker service-account JSON** — stored only as Worker secrets; original JSON deleted; regenerate via `wrangler secret put` if credentials are lost
-6. **`setup-admin.html` was in the public repo** — removed; don't re-add any admin bootstrap utilities without access control
+1. **Browser HTTP caching** — SW cache version bump is the only lever (GitHub Pages can't set custom headers)
+2. **Firebase API key** — can randomly stop working; generate a new one scoped to the right APIs
+3. **Redirect sign-in is broken** — always use `signInWithPopup`
+4. **Firestore rules must be manually deployed** — GitHub Pages only serves static files
+5. **Cloudflare Worker credentials** — stored as Worker secrets only; regenerate via `wrangler secret put` if lost
+6. **`setup-admin.html`** — removed; don't re-add any admin bootstrap utilities without access control
+7. **Tiffany (#21F1A8) is a bright colour** — always use dark text (#171717) on Tiffany backgrounds; reserve white text for truly dark surfaces only
 
 ---
 
-## Commit History (All 50 Commits)
+## Commit History (This Session)
 
 | Commit | Message |
 |---|---|
+| `b05ab36` | Always show banner + instructions play button on home screen — v44 |
+| `b282540` | Fix all remaining white/light surfaces for dark theme — v43 |
+| `8a7c018` | Match colour palette — Tiffany header, Dark Gray body — v42 |
+| `fa59007` | Fix dark theme contrast — surfaces visibly distinct from background — v41 |
+| `08a75fa` | Full dark theme — Tiffany + Dark Gray throughout — v40 |
+| `c0d4e7b` | Force immediate SW update check on load + every 60s — v39 |
+| `13ac3ff` | Bump to v38 to test update banner fix |
+| `0a921a8` | Fix duplicate update banners — single alreadyShown guard across all SW paths |
+| `13632c4` | Rebrand colour scheme to Tiffany (#21F1A8) + Dark Gray (#171717) — v37 |
+| `23b9c88` | Full audit fixes — crash guards, admin update banner, efficiency |
+| `a5e2a04` | Fix stale admin.html served from SW cache on F5 |
+| `da4e571` | Fix draft saving format selection and restore sync |
+| `44a1138` | Fix group draft save and simplify Apply button |
+| `3cbd69c` | Add Save Draft to group builder — survives refresh |
 | `74dc971` | Improve group builder — rename formats, move player, per-group approve |
 | `fc393ea` | Add group format picker — groups of 4, groups of 3, or 2 groups |
 | `7e184d4` | Add Player View switch button to admin header |
 | `446e780` | Add remove player option to admin Players tab |
 | `d09188a` | Add Admin nav link to player app and PWA shortcut |
-| `98883ad` | Add PROJECT_STATUS.md — full project history, bugs fixed, architecture decisions |
-| `26d1603` | Show iOS Add to Home Screen banner on load, not hidden behind a video |
-| `90d6d80` | Let verification accept phone OR eFootball ID, not just ID |
-| `7bf9d8a` | Add explicit verify option for players already in the admin's list |
-| `3866076` | Add 'Not you? Switch account' reset link to the profile card |
-| `a6328b4` | Fix identity hijack bug in My Matches search |
-| `4084b83` | Personalize the app based on registration status |
-| `5d7104d` | Show a real profile instead of a generic message for returning players |
-| `bc81107` | Retroactively flag players as registered via My Matches lookup |
-| `661ba82` | Let admin see which players are on the latest app version |
-| `8bbb0a1` | Add update-available banner to the player app |
-| `f04b457` | Hide registration form for players who already registered on this device |
-| `11fb1ad` | Enforce unique player names at registration |
-| `31c4997` | Update help docs for the match-flow overhaul, add player-facing Help |
-| `5f50d05` | Document the Cloudflare Worker match-reminder notifier in PROJECT.md |
-| `ff08e5c` | Add client-side push notification foundation (step 4, part 1) |
-| `a8b20f8` | Add dual score entry with auto-finalize / mismatch detection |
-| `00c5897` | Add team/manager setup submission (step 1 of match-flow overhaul) |
-| `3b4f517` | Add share button to home banner, sharing the intro video |
-| `7ec1ad3` | Trigger Add to Home Screen from the same play button as the video |
-| `3ef5f04` | Move intro video mute button to bottom-center |
-| `b758099` | Rename install button to 'Add to Home Screen' |
-| `b278f33` | Add Install App option to the instructions video overlay |
-| `40938b2` | Add unmute toggle to intro video |
-| `9ef8e52` | Add instructions video accessible via play button on home banner |
-| `3a4580a` | Add intro video overlay on the player-facing home page |
-| `9c6e289` | Make welcome banner image fill panel edge-to-edge |
-| `64e96de` | Show clear error message when Google sign-in popup fails |
-| `0fdf866` | Add in-app Help tab to admin panel with match-day guide |
-| `e988dea` | Add ADMIN_GUIDE.md with step-by-step match-day instructions |
-| `6816328` | Add default-admin governance model |
-| `532791b` | Add PROJECT.md documenting architecture, data model, and auth flow gotchas |
-| `67f18f7` | Bump SW cache version after dispute.js change |
-| `cf63ff7` | Fix minor audit findings |
-| `48a7127` | Revert to signInWithPopup for Google login |
-| `8919227` | Replace broken Firebase API key with newly generated one |
-| `49a5a97` | Fix remaining audit findings |
-| `4e3361f` | Remove dead isSuper/Owner badge UI |
-| `f961b30` | Add Firebase CLI config for firestore rules deployment |
-| `e63cefb` | Fix critical security/audit issues |
-| `780d956` | Remove setup-admin.html from public repo |
-| `2b111dd` | Switch Google admin login from popup to redirect flow |
-| `cd30a3a` | Add files via upload |
-| `51a776d` | Add files via upload |
-| `8c1ab93` | Add files via upload |
-| `836a21f` | Add files via upload |
-| `97d3c75` | Add files via upload |
-| `0829b2f` | Add files via upload |
-| `18140ca` | Add files via upload |
-| `22d88e6` | Add files via upload |
-| `d1cbb9e` | Add files via upload |
 
 ---
 
 ## Current State
 
-**No known bugs.** No `TODO` or `FIXME` comments in the codebase. All discovered issues have been resolved and documented above.
+**No known bugs.** All surfaces use the dark theme. Banner and instructions video are always visible on the Home tab. SW update detection is reliable — users see the banner within 60 seconds of a new deploy without any manual action.
 
 ### Potential Future Work (Not Started)
-- Mid-tournament player withdrawal / substitution UI (currently requires manual admin handling)
+- Mid-tournament player withdrawal / substitution UI
 - Advanced bracket seeding algorithms
 - Email / SMS notifications (currently push-only via FCM)
 - Past-season archive / tournament replay
