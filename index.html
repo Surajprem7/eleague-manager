@@ -320,7 +320,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v43';
+  const APP_VERSION = 'v44';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -553,6 +553,20 @@
   let cachedStatus = null;
   let cachedLiveMatches = [];
 
+  // Banner with instructions play button — always shown at top of home screen
+  const BANNER_HTML = `
+    <div style="border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem;position:relative">
+      <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
+      <button id="instructions-play-btn" aria-label="Watch instructions" style="position:absolute;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+        <span style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
+          <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0DB87E;margin-left:5px"></span>
+        </span>
+      </button>
+      <button id="banner-share-btn" aria-label="Share" style="position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
+    </div>`;
+
   function renderHome() {
     if (localStorage.getItem('myRegisteredName')) { renderMyDashboard(); return; }
     const el = document.getElementById('home-content');
@@ -560,24 +574,7 @@
     const liveMatches = cachedLiveMatches;
 
     if (!status) {
-      el.innerHTML = `
-        <div class="winner-banner" style="background:linear-gradient(135deg,#171717,#0DB87E);padding:0;overflow:hidden">
-          <div style="position:relative">
-            <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
-            <button id="instructions-play-btn" aria-label="Watch instructions" style="position:absolute;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
-              <span style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
-                <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0DB87E;margin-left:5px"></span>
-              </span>
-            </button>
-            <button id="banner-share-btn" aria-label="Share" style="position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            </button>
-          </div>
-          <div style="padding:1.25rem 1.5rem 1.5rem">
-            <h2>Welcome!</h2>
-            <p>Tournament registration is open. Sign up now!</p>
-          </div>
-        </div>
+      el.innerHTML = BANNER_HTML + `
         <div class="card">
           <div class="card-title">How it works</div>
           <div class="player-item"><div class="player-avatar">1</div><div><div class="player-name">Register</div><div class="player-sub">Fill in your details to join</div></div></div>
@@ -589,7 +586,7 @@
     }
 
     if (status.phase === 'done' && status.winner) {
-      el.innerHTML = `
+      el.innerHTML = BANNER_HTML + `
         <div class="winner-banner">
           <span class="trophy">🏆</span>
           <h2>${esc(status.winner)}</h2>
@@ -621,7 +618,7 @@
           </div>`).join('')}
       </div>` : '';
 
-    el.innerHTML = `
+    el.innerHTML = BANNER_HTML + `
       <div style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
         ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
       </div>
