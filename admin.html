@@ -192,7 +192,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v42';
+  const CURRENT_APP_VERSION = 'v43';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -555,7 +555,7 @@
           ${players.map(p => `
             <div class="drag-player" data-id="${p.id}" data-name="${esc(p.name)}" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
               <span>${esc(p.name)}</span>
-              <select class="move-select" style="font-size:.72rem;border:1px solid var(--gray-200);border-radius:6px;padding:2px 4px;background:#fff;color:var(--gray-700);cursor:pointer">
+              <select class="move-select" style="font-size:.72rem;border:1px solid var(--gray-200);border-radius:6px;padding:2px 4px;background:#2E2E2E;color:#CCCCCC;cursor:pointer">
                 <option value="">Move →</option>
                 ${letters.filter(l => l !== letter).map(l => `<option value="${l}">Group ${l}</option>`).join('')}
               </select>
