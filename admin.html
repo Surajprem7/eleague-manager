@@ -187,7 +187,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v49';
+  const CURRENT_APP_VERSION = 'v50';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -647,15 +647,15 @@
       return;
     }
     const groups = [...new Set(matches.map(m => m.group))].sort();
-    let html = '';
-    groups.forEach(g => {
-      const gMatches = matches.filter(m => m.group === g);
-      html += `<div style="margin-bottom:1.25rem">
-        <div class="card-title" style="margin-bottom:0.5rem">Group ${g}</div>
-        ${gMatches.map(m => matchAdminCard(m)).join('')}
-      </div>`;
-    });
-    el.innerHTML = html;
+    // Interleave: A-M1, B-M1, A-M2, B-M2 ...
+    const byGroup = {};
+    groups.forEach(g => { byGroup[g] = matches.filter(m => m.group === g); });
+    const maxLen = Math.max(...groups.map(g => byGroup[g].length));
+    const interleaved = [];
+    for (let i = 0; i < maxLen; i++) {
+      groups.forEach(g => { if (byGroup[g][i]) interleaved.push(byGroup[g][i]); });
+    }
+    el.innerHTML = interleaved.map(m => matchAdminCard(m)).join('');
   }
 
   function matchAdminCard(m) {
