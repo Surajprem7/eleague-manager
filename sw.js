@@ -28,7 +28,9 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.openWindow('./'));
 });
 
-const CACHE = 'eleague-v65';
+const CACHE = 'eleague-v66';
+// Large files (videos) excluded — they cache on first use so they
+// don't block SW installation and cause silent update failures.
 const ASSETS = [
   './',
   './index.html',
@@ -52,9 +54,7 @@ const ASSETS = [
   './manifest.json',
   './assets/icon-192.png',
   './assets/icon-512.png',
-  './assets/banner.png',
-  './assets/intro.mp4',
-  './assets/instructions.mp4'
+  './assets/banner.png'
 ];
 
 self.addEventListener('install', e => {
