@@ -45,6 +45,7 @@
     <button class="admin-tab" data-tab="results">Results</button>
     <button class="admin-tab" data-tab="disputes">Disputes</button>
     <button class="admin-tab" data-tab="log">Activity Log</button>
+    <button class="admin-tab" data-tab="announce">📢 Announce</button>
     <button class="admin-tab" data-tab="admins">👥 Admins</button>
     <button class="admin-tab" data-tab="help">❔ Help</button>
   </div>
@@ -103,6 +104,26 @@
       <div class="tab-content" id="tab-log" style="display:none">
         <div id="log-panel">
           <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ANNOUNCE TAB -->
+      <div class="tab-content" id="tab-announce" style="display:none">
+        <div class="card">
+          <div class="card-title">📢 Send Announcement to All Users</div>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:1rem">Message appears instantly on every player's screen in real time.</p>
+          <div class="form-group">
+            <textarea id="announce-msg" class="form-input" rows="3" placeholder="e.g. Please refresh the app to get the latest update!" style="resize:vertical"></textarea>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="announce-send-btn" class="btn btn-primary" style="flex:1">📢 Send to All</button>
+            <button id="announce-clear-btn" class="btn btn-secondary">✕ Clear</button>
+          </div>
+          <div id="announce-status" style="margin-top:.75rem;font-size:.82rem;color:var(--gray-600)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Current Active Message</div>
+          <div id="announce-current" style="font-size:.85rem;color:var(--gray-700)">None</div>
         </div>
       </div>
 
@@ -192,7 +213,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v56';
+  const CURRENT_APP_VERSION = 'v57';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -204,7 +225,7 @@
   import { getLogs, LOG_ICON } from './js/activitylog.js';
   import { getDisputes, resolveDispute } from './js/dispute.js';
   import {
-    collection, getDocs, query, where, doc, updateDoc, serverTimestamp
+    collection, getDocs, query, where, doc, updateDoc, setDoc, getDoc, serverTimestamp, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   function toast(msg, duration = 2500) {
@@ -260,6 +281,7 @@
       if (tab.dataset.tab === 'disputes') loadDisputes();
       if (tab.dataset.tab === 'log')      loadActivityLog();
       if (tab.dataset.tab === 'admins')   loadAdmins();
+      if (tab.dataset.tab === 'announce') loadAnnounce();
     });
   });
 
@@ -905,6 +927,39 @@
     } catch(e) {
       el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading log.</p></div>';
     }
+  }
+
+  // ── ANNOUNCE ──
+  let announceUnsubscribe = null;
+  function loadAnnounce() {
+    const annRef = doc(db, 'announcements', 'current');
+    // Show current active message
+    const currentEl = document.getElementById('announce-current');
+    if (announceUnsubscribe) announceUnsubscribe();
+    announceUnsubscribe = onSnapshot(annRef, snap => {
+      const data = snap.exists() ? snap.data() : null;
+      if (data && data.active && data.message) {
+        currentEl.innerHTML = `<div style="background:#1a3d2a;border:1px solid var(--green);border-radius:10px;padding:.75rem 1rem;color:var(--green);font-weight:600">${esc(data.message)}</div>`;
+        document.getElementById('announce-msg').value = data.message;
+      } else {
+        currentEl.textContent = 'None — no active announcement.';
+      }
+    });
+
+    document.getElementById('announce-send-btn').onclick = async () => {
+      const msg = document.getElementById('announce-msg').value.trim();
+      if (!msg) { toast('Type a message first'); return; }
+      await setDoc(annRef, { message: msg, active: true, sentAt: serverTimestamp() });
+      document.getElementById('announce-status').textContent = '✅ Sent to all users!';
+      setTimeout(() => { document.getElementById('announce-status').textContent = ''; }, 3000);
+    };
+
+    document.getElementById('announce-clear-btn').onclick = async () => {
+      await setDoc(annRef, { message: '', active: false, sentAt: serverTimestamp() });
+      document.getElementById('announce-msg').value = '';
+      document.getElementById('announce-status').textContent = '🗑️ Announcement cleared.';
+      setTimeout(() => { document.getElementById('announce-status').textContent = ''; }, 3000);
+    };
   }
 
   // ── ADMINS MANAGEMENT ──

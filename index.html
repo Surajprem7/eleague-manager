@@ -72,6 +72,12 @@
   🔄 New update available — Tap here to refresh!
 </div>
 
+<!-- Announcement Banner -->
+<div id="announce-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9998;background:#F9AB00;color:#171717;text-align:center;padding:14px 1rem 14px 1rem;font-size:.9rem;font-weight:700;box-shadow:0 2px 12px rgba(0,0,0,0.3);display:none">
+  <span id="announce-banner-text"></span>
+  <button onclick="document.getElementById('announce-banner').style.display='none'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.15);border:none;border-radius:50%;width:26px;height:26px;font-size:.85rem;cursor:pointer;color:#171717">✕</button>
+</div>
+
 
 <!-- Install App Prompt Modal -->
 <div id="install-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center;padding:0">
@@ -334,7 +340,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v56';
+  const APP_VERSION = 'v57';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -346,7 +352,7 @@
     onGroups, onPlayers, onPlayerMatches, cleanupAll
   } from './js/realtime.js';
   import {
-    collection, getDocs, query, where, doc, updateDoc
+    collection, getDocs, query, where, doc, updateDoc, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   function reportAppVersion(playerId) {
@@ -553,6 +559,19 @@
   const offlineBanner = document.getElementById('offline-banner');
   window.addEventListener('offline', () => offlineBanner.classList.add('show'));
   window.addEventListener('online',  () => offlineBanner.classList.remove('show'));
+
+  // Announcement banner — real-time from Firestore
+  onSnapshot(doc(db, 'announcements', 'current'), snap => {
+    const banner = document.getElementById('announce-banner');
+    const textEl = document.getElementById('announce-banner-text');
+    const data = snap.exists() ? snap.data() : null;
+    if (data && data.active && data.message) {
+      textEl.textContent = '📢 ' + data.message;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  });
 
   // Toast
   function toast(msg) {
