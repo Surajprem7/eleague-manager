@@ -279,6 +279,8 @@
       document.getElementById('admin-app').style.display = 'block';
       document.getElementById('admin-email').textContent = user.email;
       currentAdminEmail = user.email;
+      // Measure header NOW that admin-app is visible (was display:none before, so earlier calls got height 0)
+      requestAnimationFrame(() => { fixOffsets(); setTimeout(fixOffsets, 150); });
       loadPlayers();
     } else {
       document.getElementById('login-screen').style.display = 'flex';
