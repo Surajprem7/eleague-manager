@@ -185,9 +185,14 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Update Banner -->
+<div id="update-banner" onclick="location.reload()" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#21F1A8;color:#171717;text-align:center;padding:14px 1rem;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
+  🔄 New update available — Tap here to refresh!
+</div>
+
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v55';
+  const CURRENT_APP_VERSION = 'v56';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -978,6 +983,16 @@
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') registration.update().catch(() => {});
       });
+      function showUpdateBanner() {
+        document.getElementById('update-banner').style.display = 'block';
+      }
+      registration.addEventListener('updatefound', () => {
+        const w = registration.installing;
+        if (w) w.addEventListener('statechange', () => {
+          if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner();
+        });
+      });
+      if (registration.waiting && navigator.serviceWorker.controller) showUpdateBanner();
       navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }).catch(() => {});
   }

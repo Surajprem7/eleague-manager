@@ -67,6 +67,11 @@
 <!-- Offline Banner -->
 <div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
 
+<!-- Update Banner -->
+<div id="update-banner" onclick="location.reload()" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#21F1A8;color:#171717;text-align:center;padding:14px 1rem;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
+  🔄 New update available — Tap here to refresh!
+</div>
+
 
 <!-- Install App Prompt Modal -->
 <div id="install-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center;padding:0">
@@ -329,7 +334,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v55';
+  const APP_VERSION = 'v56';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -1121,7 +1126,17 @@
         if (document.visibilityState === 'visible') registration.update().catch(() => {});
       });
 
-      // Auto-reload when a new SW takes over — no user action needed.
+      // Show update banner when a new SW is waiting, auto-reload when it takes over.
+      function showUpdateBanner() {
+        document.getElementById('update-banner').style.display = 'block';
+      }
+      registration.addEventListener('updatefound', () => {
+        const w = registration.installing;
+        if (w) w.addEventListener('statechange', () => {
+          if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner();
+        });
+      });
+      if (registration.waiting && navigator.serviceWorker.controller) showUpdateBanner();
       navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }).catch(() => {});
   }
