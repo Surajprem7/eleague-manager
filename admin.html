@@ -51,18 +51,20 @@
   </div>
 
   <script>
-    // Measure actual header + tabs height and set CSS variables so content doesn't hide behind them
+    // Measure actual header height and keep content clear of fixed header + tabs
     function fixOffsets() {
       const h = document.querySelector('.admin-header');
       if (!h) return;
       const hh = h.getBoundingClientRect().height;
-      document.documentElement.style.setProperty('--header-h', hh + 'px');
+      if (hh > 10) document.documentElement.style.setProperty('--header-h', hh + 'px');
     }
+    document.addEventListener('DOMContentLoaded', fixOffsets);
     window.addEventListener('load', fixOffsets);
     window.addEventListener('resize', fixOffsets);
-    setTimeout(fixOffsets, 50);
-    setTimeout(fixOffsets, 300);
-    setTimeout(fixOffsets, 800);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fixOffsets);
+    setTimeout(fixOffsets, 0);
+    setTimeout(fixOffsets, 100);
+    setTimeout(fixOffsets, 500);
   </script>
 
   <main class="page">
@@ -751,6 +753,7 @@
           </div>
           <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">✓ Save Score</button>
           <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+          <button class="btn btn-sm btn-danger" onclick="cancelLive('${m.id}')">✕ Cancel Live</button>
         </div>` : ''}
       ${m.status === 'completed' ? `
         <div style="display:flex;justify-content:flex-end">
@@ -768,6 +771,11 @@
   window.goLive = async (id) => {
     try { await setMatchLive(id); toast('Match is now live! 🔴'); loadMatches(); }
     catch (e) { toast(e.message); }
+  };
+  window.cancelLive = async (id) => {
+    if (!confirm('Cancel this live match and set it back to Scheduled?')) return;
+    await updateMatch(id, { status: 'scheduled' });
+    toast('Match set back to Scheduled'); loadMatches();
   };
   window.saveScore = async (id) => {
     const hs = parseInt(document.getElementById('hs-' + id)?.value);
@@ -861,6 +869,9 @@
         <div class="match-meta">
           <span class="badge badge-gray">${phaseLabels[m.phase] || m.phase}${m.group?' '+m.group:''}</span>
           <span class="badge badge-green">✓ Completed</span>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem">
+          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Share Result</button>
         </div>
       </div>`).join('');
   }

@@ -148,9 +148,15 @@
       <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">On the <strong>My Matches</strong> tab, tap <strong>Enable</strong> to get a notification 10 minutes before your scheduled match starts — even if you don't have the app open.</p>
     </div>
 
-    <div class="card">
+    <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">6. Track the tournament</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Check <strong>Standings</strong> for group tables, <strong>Stats</strong> for your goals/wins, and <strong>Bracket</strong> for the knockout stage once it starts. If a result looks wrong, use the <strong>Dispute</strong> tab to flag it for admin review.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Check <strong>Standings</strong> for group tables, <strong>Stats</strong> for your goals/wins, and <strong>Bracket</strong> for the knockout stage once it starts.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ Report an Issue</div>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6;margin-bottom:.75rem">If a result looks wrong or you have a problem, email the admin directly. Include your name, the match join code, and what happened.</p>
+      <a href="mailto:surajtxglive@gmail.com?subject=eLeague%20Issue&body=Name%3A%0AMatch%20Code%3A%0AWhat%20happened%3A" class="btn btn-secondary btn-full" style="text-decoration:none">✉️ Email Admin</a>
     </div>
   </div>
 </div>
@@ -235,18 +241,16 @@
     <!-- MY MATCHES -->
     <section class="section" id="sec-matches">
       <div class="card" style="margin-bottom:0.75rem">
-        <div class="card-title">Find my matches</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" class="form-input" id="player-search" placeholder="Enter your name" style="flex:1" />
-          <button class="btn btn-primary" id="search-btn">Search</button>
+        <div class="card-title">My Matches</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="form-input form-select" id="player-search" style="flex:1"></select>
+          <button class="btn btn-primary" id="search-btn">View</button>
         </div>
+        <p class="form-hint" style="margin-top:0.4rem">Showing your matches by default. Select another player to view theirs.</p>
       </div>
       <div id="notif-prompt" style="display:none;margin-bottom:0.75rem"></div>
       <div id="my-matches-list">
-        <div class="empty-state">
-          <span class="icon">📅</span>
-          <p>Search your name to see your matches</p>
-        </div>
+        <div class="loader"><div class="spinner"></div></div>
       </div>
     </section>
 
@@ -266,33 +270,21 @@
       </div>
     </section>
 
-    <!-- DISPUTE -->
-    <section class="section" id="sec-dispute">
-      <div class="card">
-        <div class="card-title">⚠️ Report a Match Issue</div>
-        <p style="font-size:0.88rem;color:var(--gray-600);margin-bottom:1rem">If you believe a match result is incorrect, raise a dispute here. Admin will review it.</p>
-        <div class="form-group">
-          <label class="form-label">Your name</label>
-          <input type="text" class="form-input" id="dispute-name" placeholder="Your name" maxlength="40" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Match Join Code</label>
-          <input type="text" class="form-input join-code-input" id="dispute-code" placeholder="e.g. GRP-A-M1" maxlength="20" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">What happened?</label>
-          <textarea class="form-input" id="dispute-reason" placeholder="Describe the issue clearly..." rows="3" style="resize:none;height:80px"></textarea>
-        </div>
-        <button class="btn btn-danger btn-full" id="dispute-submit">Submit Dispute</button>
-        <div id="dispute-result" style="margin-top:1rem"></div>
-      </div>
-    </section>
-
     <!-- STANDINGS -->
     <section class="section" id="sec-standings">
       <div id="standings-content">
         <div class="loader"><div class="spinner"></div></div>
       </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="section" id="sec-stats">
+      <iframe id="stats-iframe" src="stats.html" style="width:100%;height:calc(100vh - 130px);border:none;border-radius:var(--radius-lg);display:block" loading="lazy"></iframe>
+    </section>
+
+    <!-- BRACKET -->
+    <section class="section" id="sec-bracket">
+      <iframe id="bracket-iframe" src="bracket.html" style="width:100%;height:calc(100vh - 130px);border:none;border-radius:var(--radius-lg);display:block" loading="lazy"></iframe>
     </section>
 
   </div>
@@ -320,18 +312,14 @@
     <span class="icon">🏆</span>
     <span>Standings</span>
   </button>
-  <button class="nav-item nav-registered-only" data-section="dispute">
-    <span class="icon">⚠️</span>
-    <span>Dispute</span>
-  </button>
-  <a href="stats.html" class="nav-item nav-registered-only" style="text-decoration:none">
+  <button class="nav-item nav-registered-only" data-section="stats">
     <span class="icon">📊</span>
     <span>Stats</span>
-  </a>
-  <a href="bracket.html" class="nav-item nav-registered-only" style="text-decoration:none">
-    <span class="icon">🏆</span>
+  </button>
+  <button class="nav-item nav-registered-only" data-section="bracket">
+    <span class="icon">🥊</span>
     <span>Bracket</span>
-  </a>
+  </button>
   <a href="admin.html" class="nav-item" style="text-decoration:none">
     <span class="icon">⚙️</span>
     <span>Admin</span>
@@ -343,7 +331,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v66';
+  const APP_VERSION = 'v67';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -599,6 +587,7 @@
 
   // ── NAVIGATION ──
   let currentSection = 'home';
+  let matchesTabInitialized = false;
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -607,6 +596,13 @@
       currentSection = btn.dataset.section;
       document.getElementById('sec-' + currentSection).classList.add('active');
       if (currentSection === 'standings') startStandingsListener();
+      if (currentSection === 'matches' && !matchesTabInitialized) {
+        matchesTabInitialized = true;
+        loadPlayerDropdown().then(() => {
+          const sel = document.getElementById('player-search');
+          if (sel.value) loadMatchesForPlayer(sel.value);
+        });
+      }
     });
   });
 
@@ -840,54 +836,59 @@
 
   // ── MY MATCHES — real-time ──
   let currentPlayerId = null;
+  let allPlayersList = [];
 
-  document.getElementById('search-btn').addEventListener('click', async () => {
-    const name = document.getElementById('player-search').value.trim();
-    if (!name) { toast('Enter your name to search'); return; }
+  async function loadPlayerDropdown() {
+    const sel = document.getElementById('player-search');
+    const myName = localStorage.getItem('myRegisteredName');
+    try {
+      const snap = await getDocs(collection(db, 'players'));
+      allPlayersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allPlayersList.sort((a, b) => {
+        if (a.name === myName) return -1;
+        if (b.name === myName) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      sel.innerHTML = allPlayersList.map(p =>
+        `<option value="${p.id}" ${p.name === myName ? 'selected' : ''}>${p.name}</option>`
+      ).join('');
+      if (!allPlayersList.length) {
+        sel.innerHTML = '<option value="">No approved players yet</option>';
+      }
+    } catch(e) {
+      sel.innerHTML = '<option value="">Could not load players</option>';
+    }
+  }
+
+  async function loadMatchesForPlayer(playerId) {
     const el = document.getElementById('my-matches-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    const player = allPlayersList.find(p => p.id === playerId);
+    if (!player) { el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found.</p></div>'; return; }
+    currentPlayerId = player.id;
 
-    try {
-      const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
-      if (snap.empty) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found. Check your name or register first.</p></div>';
-        return;
-      }
-      const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      currentPlayerId = player.id;
+    const myName = localStorage.getItem('myRegisteredName');
+    const isSelf = player.name === myName;
+    if (isSelf) reportAppVersion(player.id);
 
-      // This search box can look up ANY player (e.g. checking an opponent's
-      // schedule) — only treat it as "this is me" if no identity is set yet,
-      // or it matches the one already known. Otherwise we'd silently hijack
-      // this device's profile/dashboard/notifications to whoever was searched.
-      const existingFlag = localStorage.getItem('myRegisteredName');
-      const isSelf = !existingFlag || existingFlag === player.name;
-      if (isSelf) {
-        reportAppVersion(player.id);
-        if (!existingFlag) localStorage.setItem('myRegisteredName', player.name);
-      }
+    const notifPrompt = document.getElementById('notif-prompt');
+    if (!isSelf || player.fcmToken) {
+      notifPrompt.style.display = 'none';
+    } else if ('Notification' in window && Notification.permission !== 'denied') {
+      notifPrompt.style.display = 'block';
+      notifPrompt.innerHTML = `
+        <div class="card" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
+          <p style="font-size:.82rem;color:var(--gray-600);margin:0">🔔 Get notified 10 minutes before your match starts.</p>
+          <button class="btn btn-primary btn-sm" id="enable-notif-btn">Enable</button>
+        </div>`;
+      document.getElementById('enable-notif-btn').addEventListener('click', async () => {
+        const ok = await enableMatchNotifications(player.id);
+        if (ok) { toast('Notifications enabled! 🔔'); notifPrompt.style.display = 'none'; }
+        else { toast('Could not enable notifications on this device/browser.'); }
+      });
+    }
 
-      const notifPrompt = document.getElementById('notif-prompt');
-      if (!isSelf) {
-        notifPrompt.style.display = 'none';
-      } else if (player.fcmToken) {
-        notifPrompt.style.display = 'none';
-      } else if ('Notification' in window && Notification.permission !== 'denied') {
-        notifPrompt.style.display = 'block';
-        notifPrompt.innerHTML = `
-          <div class="card" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
-            <p style="font-size:.82rem;color:var(--gray-600);margin:0">🔔 Get notified 10 minutes before your match starts.</p>
-            <button class="btn btn-primary btn-sm" id="enable-notif-btn">Enable</button>
-          </div>`;
-        document.getElementById('enable-notif-btn').addEventListener('click', async () => {
-          const ok = await enableMatchNotifications(player.id);
-          if (ok) { toast('Notifications enabled! 🔔'); notifPrompt.style.display = 'none'; }
-          else { toast('Could not enable notifications on this device/browser.'); }
-        });
-      }
-
-      // Real-time listener for this player's matches
-      onPlayerMatches(player.id, matches => {
+    onPlayerMatches(player.id, matches => {
         if (!matches.length) {
           el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet. Check back soon!</p></div>';
           return;
@@ -930,9 +931,11 @@
           </div>`;
         }).join('');
       });
-    } catch(e) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading matches.</p></div>';
-    }
+  }
+
+  document.getElementById('search-btn').addEventListener('click', () => {
+    const sel = document.getElementById('player-search');
+    if (sel.value) loadMatchesForPlayer(sel.value);
   });
 
   // ── JOIN MATCH ──
