@@ -146,35 +146,9 @@
 <main class="page">
   <div class="container">
 
-    <a href="index.html" class="back-btn">← Back to Tournament</a>
-
-    <div class="tab-row">
-      <button class="stab active" onclick="showTab('search',this)">🔍 Player Stats</button>
-      <button class="stab" onclick="showTab('leaderboard',this)">🏆 Leaderboard</button>
-    </div>
-
-    <!-- SEARCH TAB -->
-    <div id="tab-search">
-      <div class="card" style="margin-bottom:0.75rem">
-        <div class="card-title">Find a player</div>
-        <div style="display:flex;gap:8px">
-          <input type="text" class="form-input" id="stats-search" placeholder="Enter player name" style="flex:1" />
-          <button class="btn btn-primary" id="stats-search-btn">Search</button>
-        </div>
-      </div>
-      <div id="stats-result">
-        <div class="empty-state">
-          <span class="icon">📊</span>
-          <p>Search a player name to see their stats</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- LEADERBOARD TAB -->
-    <div id="tab-leaderboard" style="display:none">
-      <div id="leaderboard-content">
-        <div class="loader"><div class="spinner"></div></div>
-      </div>
+    <!-- LEADERBOARD -->
+    <div id="leaderboard-content">
+      <div class="loader"><div class="spinner"></div></div>
     </div>
 
   </div>
@@ -184,13 +158,11 @@
 
 <script type="module">
   import { db } from './js/firebase.js';
-  import { getPlayerStats, getTopScorers } from './js/stats.js';
-  import {
-    collection, getDocs, query, where
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getTopScorers } from './js/stats.js';
 
   window.addEventListener('load', () => {
     setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1000);
+    loadLeaderboard();
   });
 
   window.addEventListener('offline', () => document.getElementById('offline-banner').classList.add('show'));
@@ -206,87 +178,8 @@
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // Tab switching
-  window.showTab = (tab, btn) => {
-    document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-search').style.display      = tab==='search'      ? 'block' : 'none';
-    document.getElementById('tab-leaderboard').style.display = tab==='leaderboard' ? 'block' : 'none';
-    if (tab === 'leaderboard') loadLeaderboard();
-  };
-
-  // ── PLAYER STATS ──
-  document.getElementById('stats-search-btn').addEventListener('click', async () => {
-    const name = document.getElementById('stats-search').value.trim();
-    if (!name) { toast('Enter a player name'); return; }
-    const el = document.getElementById('stats-result');
-    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-
-    try {
-      const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
-      if (snap.empty) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found.</p></div>';
-        return;
-      }
-      const player = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      const stats = await getPlayerStats(player.id);
-
-      const resultColors = { W:'#0DB87E', D:'#888', L:'#D93025' };
-
-      el.innerHTML = `
-        <div class="stat-hero">
-          <div class="avatar">${player.name[0].toUpperCase()}</div>
-          <h2>${esc(player.name)}</h2>
-          <p>⚽ ${esc(player.efootballId)}${player.group ? ' · Group ' + player.group : ''}</p>
-          ${stats.knockoutReached ? `<p style="margin-top:4px;font-size:0.8rem;background:rgba(255,255,255,0.15);display:inline-block;padding:2px 10px;border-radius:99px">Reached: ${stats.knockoutReached}</p>` : ''}
-        </div>
-
-        <div class="stat-grid-4">
-          <div class="mini-stat"><div class="num">${stats.played}</div><div class="lbl">Played</div></div>
-          <div class="mini-stat"><div class="num" style="color:#0DB87E">${stats.w}</div><div class="lbl">Won</div></div>
-          <div class="mini-stat"><div class="num" style="color:#888">${stats.d}</div><div class="lbl">Drawn</div></div>
-          <div class="mini-stat"><div class="num" style="color:#D93025">${stats.l}</div><div class="lbl">Lost</div></div>
-        </div>
-
-        <div class="card" style="margin-bottom:0.75rem">
-          <div class="card-title">Goals</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
-            <div><div style="font-size:1.4rem;font-weight:700;color:#0DB87E">${stats.gf}</div><div style="font-size:0.72rem;color:var(--gray-600)">Scored</div></div>
-            <div><div style="font-size:1.4rem;font-weight:700;color:#D93025">${stats.ga}</div><div style="font-size:0.72rem;color:var(--gray-600)">Conceded</div></div>
-            <div><div style="font-size:1.4rem;font-weight:700;color:${stats.gd>=0?'#0DB87E':'#D93025'}">${stats.gd>0?'+':''}${stats.gd}</div><div style="font-size:0.72rem;color:var(--gray-600)">Difference</div></div>
-          </div>
-          <div style="margin-top:1rem">
-            <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--gray-600)">
-              <span>Win rate</span><span>${stats.winRate}%</span>
-            </div>
-            <div class="win-bar-wrap"><div class="win-bar" style="width:${stats.winRate}%"></div></div>
-          </div>
-        </div>
-
-        ${stats.history.length ? `
-        <div class="card">
-          <div class="card-title">Match history</div>
-          ${stats.history.map(m => `
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--gray-100)">
-              <div class="result-badge result-${m.result}">${m.result}</div>
-              <div style="flex:1">
-                <div style="font-size:0.88rem;font-weight:500">vs ${esc(m.opponent)}</div>
-                <div style="font-size:0.72rem;color:var(--gray-600)">${m.phase}${m.group?' · Group '+m.group:''}</div>
-              </div>
-              <div style="font-size:1rem;font-weight:700;color:${m.result==='W'?'#21F1A8':m.result==='L'?'#D93025':'#888'}">${m.myScore} – ${m.oppScore}</div>
-            </div>`).join('')}
-        </div>` : ''}`;
-    } catch(e) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading stats.</p></div>';
-      console.error(e);
-    }
-  });
-
   // ── LEADERBOARD ──
-  let leaderboardLoaded = false;
   async function loadLeaderboard() {
-    if (leaderboardLoaded) return;
-    leaderboardLoaded = true;
     const el = document.getElementById('leaderboard-content');
     try {
       const scorers = await getTopScorers();
