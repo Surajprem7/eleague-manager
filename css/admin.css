@@ -28,18 +28,20 @@
   display: flex;
   gap: 0;
   background: #242424;
-  border-bottom: 1px solid #3D3D3D;
+  border-top: 1px solid #3D3D3D;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   position: fixed;
-  top: var(--header-h, 64px);
+  bottom: 0;
   left: 0;
   right: 0;
   z-index: 99;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 main.page {
-  padding-top: var(--total-top, 116px);
+  padding-top: var(--header-h, 64px);
+  padding-bottom: 60px;
 }
 .admin-tab {
   flex-shrink: 0;
