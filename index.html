@@ -75,6 +75,9 @@
 <!-- Announcement Banner -->
 <div id="announce-banner" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9998;background:#F9AB00;color:#171717;border-radius:16px;padding:1.5rem 1.75rem;font-size:1rem;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:340px;width:90%;text-align:center">
   <div id="announce-banner-text" style="margin-bottom:1rem;line-height:1.5"></div>
+  <div id="announce-refresh-wrap" style="display:none;margin-bottom:.75rem">
+    <button onclick="location.reload(true)" style="width:100%;background:#171717;color:#21F1A8;border:none;border-radius:99px;padding:10px 20px;font-size:.9rem;font-weight:700;cursor:pointer">🔄 Tap to Refresh Now</button>
+  </div>
   <button onclick="document.getElementById('announce-banner').style.display='none'" style="background:rgba(0,0,0,0.15);border:none;border-radius:99px;padding:8px 20px;font-size:.85rem;font-weight:700;cursor:pointer;color:#171717">OK, Got it</button>
 </div>
 
@@ -340,7 +343,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v59';
+  const APP_VERSION = 'v60';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -564,9 +567,11 @@
   onSnapshot(doc(db, 'announcements', 'current'), snap => {
     const banner = document.getElementById('announce-banner');
     const textEl = document.getElementById('announce-banner-text');
+    const refreshWrap = document.getElementById('announce-refresh-wrap');
     const data = snap.exists() ? snap.data() : null;
     if (data && data.active && data.message) {
       textEl.textContent = '📢 ' + data.message;
+      refreshWrap.style.display = data.showRefresh ? 'block' : 'none';
       banner.style.display = 'block';
     } else {
       banner.style.display = 'none';

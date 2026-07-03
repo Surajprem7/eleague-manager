@@ -131,6 +131,10 @@
           <div class="form-group">
             <textarea id="announce-msg" class="form-input" rows="3" placeholder="e.g. Please refresh the app to get the latest update!" style="resize:vertical"></textarea>
           </div>
+          <label style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;cursor:pointer;font-size:.85rem;color:var(--gray-700)">
+            <input type="checkbox" id="announce-refresh-chk" style="width:18px;height:18px;accent-color:var(--green)">
+            Include <strong style="color:var(--green)">🔄 Tap to Refresh Now</strong> button
+          </label>
           <div style="display:flex;gap:8px">
             <button id="announce-send-btn" class="btn btn-primary" style="flex:1">📢 Send to All</button>
             <button id="announce-clear-btn" class="btn btn-secondary">✕ Clear</button>
@@ -229,7 +233,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v59';
+  const CURRENT_APP_VERSION = 'v60';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -965,7 +969,8 @@
     document.getElementById('announce-send-btn').onclick = async () => {
       const msg = document.getElementById('announce-msg').value.trim();
       if (!msg) { toast('Type a message first'); return; }
-      await setDoc(annRef, { message: msg, active: true, sentAt: serverTimestamp() });
+      const showRefresh = document.getElementById('announce-refresh-chk').checked;
+      await setDoc(annRef, { message: msg, active: true, showRefresh, sentAt: serverTimestamp() });
       document.getElementById('announce-status').textContent = '✅ Sent to all users!';
       setTimeout(() => { document.getElementById('announce-status').textContent = ''; }, 3000);
     };
