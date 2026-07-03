@@ -25,23 +25,25 @@
 }
 
 .admin-tabs {
-  display: flex;
+  display: flex !important;
   gap: 0;
   background: #242424;
-  border-top: 1px solid #3D3D3D;
+  border-top: 2px solid #3D3D3D;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  position: fixed;
-  bottom: 0;
+  position: fixed !important;
+  bottom: 0 !important;
+  top: auto !important;
   left: 0;
   right: 0;
-  z-index: 99;
+  z-index: 200;
   padding-bottom: env(safe-area-inset-bottom);
+  min-height: 52px;
 }
 
 main.page {
-  padding-top: var(--header-h, 64px);
-  padding-bottom: 60px;
+  padding-top: var(--header-h, 64px) !important;
+  padding-bottom: 80px !important;
 }
 .admin-tab {
   flex-shrink: 0;
