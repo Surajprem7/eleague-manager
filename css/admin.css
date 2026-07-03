@@ -32,14 +32,14 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   position: fixed;
-  top: 56px;
+  top: var(--header-h, 64px);
   left: 0;
   right: 0;
   z-index: 99;
 }
 
 main.page {
-  padding-top: 108px;
+  padding-top: var(--total-top, 116px);
 }
 .admin-tab {
   flex-shrink: 0;
