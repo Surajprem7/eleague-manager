@@ -187,7 +187,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v51';
+  const CURRENT_APP_VERSION = 'v52';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -656,7 +656,7 @@
       groups.forEach(g => { if (byGroup[g][i]) interleaved.push(byGroup[g][i]); });
     }
     // Sort: live first, then scheduled-with-date, then scheduled-no-date, completed last
-    const statusRank = m => m.status === 'live' ? 0 : m.status === 'completed' ? 3 : m.scheduledAt ? 1 : 2;
+    const statusRank = m => m.scheduledAt && m.status === 'scheduled' ? 0 : m.status === 'live' ? 1 : m.status === 'completed' ? 3 : 2;
     interleaved.sort((a, b) => statusRank(a) - statusRank(b));
     el.innerHTML = interleaved.map(m => matchAdminCard(m)).join('');
   }
