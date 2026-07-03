@@ -67,11 +67,6 @@
 <!-- Offline Banner -->
 <div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
 
-<!-- Update Available Banner -->
-<div id="update-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:9997;background:#21F1A8;color:#171717;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;justify-content:space-between;gap:10px">
-  <span style="font-size:.85rem">🔄 A new version is available.</span>
-  <button id="update-reload-btn" style="background:#fff;color:#0DB87E;border:none;border-radius:99px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Update</button>
-</div>
 
 <!-- iOS Install Banner (Safari has no programmatic install prompt) -->
 <div id="ios-install-banner" style="display:none;position:fixed;left:12px;right:12px;bottom:calc(130px + env(safe-area-inset-bottom));z-index:9996;background:#0DB87E;color:#171717;border-radius:14px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.25);align-items:center;gap:10px">
@@ -320,7 +315,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v47';
+  const APP_VERSION = 'v48';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -1076,24 +1071,6 @@
   // indefinitely without the user knowing a new version exists.
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(registration => {
-      let alreadyShown = false;
-      function showUpdateBanner() {
-        if (alreadyShown) return;
-        alreadyShown = true;
-        document.getElementById('update-banner').style.display = 'flex';
-      }
-      // A worker may already be waiting from before this page loaded.
-      if (registration.waiting && navigator.serviceWorker.controller) showUpdateBanner();
-
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            showUpdateBanner();
-          }
-        });
-      });
 
       // Check for a new SW immediately on load, and again every 60 s —
       // without this the browser only checks on navigation, so long-lived
@@ -1106,13 +1083,9 @@
         if (document.visibilityState === 'visible') registration.update().catch(() => {});
       });
 
-      // controllerchange is a reliable backstop for when statechange races past 'installed'.
-      navigator.serviceWorker.addEventListener('controllerchange', () => showUpdateBanner());
+      // Auto-reload when a new SW takes over — no user action needed.
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }).catch(() => {});
-
-    document.getElementById('update-reload-btn').addEventListener('click', () => {
-      location.reload();
-    });
   }
 </script>
 </body>

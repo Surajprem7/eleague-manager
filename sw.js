@@ -28,7 +28,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.openWindow('./'));
 });
 
-const CACHE = 'eleague-v47';
+const CACHE = 'eleague-v48';
 const ASSETS = [
   './',
   './index.html',
