@@ -33,6 +33,15 @@ export async function updatePlayerStatus(playerId, status) {
 // Save groups and generate group stage matches
 export async function saveGroupsAndGenerateMatches(groups) {
   const batch = writeBatch(db);
+
+  // Delete existing group docs
+  const existingGroups = await getDocs(collection(db, 'groups'));
+  existingGroups.forEach(d => batch.delete(d.ref));
+
+  // Delete existing group-phase matches
+  const existingMatches = await getDocs(query(collection(db, 'matches'), where('phase', '==', 'group')));
+  existingMatches.forEach(d => batch.delete(d.ref));
+
   const groupLetters = [];
 
   for (const [letter, players] of Object.entries(groups)) {
