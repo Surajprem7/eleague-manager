@@ -187,7 +187,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v50';
+  const CURRENT_APP_VERSION = 'v51';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -655,11 +655,16 @@
     for (let i = 0; i < maxLen; i++) {
       groups.forEach(g => { if (byGroup[g][i]) interleaved.push(byGroup[g][i]); });
     }
+    // Sort: live first, then scheduled-with-date, then scheduled-no-date, completed last
+    const statusRank = m => m.status === 'live' ? 0 : m.status === 'completed' ? 3 : m.scheduledAt ? 1 : 2;
+    interleaved.sort((a, b) => statusRank(a) - statusRank(b));
     el.innerHTML = interleaved.map(m => matchAdminCard(m)).join('');
   }
 
   function matchAdminCard(m) {
-    const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : '';
+    const dt = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000) : null;
+    const date = dt ? dt.toISOString().slice(0, 16) : '';
+    const dateDisplay = dt ? dt.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '';
     const statusColor = m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue';
     return `<div class="match-card" style="margin-bottom:0.75rem">
       <div class="match-teams">
@@ -684,6 +689,7 @@
           ${m.awayTeamSetup ? `<div><strong>${esc(m.awayName)}:</strong> ${esc(m.awayTeamSetup)}</div>` : `<div style="color:var(--gray-600)"><strong>${esc(m.awayName)}:</strong> not submitted yet</div>`}
         </div>` : ''}
       ${m.status === 'scheduled' ? `
+        ${dateDisplay ? `<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 Scheduled: ${dateDisplay}</div>` : ''}
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <input type="datetime-local" class="form-input" style="flex:1;min-height:40px;font-size:0.82rem" id="dt-${m.id}" value="${date}" />
           <button class="btn btn-secondary btn-sm" onclick="saveSchedule('${m.id}')">📅 Schedule</button>
