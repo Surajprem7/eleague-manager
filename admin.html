@@ -241,7 +241,7 @@
   import { getAllPlayers, updatePlayerStatus, deletePlayer, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
-  import { generateMatchAlert, generateWinnerAlert } from './js/notify.js';
+  import { generateMatchAlert, generateResultAlert, generateWinnerAlert } from './js/notify.js';
   import { onPlayers, onGroupMatches, onGroups, onKnockoutMatches } from './js/realtime.js';
   import { getLogs, LOG_ICON } from './js/activitylog.js';
   import { getDisputes, resolveDispute } from './js/dispute.js';
@@ -860,23 +860,51 @@
       el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>No completed matches yet.</p></div>';
       return;
     }
-    const phaseLabels = { group:'Group', r32:'R32', r16:'R16', qf:'QF', sf:'SF', '3rd':'3rd', final:'Final' };
-    el.innerHTML = done.map(m => `
-      <div class="match-card">
-        <div class="match-teams">
-          <div class="match-player" style="${m.winner==='home'?'color:var(--green-dark)':''}">${esc(m.homeName)}</div>
-          <div class="match-vs">${m.homeScore} – ${m.awayScore}</div>
-          <div class="match-player" style="${m.winner==='away'?'color:var(--green-dark)':''}">${esc(m.awayName)}</div>
-        </div>
-        <div class="match-meta">
-          <span class="badge badge-gray">${phaseLabels[m.phase] || m.phase}${m.group?' '+m.group:''}</span>
-          <span class="badge badge-green">✓ Completed</span>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:0.5rem">
-          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Share Result</button>
-        </div>
-      </div>`).join('');
+
+    const phaseOrder = { group:0, r32:1, r16:2, qf:3, sf:4, '3rd':5, final:6 };
+    const phaseLabels = { group:'Group Stage', r32:'Round of 32', r16:'Round of 16', qf:'Quarter-final', sf:'Semi-final', '3rd':'3rd Place', final:'Final' };
+
+    done.sort((a, b) => (phaseOrder[a.phase]??0) - (phaseOrder[b.phase]??0)
+      || (a.group||'').localeCompare(b.group||'')
+      || (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0));
+
+    // Group by phase
+    const byPhase = {};
+    done.forEach(m => {
+      const key = m.phase || 'group';
+      if (!byPhase[key]) byPhase[key] = [];
+      byPhase[key].push(m);
+    });
+
+    let html = '';
+    for (const [phase, pMatches] of Object.entries(byPhase)) {
+      html += `<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin:1rem 0 .5rem">${phaseLabels[phase] || phase}</div>`;
+      html += pMatches.map(m => {
+        const isDraw = m.winner === 'draw';
+        const homeWin = m.winner === 'home';
+        const awayWin = m.winner === 'away';
+        return `<div class="match-card" style="margin-bottom:.75rem">
+          <div class="match-teams">
+            <div class="match-player" style="${homeWin?'color:var(--green);font-weight:700':''}">${esc(m.homeName)}${homeWin?' 🏆':''}</div>
+            <div class="match-vs" style="font-size:1rem;font-weight:700;color:var(--gray-900)">${m.homeScore} – ${m.awayScore}</div>
+            <div class="match-player" style="${awayWin?'color:var(--green);font-weight:700':''}">${esc(m.awayName)}${awayWin?' 🏆':''}</div>
+          </div>
+          <div class="match-meta" style="margin-top:.4rem">
+            ${m.group ? `<span class="badge badge-gray">Group ${m.group}</span>` : '<span></span>'}
+            ${isDraw ? '<span class="badge badge-gray">🤝 Draw</span>' : '<span class="badge badge-green">✓ Completed</span>'}
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:.5rem">
+            <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">📲 Share Result</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    el.innerHTML = html;
   }
+
+  window.shareResult = (home, away, hs, as_, phase) => {
+    window.open(generateResultAlert({ homePlayer: home, awayPlayer: away, homeScore: hs, awayScore: as_, phase }), '_blank');
+  };
 
   // ── DISPUTES ──
   async function loadDisputes() {
