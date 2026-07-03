@@ -181,7 +181,7 @@
           <div class="card-title">Step 3 — Run a Match (Match Day)</div>
           <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
             <li>Open the <strong>Matches</strong> tab and pick a match.</li>
-            <li>Click <strong>Set Live</strong>. Only 2 matches can be live at once.</li>
+            <li>Click <strong>Go Live</strong>. Only 2 matches can be live at once.</li>
             <li>Share the <strong>Join Code</strong> (e.g. <code>GRP-A-M1</code>) with both players.</li>
             <li>Tell them: "Go to league.getgol.in → Join tab → enter the code and your name."</li>
             <li>After confirming ready, players can submit their manager/team setup — you'll see both submissions right on this match's card.</li>
@@ -208,8 +208,8 @@
           <div class="card-title">Handling Problems</div>
           <ul style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
             <li><strong>Score mismatch flagged:</strong> see the "Scoring" section above — enter the correct score to resolve it.</li>
-            <li><strong>Player disputes a score:</strong> review it under the <strong>Disputes</strong> tab and resolve with a short note.</li>
-            <li><strong>You entered a wrong score:</strong> go back to Matches/Results and re-enter it — it overwrites the old one.</li>
+            <li><strong>Player disputes a score:</strong> review it under the <strong>Disputes</strong> tab and resolve with a short note. Players can also email you directly.</li>
+            <li><strong>You entered a wrong score:</strong> go to Matches tab, find the completed match, click <strong>✏️ Correct Score</strong> and re-enter — it overwrites the old one.</li>
             <li>Every action you take is recorded in the <strong>Activity Log</strong> tab with a timestamp.</li>
           </ul>
         </div>
@@ -234,7 +234,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v66';
+  const CURRENT_APP_VERSION = 'v69';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -758,8 +758,20 @@
           <button class="btn btn-sm btn-danger" onclick="cancelLive('${m.id}')">✕ Cancel Live</button>
         </div>` : ''}
       ${m.status === 'completed' ? `
-        <div style="display:flex;justify-content:flex-end">
-          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+        <div style="text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:.5rem">${m.homeScore} – ${m.awayScore}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">📲 Share Result</button>
+          <button class="btn btn-sm btn-secondary" onclick="correctScore('${m.id}')">✏️ Correct Score</button>
+        </div>
+        <div id="correct-${m.id}" style="display:none;margin-top:.5rem">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="score-inputs">
+              <input type="number" class="score-input" id="hs-${m.id}" value="${m.homeScore}" min="0" max="99" />
+              <span class="score-dash">–</span>
+              <input type="number" class="score-input" id="as-${m.id}" value="${m.awayScore}" min="0" max="99" />
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">✓ Save</button>
+          </div>
         </div>` : ''}
     </div>`;
   }
@@ -773,6 +785,10 @@
   window.goLive = async (id) => {
     try { await setMatchLive(id); toast('Match is now live! 🔴'); loadMatches(); }
     catch (e) { toast(e.message); }
+  };
+  window.correctScore = (id) => {
+    const el = document.getElementById('correct-' + id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
   };
   window.cancelLive = async (id) => {
     if (!confirm('Cancel this live match and set it back to Scheduled?')) return;
@@ -812,21 +828,45 @@
       hasAny = true;
       html += `<div class="bracket-round">
         <div class="bracket-label">${labels[round]}</div>
-        ${matches.map(m => `
-          <div class="bracket-match">
-            <div class="bracket-team ${m.winner==='home'?'winner':''}">${esc(m.homeName)}</div>
-            ${m.status==='completed' ? `<span class="match-vs">${m.homeScore}–${m.awayScore}</span>` : '<span class="match-vs">vs</span>'}
-            <div class="bracket-team ${m.winner==='away'?'winner':''}" style="text-align:right">${esc(m.awayName)}</div>
-            ${m.status!=='completed' ? `
-              <div style="display:flex;gap:4px;align-items:center;margin-left:8px">
-                ${m.status==='scheduled'?`<button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">Live</button>`:''}
-                ${m.status==='live'?`
-                  <input type="number" class="score-input" id="khs-${m.id}" placeholder="0" style="width:40px" />
-                  <span>–</span>
-                  <input type="number" class="score-input" id="kas-${m.id}" placeholder="0" style="width:40px" />
-                  <button class="btn btn-primary btn-sm" onclick="koSaveScore('${m.id}','${round}')">✓</button>`:''}
-              </div>` : '<span class="badge badge-green" style="margin-left:8px">Done</span>'}
-          </div>`).join('')}
+        ${matches.map(m => {
+          const dt = m.scheduledAt ? new Date(m.scheduledAt.seconds*1000) : null;
+          const dateVal = dt ? dt.toISOString().slice(0,16) : '';
+          const dateDisplay = dt ? dt.toLocaleString([],{dateStyle:'medium',timeStyle:'short'}) : '';
+          return `<div class="match-card" style="margin-bottom:.75rem">
+            <div class="match-teams">
+              <div class="match-player ${m.winner==='home'?'winner':''}" style="${m.winner==='home'?'color:var(--green);font-weight:700':''}">${esc(m.homeName)}</div>
+              <div class="match-vs">${m.status==='completed'?m.homeScore+' – '+m.awayScore:'vs'}</div>
+              <div class="match-player ${m.winner==='away'?'winner':''}" style="${m.winner==='away'?'color:var(--green);font-weight:700':''}">${esc(m.awayName)}</div>
+            </div>
+            <div class="match-meta" style="margin-bottom:.5rem">
+              <span class="match-code">🔑 ${m.joinCode}</span>
+              <span class="badge badge-${m.status==='live'?'green':m.status==='completed'?'gray':'blue'}">${m.status}</span>
+            </div>
+            ${m.status==='scheduled'?`
+              ${dateDisplay?`<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 ${dateDisplay}</div>`:''}
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <input type="datetime-local" class="form-input" style="flex:1;min-height:40px;font-size:.82rem" id="ko-dt-${m.id}" value="${dateVal}" />
+                <button class="btn btn-secondary btn-sm" onclick="koSchedule('${m.id}')">📅 Schedule</button>
+                <button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">🔴 Go Live</button>
+                <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+              </div>` : ''}
+            ${m.status==='live'?`
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <div class="score-inputs">
+                  <input type="number" class="score-input" id="khs-${m.id}" placeholder="0" style="width:48px" />
+                  <span class="score-dash">–</span>
+                  <input type="number" class="score-input" id="kas-${m.id}" placeholder="0" style="width:48px" />
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="koSaveScore('${m.id}','${round}')">✓ Save Score</button>
+                <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+                <button class="btn btn-sm btn-danger" onclick="koCancelLive('${m.id}')">✕ Cancel Live</button>
+              </div>` : ''}
+            ${m.status==='completed'?`
+              <div style="display:flex;justify-content:flex-end">
+                <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${round}')">📲 Share Result</button>
+              </div>` : ''}
+          </div>`;
+        }).join('')}
       </div>`;
     }
 
@@ -837,9 +877,20 @@
     el.innerHTML = html;
   }
 
+  window.koSchedule = async (id) => {
+    const val = document.getElementById('ko-dt-' + id)?.value;
+    if (!val) { toast('Pick a date and time first'); return; }
+    await updateMatch(id, { scheduledAt: new Date(val) });
+    toast('Match scheduled! ✅'); loadKnockout();
+  };
   window.koGoLive = async (id) => {
     try { await setMatchLive(id); toast('Match live! 🔴'); loadKnockout(); }
     catch (e) { toast(e.message); }
+  };
+  window.koCancelLive = async (id) => {
+    if (!confirm('Cancel this live match and set it back to Scheduled?')) return;
+    await updateMatch(id, { status: 'scheduled' });
+    toast('Match set back to Scheduled'); loadKnockout();
   };
   window.koSaveScore = async (id, round) => {
     const hs = parseInt(document.getElementById('khs-' + id)?.value);
