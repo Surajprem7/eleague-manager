@@ -8,8 +8,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
@@ -29,9 +31,15 @@
   border-bottom: 1px solid #3D3D3D;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  position: sticky;
+  position: fixed;
   top: 56px;
+  left: 0;
+  right: 0;
   z-index: 99;
+}
+
+main.page {
+  padding-top: 108px;
 }
 .admin-tab {
   flex-shrink: 0;
