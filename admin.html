@@ -192,7 +192,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v46';
+  const CURRENT_APP_VERSION = 'v47';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -320,7 +320,11 @@
     if (groupsExist) {
       const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const matches = await getMatches('group');
-      let html = '<div class="group-grid">';
+      let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <span style="font-size:.8rem;color:var(--gray-600)">Groups are locked. Only admin can change.</span>
+        <button id="edit-groups-btn" class="btn btn-sm btn-secondary">✏️ Edit Groups</button>
+      </div>
+      <div class="group-grid">`;
       groups.sort((a,b) => a.letter.localeCompare(b.letter)).forEach(g => {
         const gPlayers = players.filter(p => g.players.includes(p.id));
         const gMatches = matches.filter(m => m.group === g.letter);
@@ -337,6 +341,10 @@
       const done = await checkAndGenerateKnockout();
       if (done) { toast('All group matches done! Knockout generated.'); }
       el.innerHTML = html;
+      document.getElementById('edit-groups-btn').addEventListener('click', () => {
+        if (!confirm('Are you sure you want to edit groups? This will reset the current groups and match schedule.')) return;
+        renderGroupFormatPicker(players, el);
+      });
       return;
     }
 
