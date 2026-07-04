@@ -740,9 +740,9 @@
         </div>` : ''}
       ${m.status === 'scheduled' ? `
         ${dateDisplay ? `<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 Scheduled: ${dateDisplay}</div>` : ''}
+        <input type="datetime-local" class="form-input" style="width:100%;min-height:44px;font-size:0.9rem;margin-bottom:.5rem" id="dt-${m.id}" value="${date}" onchange="document.getElementById('sch-btn-${m.id}').style.display='flex'" />
+        <button class="btn btn-primary btn-full" id="sch-btn-${m.id}" onclick="saveSchedule('${m.id}')" style="display:${date?'flex':'none'};margin-bottom:.5rem">📅 Confirm Schedule</button>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <input type="datetime-local" class="form-input" style="flex:1;min-height:40px;font-size:0.82rem" id="dt-${m.id}" value="${date}" />
-          <button class="btn btn-secondary btn-sm" onclick="saveSchedule('${m.id}')">📅 Schedule</button>
           <button class="btn btn-primary btn-sm" onclick="goLive('${m.id}')">🔴 Go Live</button>
           <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
         </div>` : ''}
@@ -844,9 +844,9 @@
             </div>
             ${m.status==='scheduled'?`
               ${dateDisplay?`<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 ${dateDisplay}</div>`:''}
+              <input type="datetime-local" class="form-input" style="width:100%;min-height:44px;font-size:.9rem;margin-bottom:.5rem" id="ko-dt-${m.id}" value="${dateVal}" onchange="document.getElementById('ko-sch-btn-${m.id}').style.display='flex'" />
+              <button class="btn btn-primary btn-full" id="ko-sch-btn-${m.id}" onclick="koSchedule('${m.id}')" style="display:${dateVal?'flex':'none'};margin-bottom:.5rem">📅 Confirm Schedule</button>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <input type="datetime-local" class="form-input" style="flex:1;min-height:40px;font-size:.82rem" id="ko-dt-${m.id}" value="${dateVal}" />
-                <button class="btn btn-secondary btn-sm" onclick="koSchedule('${m.id}')">📅 Schedule</button>
                 <button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">🔴 Go Live</button>
                 <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
               </div>` : ''}
