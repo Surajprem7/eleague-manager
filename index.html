@@ -236,20 +236,18 @@
         <p id="profile-status-msg" style="font-size:.85rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200,#eee)"></p>
         <button id="not-me-btn" style="background:none;border:none;color:var(--gray-600);font-size:.78rem;text-decoration:underline;cursor:pointer;margin-top:.5rem;padding:0">Not you? Switch account</button>
       </div>
+
+      <!-- MY MATCHES — shown below profile after registration -->
+      <div id="my-profile-matches-wrap" style="display:none;margin-top:.75rem">
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin-bottom:.5rem">My Matches</div>
+        <div id="notif-prompt" style="display:none;margin-bottom:.75rem"></div>
+        <div id="profile-matches-list"><div class="loader"><div class="spinner"></div></div></div>
+      </div>
     </section>
 
     <!-- MY MATCHES -->
     <section class="section" id="sec-matches">
-      <div class="card" style="margin-bottom:0.75rem">
-        <div class="card-title">My Matches</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select class="form-input form-select" id="player-search" style="flex:1"></select>
-          <button class="btn btn-primary" id="search-btn">View</button>
-        </div>
-        <p class="form-hint" style="margin-top:0.4rem">Showing your matches by default. Select another player to view theirs.</p>
-      </div>
-      <div id="notif-prompt" style="display:none;margin-bottom:0.75rem"></div>
-      <div id="my-matches-list">
+      <div id="all-matches-list">
         <div class="loader"><div class="spinner"></div></div>
       </div>
     </section>
@@ -299,7 +297,7 @@
     <span>Register</span>
   </button>
   <button class="nav-item nav-registered-only" data-section="matches">
-    <span>My Matches</span>
+    <span>Matches</span>
   </button>
   <button class="nav-item nav-registered-only" data-section="join">
     <span>Join</span>
@@ -323,7 +321,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v72';
+  const APP_VERSION = 'v73';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -590,10 +588,7 @@
       if (currentSection === 'standings') startStandingsListener();
       if (currentSection === 'matches' && !matchesTabInitialized) {
         matchesTabInitialized = true;
-        loadPlayerDropdown().then(() => {
-          const sel = document.getElementById('player-search');
-          if (sel.value) loadMatchesForPlayer(sel.value);
-        });
+        loadAllMatches();
       }
     });
   });
@@ -830,105 +825,134 @@
   let currentPlayerId = null;
   let allPlayersList = [];
 
-  async function loadPlayerDropdown() {
-    const sel = document.getElementById('player-search');
-    const myName = localStorage.getItem('myRegisteredName');
-    try {
-      const snap = await getDocs(collection(db, 'players'));
-      allPlayersList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      allPlayersList.sort((a, b) => {
-        if (a.name === myName) return -1;
-        if (b.name === myName) return 1;
-        return a.name.localeCompare(b.name);
-      });
-      sel.innerHTML = allPlayersList.map(p =>
-        `<option value="${p.id}" ${p.name === myName ? 'selected' : ''}>${p.name}</option>`
-      ).join('');
-      if (!allPlayersList.length) {
-        sel.innerHTML = '<option value="">No approved players yet</option>';
-      }
-    } catch(e) {
-      sel.innerHTML = '<option value="">Could not load players</option>';
+  // Render the current player's matches below the profile card in the Register tab.
+  function renderProfileMatches(player) {
+    const wrap = document.getElementById('my-profile-matches-wrap');
+    const el = document.getElementById('profile-matches-list');
+    if (!wrap || !el) return;
+
+    if (!myMatches.length) {
+      wrap.style.display = 'block';
+      el.innerHTML = '<div class="empty-state" style="padding:.75rem 0"><span class="icon">📅</span><p>No matches scheduled yet.</p></div>';
+      return;
     }
-  }
 
-  async function loadMatchesForPlayer(playerId) {
-    const el = document.getElementById('my-matches-list');
-    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-    const player = allPlayersList.find(p => p.id === playerId);
-    if (!player) { el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>Player not found.</p></div>'; return; }
-    currentPlayerId = player.id;
-
-    const myName = localStorage.getItem('myRegisteredName');
-    const isSelf = player.name === myName;
-    if (isSelf) reportAppVersion(player.id);
+    wrap.style.display = 'block';
 
     const notifPrompt = document.getElementById('notif-prompt');
-    if (!isSelf || player.fcmToken) {
-      notifPrompt.style.display = 'none';
-    } else if ('Notification' in window && Notification.permission !== 'denied') {
+    if (notifPrompt && !player.fcmToken && 'Notification' in window && Notification.permission !== 'denied') {
       notifPrompt.style.display = 'block';
       notifPrompt.innerHTML = `
         <div class="card" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
-          <p style="font-size:.82rem;color:var(--gray-600);margin:0">🔔 Get notified 10 minutes before your match starts.</p>
+          <p style="font-size:.82rem;color:var(--gray-600);margin:0">🔔 Get notified 10 min before your match.</p>
           <button class="btn btn-primary btn-sm" id="enable-notif-btn">Enable</button>
         </div>`;
-      document.getElementById('enable-notif-btn').addEventListener('click', async () => {
+      document.getElementById('enable-notif-btn')?.addEventListener('click', async () => {
         const ok = await enableMatchNotifications(player.id);
-        if (ok) { toast('Notifications enabled! 🔔'); notifPrompt.style.display = 'none'; }
-        else { toast('Could not enable notifications on this device/browser.'); }
+        if (ok) { toast('Notifications enabled!'); notifPrompt.style.display = 'none'; }
+        else toast('Could not enable notifications on this device/browser.');
       });
     }
 
-    onPlayerMatches(player.id, matches => {
-        if (!matches.length) {
-          el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet. Check back soon!</p></div>';
-          return;
-        }
-        matches.sort((a,b) => (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0));
-        el.innerHTML = matches.map(m => {
-          const isHome = m.homeId === player.id;
-          const opp = isHome ? m.awayName : m.homeName;
-          const date = m.scheduledAt ? new Date(m.scheduledAt.seconds*1000).toLocaleString() : 'TBA';
-          return `<div class="match-card">
-            <div class="match-teams">
-              <div class="match-player" style="color:var(--green-dark)">${esc(player.name)}</div>
-              <div class="match-vs">vs</div>
-              <div class="match-player">${esc(opp)}</div>
+    const sorted = myMatches.slice().sort((a, b) => {
+      if (a.status === 'completed' && b.status !== 'completed') return 1;
+      if (b.status === 'completed' && a.status !== 'completed') return -1;
+      return (a.scheduledAt?.seconds || 0) - (b.scheduledAt?.seconds || 0);
+    });
+
+    el.innerHTML = sorted.map(m => {
+      const isHome = m.homeId === player.id;
+      const opp = isHome ? m.awayName : m.homeName;
+      const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
+      return `<div class="match-card" style="${m.status === 'live' ? 'border-left:3px solid var(--green)' : ''}">
+        <div class="match-teams">
+          <div class="match-player" style="color:var(--green-dark)">${esc(player.name)}</div>
+          <div class="match-vs">vs</div>
+          <div class="match-player">${esc(opp)}</div>
+        </div>
+        <div class="match-meta">
+          <span>📅 ${date}</span>
+          <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
+        </div>
+        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+        ${m.status === 'live' ? `<div class="match-meta" style="margin-top:.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:.78rem;color:var(--green-dark);font-weight:500">LIVE now!</span></div>` : ''}
+        ${m.status === 'live' ? `
+          <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--gray-200,#eee)">
+            <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Played the match? Enter the final score below.</p>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:.5rem">
+              <div style="flex:1;text-align:center">
+                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.homeName)}</label>
+                <input type="number" class="score-input" id="score-h-${m.id}" min="0" max="99" placeholder="0" />
+              </div>
+              <span style="font-weight:700;margin-top:14px">–</span>
+              <div style="flex:1;text-align:center">
+                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.awayName)}</label>
+                <input type="number" class="score-input" id="score-a-${m.id}" min="0" max="99" placeholder="0" />
+              </div>
             </div>
-            <div class="match-meta">
-              <span>📅 ${date}</span>
-              <span class="badge badge-${m.status==='live'?'green':m.status==='completed'?'gray':'blue'}">${m.status}</span>
-            </div>
-            ${m.status==='completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:0.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
-            ${m.status==='live' ? `<div class="match-meta" style="margin-top:0.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:0.78rem;color:var(--green-dark);font-weight:500">Your match is LIVE!</span></div>` : ''}
-            ${m.status==='live' ? `
-              <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--gray-200,#eee)">
-                <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Played the match? Enter the final score below.</p>
-                <div style="display:flex;gap:8px;align-items:center;margin-bottom:.5rem">
-                  <div style="flex:1;text-align:center">
-                    <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.homeName)}</label>
-                    <input type="number" class="score-input" id="score-h-${m.id}" min="0" max="99" placeholder="0" />
-                  </div>
-                  <span style="font-weight:700;margin-top:14px">–</span>
-                  <div style="flex:1;text-align:center">
-                    <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.awayName)}</label>
-                    <input type="number" class="score-input" id="score-a-${m.id}" min="0" max="99" placeholder="0" />
-                  </div>
-                </div>
-                <button class="btn btn-primary btn-full btn-sm" data-submit-score="${m.id}" data-side="${isHome ? 'home' : 'away'}">Submit Score</button>
-                <div id="score-result-${m.id}" style="margin-top:.5rem;font-size:.8rem;text-align:center"></div>
-                ${m.scoreMismatch ? `<p style="font-size:.78rem;color:#D93025;text-align:center;margin-top:.5rem">⚠️ Score not matching — admin has been notified. Please re-check and resubmit, or contact admin.</p>` : ''}
-              </div>` : ''}
-          </div>`;
-        }).join('');
-      });
+            <button class="btn btn-primary btn-full btn-sm" data-submit-score="${m.id}" data-side="${isHome ? 'home' : 'away'}">Submit Score</button>
+            <div id="score-result-${m.id}" style="margin-top:.5rem;font-size:.8rem;text-align:center"></div>
+            ${m.scoreMismatch ? `<p style="font-size:.78rem;color:#D93025;text-align:center;margin-top:.5rem">⚠️ Score mismatch — check with opponent or contact admin.</p>` : ''}
+          </div>` : ''}
+      </div>`;
+    }).join('');
   }
 
-  document.getElementById('search-btn').addEventListener('click', () => {
-    const sel = document.getElementById('player-search');
-    if (sel.value) loadMatchesForPlayer(sel.value);
-  });
+  // All Matches tab — fetches every match from Firestore, sorted soonest scheduled first.
+  async function loadAllMatches() {
+    const el = document.getElementById('all-matches-list');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const [groupSnap, koSnap] = await Promise.all([
+        getDocs(collection(db, 'matches')),
+        getDocs(collection(db, 'knockoutMatches'))
+      ]);
+      const all = [
+        ...groupSnap.docs.map(d => ({ id: d.id, _col: 'group', ...d.data() })),
+        ...koSnap.docs.map(d => ({ id: d.id, _col: 'knockout', ...d.data() }))
+      ];
+
+      if (!all.length) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet.</p></div>';
+        return;
+      }
+
+      // Sort: scheduled-with-date (asc) → live → scheduled-TBA → completed
+      const order = m => {
+        if (m.status === 'live') return 1;
+        if (m.status === 'scheduled' && m.scheduledAt) return 0;
+        if (m.status === 'scheduled') return 2;
+        return 3;
+      };
+      all.sort((a, b) => {
+        const oa = order(a), ob = order(b);
+        if (oa !== ob) return oa - ob;
+        return (a.scheduledAt?.seconds || 0) - (b.scheduledAt?.seconds || 0);
+      });
+
+      const phaseLabels = { group:'Group', r32:'R32', r16:'R16', qf:'QF', sf:'SF', '3rd':'3rd', final:'Final' };
+
+      el.innerHTML = all.map(m => {
+        const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
+        const phase = m._col === 'knockout' ? (phaseLabels[m.phase] || m.phase || 'Knockout') : `Group ${esc(m.group || '')}`;
+        return `<div class="match-card" style="${m.status === 'live' ? 'border-left:3px solid var(--green)' : ''}">
+          <div style="font-size:.7rem;color:var(--gray-600);margin-bottom:.35rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em">${phase}</div>
+          <div class="match-teams">
+            <div class="match-player">${esc(m.homeName)}</div>
+            <div class="match-vs">vs</div>
+            <div class="match-player">${esc(m.awayName)}</div>
+          </div>
+          <div class="match-meta" style="margin-top:.35rem">
+            <span>📅 ${date}</span>
+            <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
+          </div>
+          ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+        </div>`;
+      }).join('');
+    } catch(e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load matches.</p></div>';
+    }
+  }
 
   // ── JOIN MATCH ──
   document.getElementById('join-btn').addEventListener('click', async () => {
@@ -1024,7 +1048,7 @@
       if (p.status === 'approved') {
         badge.className = 'badge badge-green';
         badge.textContent = 'approved';
-        msg.textContent = "You're confirmed! Check My Matches for your schedule once it's live.";
+        msg.textContent = "You're confirmed! Your match schedule is shown below.";
       } else if (p.status === 'rejected') {
         badge.className = 'badge badge-red';
         badge.textContent = 'rejected';
@@ -1039,6 +1063,7 @@
 
       onPlayerMatches(p.id, matches => {
         myMatches = matches;
+        renderProfileMatches(p);
         if (currentSection === 'home') renderHome();
       });
       if (currentSection === 'home') renderHome();
@@ -1101,32 +1126,6 @@
         ${scheduleRows || '<p style="font-size:.85rem;color:var(--gray-600)">No matches yet.</p>'}
       </div>`;
   }
-
-  // ── DISPUTE ──
-  import { raiseDispute } from './js/dispute.js';
-  document.getElementById('dispute-submit').addEventListener('click', async () => {
-    const name   = document.getElementById('dispute-name').value.trim();
-    const code   = document.getElementById('dispute-code').value.trim().toUpperCase();
-    const reason = document.getElementById('dispute-reason').value.trim();
-    const result = document.getElementById('dispute-result');
-    if (!name || !code || !reason) { toast('Please fill all fields'); return; }
-    const btn = document.getElementById('dispute-submit');
-    btn.textContent = 'Submitting...'; btn.disabled = true;
-    try {
-      // Find match by join code
-      const snap = await getDocs(query(collection(db, 'matches'), where('joinCode', '==', code)));
-      if (snap.empty) { toast('Join code not found'); btn.textContent = 'Submit Dispute'; btn.disabled = false; return; }
-      const matchId = snap.docs[0].id;
-      await raiseDispute({ matchId, playerName: name, reason });
-      result.innerHTML = '<div style="text-align:center;padding:1rem"><span style="font-size:2rem">✅</span><h3 style="margin:.5rem 0">Dispute Submitted</h3><p style="color:var(--gray-600);font-size:.88rem">Admin will review and respond soon.</p></div>';
-      document.getElementById('dispute-name').value = '';
-      document.getElementById('dispute-code').value = '';
-      document.getElementById('dispute-reason').value = '';
-    } catch(e) {
-      toast(e.message || 'Error submitting dispute');
-    }
-    btn.textContent = 'Submit Dispute'; btn.disabled = false;
-  });
 
   // Service Worker — detect updates and prompt the user to refresh,
   // since installed PWAs / open tabs can otherwise sit on stale code
