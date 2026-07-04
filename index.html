@@ -730,14 +730,13 @@
             <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
             <tbody>${standings.map((r,i) => `
               <tr class="${i<2?'qualify':''}">
-                <td>${esc(r.name)}${i<2?' <span style="color:var(--green);font-size:0.7rem">✓</span>':''}</td>
+                <td>${esc(r.name)}</td>
                 <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
                 <td>${r.gd>0?'+'+r.gd:r.gd}</td>
                 <td><strong>${r.pts}</strong></td>
               </tr>`).join('')}
             </tbody>
           </table>
-          <p style="font-size:0.72rem;color:var(--gray-600);margin-top:0.5rem">✓ = qualifies for knockout</p>
         </div>`;
     });
     el.innerHTML = html;
