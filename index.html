@@ -830,9 +830,12 @@
     const el = document.getElementById('profile-matches-list');
     if (!wrap || !el) return;
 
-    if (!myMatches.length) {
+    // Only show matches that have a confirmed date (live or scheduled with scheduledAt)
+    const scheduledMatches = myMatches.filter(m => m.status === 'live' || m.status === 'completed' || (m.status === 'scheduled' && m.scheduledAt));
+
+    if (!scheduledMatches.length) {
       wrap.style.display = 'block';
-      el.innerHTML = '<div class="empty-state" style="padding:.75rem 0"><span class="icon">📅</span><p>No matches scheduled yet.</p></div>';
+      el.innerHTML = '<div class="empty-state" style="padding:.75rem 0"><span class="icon">📅</span><p>No scheduled matches yet. Check back soon!</p></div>';
       return;
     }
 
@@ -853,7 +856,7 @@
       });
     }
 
-    const sorted = myMatches.slice().sort((a, b) => {
+    const sorted = scheduledMatches.slice().sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (b.status === 'completed' && a.status !== 'completed') return -1;
       return (a.scheduledAt?.seconds || 0) - (b.scheduledAt?.seconds || 0);
@@ -1014,6 +1017,7 @@
   if (myRegisteredName) {
     document.getElementById('reg-form').style.display = 'none';
     document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
+    document.querySelector('.nav-item[data-section="register"] span').textContent = 'Profile';
     loadMyProfile(myRegisteredName);
     startStandingsListener();
   }
