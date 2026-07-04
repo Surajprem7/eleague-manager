@@ -904,56 +904,57 @@
   async function loadAllMatches() {
     const el = document.getElementById('all-matches-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-    try {
-      const [groupSnap, koSnap] = await Promise.all([
-        getDocs(collection(db, 'matches')),
-        getDocs(collection(db, 'knockoutMatches'))
-      ]);
-      const all = [
-        ...groupSnap.docs.map(d => ({ id: d.id, _col: 'group', ...d.data() })),
-        ...koSnap.docs.map(d => ({ id: d.id, _col: 'knockout', ...d.data() }))
-      ];
 
-      if (!all.length) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches scheduled yet.</p></div>';
-        return;
-      }
+    // Fetch each collection independently so a missing collection doesn't fail both
+    const [groupSnap, koSnap] = await Promise.all([
+      getDocs(collection(db, 'matches')).catch(() => ({ docs: [] })),
+      getDocs(collection(db, 'knockoutMatches')).catch(() => ({ docs: [] }))
+    ]);
 
-      // Sort: scheduled-with-date (asc) → live → scheduled-TBA → completed
-      const order = m => {
-        if (m.status === 'live') return 1;
-        if (m.status === 'scheduled' && m.scheduledAt) return 0;
-        if (m.status === 'scheduled') return 2;
-        return 3;
-      };
-      all.sort((a, b) => {
-        const oa = order(a), ob = order(b);
-        if (oa !== ob) return oa - ob;
-        return (a.scheduledAt?.seconds || 0) - (b.scheduledAt?.seconds || 0);
-      });
+    const all = [
+      ...groupSnap.docs.map(d => ({ id: d.id, _col: 'group', ...d.data() })),
+      ...koSnap.docs.map(d => ({ id: d.id, _col: 'knockout', ...d.data() }))
+    ];
 
-      const phaseLabels = { group:'Group', r32:'R32', r16:'R16', qf:'QF', sf:'SF', '3rd':'3rd', final:'Final' };
-
-      el.innerHTML = all.map(m => {
-        const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
-        const phase = m._col === 'knockout' ? (phaseLabels[m.phase] || m.phase || 'Knockout') : `Group ${esc(m.group || '')}`;
-        return `<div class="match-card" style="${m.status === 'live' ? 'border-left:3px solid var(--green)' : ''}">
-          <div style="font-size:.7rem;color:var(--gray-600);margin-bottom:.35rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em">${phase}</div>
-          <div class="match-teams">
-            <div class="match-player">${esc(m.homeName)}</div>
-            <div class="match-vs">vs</div>
-            <div class="match-player">${esc(m.awayName)}</div>
-          </div>
-          <div class="match-meta" style="margin-top:.35rem">
-            <span>📅 ${date}</span>
-            <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
-          </div>
-          ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
-        </div>`;
-      }).join('');
-    } catch(e) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load matches.</p></div>';
+    if (!all.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches yet.</p></div>';
+      return;
     }
+
+    // Sort: live → upcoming with date (soonest first) → upcoming TBA → completed
+    const order = m => {
+      if (m.status === 'live') return 0;
+      if (m.status !== 'completed' && m.scheduledAt) return 1;
+      if (m.status !== 'completed') return 2;
+      return 3;
+    };
+    all.sort((a, b) => {
+      const oa = order(a), ob = order(b);
+      if (oa !== ob) return oa - ob;
+      return (a.scheduledAt?.seconds || 0) - (b.scheduledAt?.seconds || 0);
+    });
+
+    const phaseLabels = { group: 'Group', r32: 'R32', r16: 'R16', qf: 'QF', sf: 'SF', '3rd': '3rd Place', final: 'Final' };
+
+    el.innerHTML = all.map(m => {
+      const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
+      const phase = m._col === 'knockout'
+        ? (phaseLabels[m.phase] || m.phase || 'Knockout')
+        : `Group ${esc(m.group || '')}`;
+      return `<div class="match-card" style="${m.status === 'live' ? 'border-left:3px solid var(--green)' : ''}">
+        <div style="font-size:.7rem;color:var(--gray-600);margin-bottom:.35rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em">${phase}</div>
+        <div class="match-teams">
+          <div class="match-player">${esc(m.homeName)}</div>
+          <div class="match-vs">vs</div>
+          <div class="match-player">${esc(m.awayName)}</div>
+        </div>
+        <div class="match-meta" style="margin-top:.35rem">
+          <span>📅 ${date}</span>
+          <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
+        </div>
+        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+      </div>`;
+    }).join('');
   }
 
   // ── JOIN MATCH ──
