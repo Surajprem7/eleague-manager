@@ -1105,25 +1105,14 @@
       </div>`;
     }
 
-    const scheduleRows = myMatches.slice().sort((a,b) => (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0))
-      .map(m => {
-        const opp = m.homeId === myPlayer.id ? m.awayName : m.homeName;
-        const result = m.status === 'completed' ? `${m.homeScore}–${m.awayScore}` : (m.status === 'live' ? 'LIVE' : (m.scheduledAt ? new Date(m.scheduledAt.seconds*1000).toLocaleDateString() : 'TBA'));
-        return `<div class="player-item"><div class="player-avatar">${esc(opp[0]?.toUpperCase()||'?')}</div><div><div class="player-name">vs ${esc(opp)}</div><div class="player-sub">${result}</div></div></div>`;
-      }).join('');
-
     el.innerHTML = BANNER_HTML + `
       <div class="card" style="margin-bottom:1rem">
         <div class="card-title">👋 Hi, ${esc(myPlayer.name)}</div>
         ${rankHtml || '<p style="font-size:.85rem;color:var(--gray-600)">Standings will appear once groups are drawn.</p>'}
       </div>
-      <div class="card" style="margin-bottom:1rem">
+      <div class="card">
         <div class="card-title">Next Match</div>
         ${nextHtml}
-      </div>
-      <div class="card">
-        <div class="card-title">My Schedule</div>
-        ${scheduleRows || '<p style="font-size:.85rem;color:var(--gray-600)">No matches yet.</p>'}
       </div>`;
   }
 
