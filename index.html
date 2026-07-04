@@ -969,7 +969,7 @@
         </div>
         <div class="match-meta" style="margin-top:.35rem">
           <span>📅 ${date}</span>
-          <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
+          ${m.status === 'live' ? '<span class="badge badge-green">Live</span>' : m.status === 'completed' ? '<span class="badge badge-gray">Completed</span>' : ''}
         </div>
         ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
       </div>`;
