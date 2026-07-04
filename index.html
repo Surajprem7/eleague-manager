@@ -324,7 +324,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v78';
+  const APP_VERSION = 'v79';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -557,7 +557,7 @@
     } else {
       banner.style.display = 'none';
     }
-  });
+  }, () => {});
 
   // Toast
   function toast(msg) {
@@ -584,6 +584,7 @@
   let resultsTabInitialized = false;
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (!btn.dataset.section) return; // admin <a> tag has no data-section
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       btn.classList.add('active');
@@ -918,7 +919,7 @@
           <span>📅 ${date}</span>
           <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
         </div>
-        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} – ${esc(m.awayScore)}</div>` : ''}
         ${m.status === 'live' ? `<div class="match-meta" style="margin-top:.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:.78rem;color:var(--green-dark);font-weight:500">LIVE now!</span></div>` : ''}
         ${m.status === 'live' ? `
           <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--gray-200,#eee)">
@@ -946,6 +947,7 @@
   async function loadAllMatches() {
     const el = document.getElementById('all-matches-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
 
     // Fetch each collection independently so a missing collection doesn't fail both
     const [groupSnap, koSnap] = await Promise.all([
@@ -994,15 +996,17 @@
           <span>📅 ${date}</span>
           ${m.status === 'live' ? '<span class="badge badge-green">Live</span>' : m.status === 'completed' ? '<span class="badge badge-gray">Completed</span>' : ''}
         </div>
-        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${m.homeScore} – ${m.awayScore}</div>` : ''}
+        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} – ${esc(m.awayScore)}</div>` : ''}
       </div>`;
     }).join('');
+    } catch { el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load matches.</p></div>'; }
   }
 
   // ── RESULTS ──
   async function loadResults() {
     const el = document.getElementById('results-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
 
     const [groupSnap, koSnap] = await Promise.all([
       getDocs(collection(db, 'matches')).catch(() => ({ docs: [] })),
@@ -1056,6 +1060,7 @@
       }).join('');
     }
     el.innerHTML = html;
+    } catch { el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load results.</p></div>'; }
   }
 
   // ── INIT ──
@@ -1075,6 +1080,7 @@
   function enableFanMode() {
     localStorage.setItem('fanMode', '1');
     document.getElementById('reg-form').style.display = 'none';
+    document.getElementById('verify-form').style.display = 'none';
     document.getElementById('fan-mode-card').style.display = 'block';
     document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
     startStandingsListener();
@@ -1082,8 +1088,7 @@
 
   document.getElementById('fan-join-btn').addEventListener('click', () => {
     enableFanMode();
-    // Switch to Matches tab so they see content immediately
-    document.querySelector('[data-section="matches"]').click();
+    document.querySelector('[data-section="matches"]')?.click();
   });
 
   document.getElementById('exit-fan-btn').addEventListener('click', () => {
@@ -1096,8 +1101,8 @@
     document.getElementById('reg-form').style.display = 'none';
     document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
     document.querySelector('.nav-item[data-section="register"] span').textContent = 'Profile';
-    loadMyProfile(myRegisteredName);
     startStandingsListener();
+    loadMyProfile(myRegisteredName);
   } else if (localStorage.getItem('fanMode')) {
     enableFanMode();
   }

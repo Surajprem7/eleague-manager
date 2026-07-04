@@ -109,7 +109,6 @@
         </div>
       </div>
 
-      <!-- DISPUTES TAB -->
 
       <!-- ACTIVITY LOG TAB -->
       <div class="tab-content" id="tab-log" style="display:none">
@@ -177,7 +176,7 @@
             <li>Open the <strong>Matches</strong> tab and pick a match.</li>
             <li>Click <strong>Go Live</strong>. Only 2 matches can be live at once.</li>
             <li>Share the <strong>Join Code</strong> (e.g. <code>GRP-A-M1</code>) with both players.</li>
-            <li>Tell them: "Go to league.getgol.in → Join tab → enter the code and your name."</li>
+            <li>Tell them: "Go to league.getgol.in → Matches tab → find your match and enter the join code."</li>
             <li>After confirming ready, players can submit their manager/team setup — you'll see both submissions right on this match's card.</li>
             <li>They play the match in eFootball (one of them creates the 1v1 Match Room and shares that code with the other directly — that's separate from our Join Code).</li>
           </ol>
@@ -185,7 +184,7 @@
 
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">Scoring — players can self-report</div>
-          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">After playing, either player can enter the final score themselves from the <strong>My Matches</strong> tab on the player site — no need for you to do it. If <strong>both players enter the same score</strong>, the match completes automatically and standings update — nothing for you to do. If their scores <strong>don't match</strong>, you'll see a <strong style="color:#D93025">⚠️ Score mismatch</strong> flag on this match's card showing both numbers — check with the players and enter the correct score yourself to resolve it. You can also enter or override any score manually at any time, same as before.</p>
+          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">After playing, either player can enter the final score themselves from the <strong>Profile</strong> tab on the player site — no need for you to do it. If <strong>both players enter the same score</strong>, the match completes automatically and standings update — nothing for you to do. If their scores <strong>don't match</strong>, you'll see a <strong style="color:#D93025">⚠️ Score mismatch</strong> flag on this match's card showing both numbers — check with the players and enter the correct score yourself to resolve it. You can also enter or override any score manually at any time, same as before.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
@@ -228,7 +227,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v78';
+  const CURRENT_APP_VERSION = 'v79';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -259,6 +258,7 @@
     }
   });
   document.getElementById('logout-btn').addEventListener('click', async () => {
+    announceUnsubscribe?.();
     import('./js/realtime.js').then(m => m.cleanupAll?.()).catch(() => {});
     await logout();
     location.reload();
@@ -567,7 +567,7 @@
 
   function updateSaveBtn() {
     const total = [...document.querySelectorAll('#group-builder [data-group]')].length;
-    const approved = [...document.querySelectorAll('.approve-group-btn[data-letter][data-approved="true"]')].length;
+    const approved = [...document.querySelectorAll('#group-builder .approve-group-btn[data-approved="true"]')].length;
     const btn = document.getElementById('save-groups-btn');
     if (!btn) return;
     if (approved === total) {
@@ -698,7 +698,7 @@
       groups.forEach(g => { if (byGroup[g][i]) interleaved.push(byGroup[g][i]); });
     }
     // Sort: live first, then scheduled-with-date, then scheduled-no-date, completed last
-    const statusRank = m => m.scheduledAt && m.status === 'scheduled' ? 0 : m.status === 'live' ? 1 : m.status === 'completed' ? 3 : 2;
+    const statusRank = m => m.status === 'live' ? 0 : m.scheduledAt && m.status === 'scheduled' ? 1 : m.status === 'completed' ? 3 : 2;
     interleaved.sort((a, b) => statusRank(a) - statusRank(b));
     el.innerHTML = interleaved.map(m => matchAdminCard(m)).join('');
   }
@@ -973,8 +973,6 @@
   window.shareResult = (home, away, hs, as_, phase) => {
     window.open(generateResultAlert({ homePlayer: home, awayPlayer: away, homeScore: hs, awayScore: as_, phase }), '_blank');
   };
-
-  // ── DISPUTES ──
 
   // ── ACTIVITY LOG ──
   async function loadActivityLog() {

@@ -190,7 +190,7 @@ p  { font-size: 0.95rem; }
 }
 .badge-green  { background: var(--green-light); color: var(--green-dark); }
 .badge-blue   { background: var(--blue-light);  color: var(--blue); }
-.badge-amber  { background: var(--amber-light); color: #8C5A00; }
+.badge-amber  { background: var(--amber-light); color: var(--amber, #F9AB00); }
 .badge-red    { background: var(--red-light);   color: var(--red); }
 .badge-gray   { background: var(--gray-100);    color: var(--gray-600); }
 
