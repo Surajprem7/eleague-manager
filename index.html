@@ -125,32 +125,32 @@
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">1. Register</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Fill in your name and eFootball ID on the <strong>Register</strong> tab. Your registration needs admin approval before you're confirmed — check back on the Home tab.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Fill in your name and eFootball ID on the <strong>Profile</strong> tab. Your registration needs admin approval before you're confirmed — check back on the Home tab.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
-      <div class="card-title">2. Confirm ready & submit your setup</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">When your match goes live, the admin shares a <strong>Join Code</strong> (e.g. <code>GRP-A-M1</code>) — enter it on the <strong>Join</strong> tab with your name to confirm you're ready. You can also submit your manager name, formation, and team there, so the admin can verify it later.</p>
+      <div class="card-title">2. Check your schedule</div>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Once approved and your matches are scheduled, they'll appear in your <strong>Profile</strong> tab below your player card. The <strong>Matches</strong> tab shows all players' matches sorted by date.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">3. Play the match</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Play in the eFootball app directly — this website doesn't host the gameplay. One of you creates a 1v1 Match Room in eFootball and shares <strong>that</strong> code with your opponent directly (WhatsApp, etc.) — that's a different code from our Join Code.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Play in the eFootball app directly — this website doesn't host the gameplay. One of you creates a 1v1 Match Room in eFootball and shares the room code with your opponent via WhatsApp.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">4. Report the score</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">After playing, go to <strong>My Matches</strong>, search your name, and enter the final score on your live match. If you and your opponent both enter the <strong>same</strong> score, it's confirmed automatically. If your scores don't match, you'll see a warning — double check with your opponent and the admin will step in to resolve it.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">After playing, go to your <strong>Profile</strong> tab and enter the final score on your live match card. If you and your opponent both enter the <strong>same</strong> score, it's confirmed automatically. If scores don't match, the admin will step in to resolve it.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">5. Get match reminders</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">On the <strong>My Matches</strong> tab, tap <strong>Enable</strong> to get a notification 10 minutes before your scheduled match starts — even if you don't have the app open.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">On your <strong>Profile</strong> tab, tap <strong>Enable</strong> to get a notification 10 minutes before your scheduled match starts — even if you don't have the app open.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">6. Track the tournament</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Check <strong>Standings</strong> for group tables, <strong>Stats</strong> for your goals/wins, and <strong>Bracket</strong> for the knockout stage once it starts.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Check <strong>Standings</strong> for group tables, <strong>Leaderboard</strong> for top scorers/wins, <strong>Results</strong> for completed match scores, and <strong>Bracket</strong> for the knockout stage once it starts.</p>
     </div>
 
     <div class="card">
@@ -264,7 +264,7 @@
       </div>
     </section>
 
-    <!-- JOIN MATCH -->
+    <!-- RESULTS -->
     <section class="section" id="sec-results">
       <div id="results-list">
         <div class="loader"><div class="spinner"></div></div>
@@ -324,16 +324,16 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v77';
+  const APP_VERSION = 'v78';
 
   import { db } from './js/firebase.js';
-  import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
-  import { submitTeamSetup, submitPlayerScore } from './js/matches.js';
+  import { registerPlayer } from './js/app.js';
+  import { submitPlayerScore } from './js/matches.js';
   import { enableMatchNotifications } from './js/push.js';
   import { computeStandings } from './js/tournament.js';
   import {
     onLiveMatches, onTournamentStatus, onGroupMatches,
-    onGroups, onPlayers, onPlayerMatches, cleanupAll
+    onGroups, onPlayers, onPlayerMatches
   } from './js/realtime.js';
   import {
     collection, getDocs, query, where, doc, updateDoc, onSnapshot
@@ -694,19 +694,32 @@
           </div>`).join('')}
       </div>` : '';
 
+    const isFanOrPlayer = localStorage.getItem('myRegisteredName') || localStorage.getItem('fanMode');
     el.innerHTML = BANNER_HTML + INSTALL_CARD_HTML + `
       <div style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
         ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
       </div>
       ${liveHtml}
+      ${isFanOrPlayer ? `
       <div class="card">
         <div class="card-title">Quick Actions</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
           <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=matches]').click()">View all matches</button>
           <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=standings]').click()">See standings</button>
         </div>
-      </div>`;
+      </div>` : `
+      <div class="card" style="text-align:center;padding:1.25rem">
+        <p style="font-size:.88rem;color:var(--gray-600);margin-bottom:1rem">Register to play or watch the tournament as a fan.</p>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <button class="btn btn-primary btn-full" onclick="document.querySelector('[data-section=register]').click()">Register to Play</button>
+          <button class="btn btn-secondary btn-full" id="home-fan-btn">🏟️ Watch as Fan</button>
+        </div>
+      </div>`}`;
     attachInstallBtn();
+    document.getElementById('home-fan-btn')?.addEventListener('click', () => {
+      enableFanMode();
+      document.querySelector('[data-section="matches"]').click();
+    });
 
     flash(document.getElementById('live-matches-card'));
   }
@@ -852,8 +865,6 @@
   });
 
   // ── MY MATCHES — real-time ──
-  let currentPlayerId = null;
-  let allPlayersList = [];
 
   // Render the current player's matches below the profile card in the Register tab.
   function renderProfileMatches(player) {
@@ -988,7 +999,7 @@
     }).join('');
   }
 
-  // ── JOIN MATCH ──
+  // ── RESULTS ──
   async function loadResults() {
     const el = document.getElementById('results-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';

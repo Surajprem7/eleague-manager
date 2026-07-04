@@ -195,14 +195,14 @@
 
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">Match Reminders</div>
-          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Players can tap "Enable" on their My Matches tab to get a push notification ~10 minutes before their match's scheduled time — this is fully automatic once they opt in, nothing for you to set up per match. It only works if you've set a <strong>date and time</strong> on the match (the 📅 Schedule button), since that's what the reminder is timed against.</p>
+          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Players can tap "Enable" on their Profile tab to get a push notification ~10 minutes before their match's scheduled time — this is fully automatic once they opt in, nothing for you to set up per match. It only works if you've set a <strong>date and time</strong> on the match (the 📅 Schedule button), since that's what the reminder is timed against.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">Handling Problems</div>
           <ul style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
             <li><strong>Score mismatch flagged:</strong> see the "Scoring" section above — enter the correct score to resolve it.</li>
-            <li><strong>Player disputes a score:</strong> review it under the <strong>Disputes</strong> tab and resolve with a short note. Players can also email you directly.</li>
+            <li><strong>Player disputes a score:</strong> players can email you directly (link in their Help modal). Use <strong>✏️ Correct Score</strong> on the Results tab to fix it.</li>
             <li><strong>You entered a wrong score:</strong> go to Matches tab, find the completed match, click <strong>✏️ Correct Score</strong> and re-enter — it overwrites the old one.</li>
             <li>Every action you take is recorded in the <strong>Activity Log</strong> tab with a timestamp.</li>
           </ul>
@@ -228,7 +228,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v77';
+  const CURRENT_APP_VERSION = 'v78';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
