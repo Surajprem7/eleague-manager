@@ -341,14 +341,6 @@ p  { font-size: 0.95rem; }
 }
 .bracket-team.winner { color: var(--green); font-weight: 700; }
 
-/* ===== JOIN CODE INPUT ===== */
-.join-code-input {
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
 
 /* ===== EMPTY STATE ===== */
 .empty-state {

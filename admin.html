@@ -227,7 +227,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v79';
+  const CURRENT_APP_VERSION = 'v80';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -374,8 +374,6 @@
       <div style="text-align:center;margin-top:1rem">
         <button id="edit-groups-btn" class="btn btn-secondary">✏️ Edit Groups</button>
       </div>`;
-      const done = await checkAndGenerateKnockout();
-      if (done) { toast('All group matches done! Knockout generated.'); }
       el.innerHTML = html;
       document.getElementById('edit-groups-btn').addEventListener('click', () => {
         if (!confirm('Are you sure you want to edit groups? This will reset the current groups and match schedule.')) return;
@@ -472,7 +470,7 @@
           if (lbl) lbl.style.borderColor = 'var(--primary)';
         }
         renderGroupBuilder(draftGroups, document.getElementById('group-builder-wrap'));
-        showDraftBanner(el);
+        showDraftBanner();
       } else {
         clearGroupDraft();
         renderGroupBuilder(buildGroupMap(players, '4'), document.getElementById('group-builder-wrap'));
@@ -494,10 +492,9 @@
   function clearGroupDraft() {
     localStorage.removeItem(DRAFT_KEY);
   }
-  function showDraftBanner(container) {
+  function showDraftBanner() {
     const existing = document.getElementById('draft-banner');
     if (existing) return;
-    const wrap = (container || document.getElementById('group-builder-wrap'));
     const banner = document.createElement('div');
     banner.id = 'draft-banner';
     banner.style.cssText = 'display:flex;align-items:center;gap:8px;background:#FEF7E0;border:1px solid #FAC775;border-radius:8px;padding:8px 12px;font-size:.8rem;color:#854F0B;margin-bottom:.75rem';
@@ -741,9 +738,9 @@
       ${m.status === 'live' ? `
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <div class="score-inputs">
-            <input type="number" class="score-input" id="hs-${m.id}" placeholder="0" min="0" max="99" />
+            <input type="number" class="score-input" id="live-hs-${m.id}" placeholder="0" min="0" max="99" />
             <span class="score-dash">–</span>
-            <input type="number" class="score-input" id="as-${m.id}" placeholder="0" min="0" max="99" />
+            <input type="number" class="score-input" id="live-as-${m.id}" placeholder="0" min="0" max="99" />
           </div>
           <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">✓ Save Score</button>
           <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
@@ -788,8 +785,12 @@
     toast('Match set back to Scheduled'); loadMatches();
   };
   window.saveScore = async (id) => {
-    const hs = parseInt(document.getElementById('hs-' + id)?.value);
-    const as = parseInt(document.getElementById('as-' + id)?.value);
+    const liveHs = document.getElementById('live-hs-' + id);
+    const corrHs = document.getElementById('hs-' + id);
+    const hs = parseInt((liveHs || corrHs)?.value);
+    const liveAs = document.getElementById('live-as-' + id);
+    const corrAs = document.getElementById('as-' + id);
+    const as = parseInt((liveAs || corrAs)?.value);
     if (isNaN(hs) || isNaN(as)) { toast('Enter both scores'); return; }
     await enterScore(id, hs, as);
     toast('Score saved! ✅'); loadMatches();

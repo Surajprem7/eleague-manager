@@ -28,15 +28,15 @@
     }
     .realtime-badge {
       display: inline-flex; align-items: center;
-      font-size: 0.7rem; color: #0DB87E;
-      background: #D0FDF0; padding: 2px 8px;
+      font-size: 0.7rem; color: var(--green-dark, #0DB87E);
+      background: rgba(33,241,168,0.15); padding: 2px 8px;
       border-radius: 99px; margin-left: 8px;
     }
     .update-flash {
       animation: flash 0.6s ease-out;
     }
     @keyframes flash {
-      0% { background: #D0FDF0; }
+      0% { background: rgba(33,241,168,0.18); }
       100% { background: transparent; }
     }
   </style>
@@ -324,7 +324,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v79';
+  const APP_VERSION = 'v80';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -757,6 +757,7 @@
   let cachedGroupMatches = [];
 
   function renderStandings() {
+    if (currentSection !== 'standings' && currentSection !== 'home') return;
     if (currentSection === 'home' && localStorage.getItem('myRegisteredName')) renderMyDashboard();
     const el = document.getElementById('standings-content');
     if (!cachedGroups.length) {
@@ -1083,6 +1084,7 @@
     document.getElementById('verify-form').style.display = 'none';
     document.getElementById('fan-mode-card').style.display = 'block';
     document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
+    document.querySelector('.nav-item[data-section="register"] span').textContent = 'Browse';
     startStandingsListener();
   }
 
