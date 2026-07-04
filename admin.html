@@ -944,8 +944,21 @@
             ${m.group ? `<span class="badge badge-gray">Group ${m.group}</span>` : '<span></span>'}
             ${isDraw ? '<span class="badge badge-gray">🤝 Draw</span>' : '<span class="badge badge-green">✓ Completed</span>'}
           </div>
-          <div style="display:flex;justify-content:flex-end;margin-top:.5rem">
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:.5rem">
             <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">📲 Share Result</button>
+            <button class="btn btn-sm btn-secondary" onclick="toggleResultEdit('${m.id}')">✏️ Edit</button>
+          </div>
+          <div id="redit-${m.id}" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--gray-200)">
+            <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.4rem">Correct the score — this will recalculate the winner and update standings.</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="score-inputs">
+                <input type="number" class="score-input" id="res-hs-${m.id}" value="${m.homeScore}" min="0" max="99" />
+                <span class="score-dash">–</span>
+                <input type="number" class="score-input" id="res-as-${m.id}" value="${m.awayScore}" min="0" max="99" />
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="saveResultEdit('${m.id}')">✓ Save</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleResultEdit('${m.id}')">Cancel</button>
+            </div>
           </div>
         </div>`;
       }).join('');
@@ -953,6 +966,18 @@
     el.innerHTML = html;
   }
 
+  window.toggleResultEdit = (id) => {
+    const el = document.getElementById('redit-' + id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  };
+  window.saveResultEdit = async (id) => {
+    const hs = parseInt(document.getElementById('res-hs-' + id)?.value);
+    const as_ = parseInt(document.getElementById('res-as-' + id)?.value);
+    if (isNaN(hs) || isNaN(as_)) { toast('Enter both scores'); return; }
+    await enterScore(id, hs, as_);
+    toast('Score corrected! ✅');
+    loadResults();
+  };
   window.shareResult = (home, away, hs, as_, phase) => {
     window.open(generateResultAlert({ homePlayer: home, awayPlayer: away, homeScore: hs, awayScore: as_, phase }), '_blank');
   };
