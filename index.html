@@ -253,18 +253,9 @@
     </section>
 
     <!-- JOIN MATCH -->
-    <section class="section" id="sec-join">
-      <div class="card">
-        <div class="card-title">Enter Join Code</div>
-        <p style="font-size:0.88rem;color:var(--gray-600);margin-bottom:1rem">Admin will share a code when your match goes live. Enter it below to confirm you're ready.</p>
-        <div class="form-group">
-          <input type="text" class="form-input join-code-input" id="join-code-input" placeholder="e.g. GRP-A-M1" maxlength="20" />
-        </div>
-        <div class="form-group">
-          <input type="text" class="form-input" id="join-name-input" placeholder="Your name" maxlength="40" />
-        </div>
-        <button class="btn btn-primary btn-full" id="join-btn">Confirm Ready ✓</button>
-        <div id="join-result" style="margin-top:1rem"></div>
+    <section class="section" id="sec-results">
+      <div id="results-list">
+        <div class="loader"><div class="spinner"></div></div>
       </div>
     </section>
 
@@ -299,8 +290,8 @@
   <button class="nav-item nav-registered-only" data-section="matches">
     <span>Matches</span>
   </button>
-  <button class="nav-item nav-registered-only" data-section="join">
-    <span>Join</span>
+  <button class="nav-item nav-registered-only" data-section="results">
+    <span>Results</span>
   </button>
   <button class="nav-item nav-registered-only" data-section="standings">
     <span>Standings</span>
@@ -321,7 +312,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v73';
+  const APP_VERSION = 'v75';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -578,6 +569,7 @@
   // ── NAVIGATION ──
   let currentSection = 'home';
   let matchesTabInitialized = false;
+  let resultsTabInitialized = false;
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -589,6 +581,10 @@
       if (currentSection === 'matches' && !matchesTabInitialized) {
         matchesTabInitialized = true;
         loadAllMatches();
+      }
+      if (currentSection === 'results' && !resultsTabInitialized) {
+        resultsTabInitialized = true;
+        loadResults();
       }
     });
   });
@@ -958,48 +954,63 @@
   }
 
   // ── JOIN MATCH ──
-  document.getElementById('join-btn').addEventListener('click', async () => {
-    const code   = document.getElementById('join-code-input').value.trim().toUpperCase();
-    const name   = document.getElementById('join-name-input').value.trim();
-    const result = document.getElementById('join-result');
-    if (!code || !name) { toast('Enter both your name and the join code'); return; }
-    result.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-    const res = await joinMatch(code, name);
-    if (!res.success) {
-      result.innerHTML = `<div class="empty-state"><span class="icon">❌</span><p>${esc(res.message)}</p></div>`;
-    } else {
-      const side = res.match.homeName === name ? 'home' : 'away';
-      const existingSetup = res.match[side + 'TeamSetup'];
-      result.innerHTML = `
-        <div style="text-align:center;padding:1rem">
-          <span style="font-size:2.5rem">✅</span>
-          <h3 style="margin:0.5rem 0">You're confirmed!</h3>
-          <p style="color:var(--gray-600);font-size:0.88rem">${esc(res.match.homeName)} vs ${esc(res.match.awayName)}</p>
-          <p style="font-size:0.85rem;margin-top:0.5rem">Go play on eFootball — good luck! 🎮</p>
-        </div>
-        <div class="card" style="margin-top:1rem">
-          <div class="card-title">Your Team / Manager Setup</div>
-          <p style="font-size:.8rem;color:var(--gray-600);margin-bottom:.75rem">Share your manager name, formation, and team — so admins can verify it matches what you played with.</p>
-          <textarea class="form-input" id="team-setup-input" rows="3" style="resize:none;height:70px" placeholder="e.g. Manager: John Smith, Formation: 4-3-3, Team: Barcelona">${esc(existingSetup || '')}</textarea>
-          <button class="btn btn-primary btn-full" id="team-setup-submit" style="margin-top:.5rem">${existingSetup ? 'Update Setup' : 'Submit Setup'}</button>
-          <div id="team-setup-result" style="margin-top:.5rem;font-size:.82rem"></div>
-        </div>`;
+  async function loadResults() {
+    const el = document.getElementById('results-list');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
 
-      document.getElementById('team-setup-submit').addEventListener('click', async () => {
-        const setupText = document.getElementById('team-setup-input').value.trim();
-        const setupResult = document.getElementById('team-setup-result');
-        if (!setupText) { toast('Enter your team/manager setup'); return; }
-        try {
-          await submitTeamSetup(res.match.id, side, setupText);
-          setupResult.style.color = '#21F1A8';
-          setupResult.textContent = '✅ Setup submitted!';
-        } catch(e) {
-          setupResult.style.color = '#D93025';
-          setupResult.textContent = '❌ ' + e.message;
-        }
-      });
+    const [groupSnap, koSnap] = await Promise.all([
+      getDocs(collection(db, 'matches')).catch(() => ({ docs: [] })),
+      getDocs(collection(db, 'knockoutMatches')).catch(() => ({ docs: [] }))
+    ]);
+
+    const all = [
+      ...groupSnap.docs.map(d => ({ id: d.id, _col: 'group', ...d.data() })),
+      ...koSnap.docs.map(d => ({ id: d.id, _col: 'knockout', ...d.data() }))
+    ].filter(m => m.status === 'completed');
+
+    if (!all.length) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>No completed matches yet.</p></div>';
+      return;
     }
-  });
+
+    const phaseOrder  = { group:0, r32:1, r16:2, qf:3, sf:4, '3rd':5, final:6 };
+    const phaseLabels = { group:'Group Stage', r32:'Round of 32', r16:'Round of 16', qf:'Quarter-final', sf:'Semi-final', '3rd':'3rd Place', final:'Final' };
+
+    all.sort((a, b) =>
+      ((phaseOrder[a.phase] ?? 0) - (phaseOrder[b.phase] ?? 0)) ||
+      (a.group || '').localeCompare(b.group || '') ||
+      ((a.scheduledAt?.seconds || 0) - (b.scheduledAt?.seconds || 0))
+    );
+
+    const byPhase = {};
+    all.forEach(m => {
+      const key = m.phase || 'group';
+      if (!byPhase[key]) byPhase[key] = [];
+      byPhase[key].push(m);
+    });
+
+    let html = '';
+    for (const [phase, pMatches] of Object.entries(byPhase)) {
+      html += `<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin:1rem 0 .5rem">${phaseLabels[phase] || phase}</div>`;
+      html += pMatches.map(m => {
+        const isDraw   = m.winner === 'draw';
+        const homeWin  = m.winner === 'home';
+        const awayWin  = m.winner === 'away';
+        return `<div class="match-card" style="margin-bottom:.75rem">
+          <div class="match-teams">
+            <div class="match-player" style="${homeWin ? 'color:var(--green);font-weight:700' : ''}">${esc(m.homeName)}${homeWin ? ' 🏆' : ''}</div>
+            <div class="match-vs" style="font-size:1rem;font-weight:700">${m.homeScore} – ${m.awayScore}</div>
+            <div class="match-player" style="${awayWin ? 'color:var(--green);font-weight:700' : ''}">${esc(m.awayName)}${awayWin ? ' 🏆' : ''}</div>
+          </div>
+          <div class="match-meta" style="margin-top:.4rem">
+            ${m.group ? `<span class="badge badge-gray">Group ${m.group}</span>` : '<span></span>'}
+            ${isDraw ? '<span class="badge badge-gray">Draw</span>' : '<span class="badge badge-green">Completed</span>'}
+          </div>
+        </div>`;
+      }).join('');
+    }
+    el.innerHTML = html;
+  }
 
   // ── INIT ──
   startHomeListeners();
