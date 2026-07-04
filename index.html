@@ -312,7 +312,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v75';
+  const APP_VERSION = 'v76';
 
   import { db } from './js/firebase.js';
   import { registerPlayer, getTournamentStatus, joinMatch } from './js/app.js';
@@ -608,6 +608,27 @@
       </button>
     </div>`;
 
+  const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const INSTALL_CARD_HTML = isStandalonePWA ? '' : `
+    <div class="card" style="display:flex;align-items:center;gap:14px;padding:1rem 1.25rem">
+      <div style="width:48px;height:48px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <img src="assets/icon-192.png" alt="eLeague" style="width:36px;height:36px;border-radius:8px" />
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.95rem;font-weight:700;color:var(--gray-900)">eLeague Manager</div>
+        <div style="font-size:.78rem;color:var(--gray-600);margin-top:1px">Install for quick access anytime</div>
+      </div>
+      <button id="home-install-btn" class="btn btn-primary btn-sm" style="flex-shrink:0;white-space:nowrap">Install App</button>
+    </div>`;
+
+  function attachInstallBtn() {
+    const btn = document.getElementById('home-install-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      document.getElementById('install-modal').style.display = 'flex';
+    });
+  }
+
   function renderHome() {
     if (localStorage.getItem('myRegisteredName')) { renderMyDashboard(); return; }
     const el = document.getElementById('home-content');
@@ -615,19 +636,20 @@
     const liveMatches = cachedLiveMatches;
 
     if (!status) {
-      el.innerHTML = BANNER_HTML + `
+      el.innerHTML = BANNER_HTML + INSTALL_CARD_HTML + `
         <div class="card">
           <div class="card-title">How it works</div>
           <div class="player-item"><div class="player-avatar">1</div><div><div class="player-name">Register</div><div class="player-sub">Fill in your details to join</div></div></div>
           <div class="player-item"><div class="player-avatar">2</div><div><div class="player-name">Get approved</div><div class="player-sub">Admin confirms your spot</div></div></div>
-          <div class="player-item"><div class="player-avatar">3</div><div><div class="player-name">Play matches</div><div class="player-sub">Join with your match code</div></div></div>
+          <div class="player-item"><div class="player-avatar">3</div><div><div class="player-name">Play matches</div><div class="player-sub">Check your schedule and results</div></div></div>
           <div class="player-item"><div class="player-avatar">4</div><div><div class="player-name">Win the league!</div><div class="player-sub">Group stage → Knockout → Final</div></div></div>
         </div>`;
+      attachInstallBtn();
       return;
     }
 
     if (status.phase === 'done' && status.winner) {
-      el.innerHTML = BANNER_HTML + `
+      el.innerHTML = BANNER_HTML + INSTALL_CARD_HTML + `
         <div class="winner-banner">
           <span class="trophy">🏆</span>
           <h2>${esc(status.winner)}</h2>
@@ -639,6 +661,7 @@
           ${status.second ? `<div class="player-item"><div class="player-avatar">🥈</div><div><div class="player-name">${esc(status.second)}</div><div class="player-sub">Runner-up</div></div></div>` : ''}
           ${status.third  ? `<div class="player-item"><div class="player-avatar">🥉</div><div><div class="player-name">${esc(status.third)}</div><div class="player-sub">Third place</div></div></div>` : ''}
         </div>`;
+      attachInstallBtn();
       return;
     }
 
@@ -659,7 +682,7 @@
           </div>`).join('')}
       </div>` : '';
 
-    el.innerHTML = BANNER_HTML + `
+    el.innerHTML = BANNER_HTML + INSTALL_CARD_HTML + `
       <div style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
         ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
       </div>
@@ -667,11 +690,11 @@
       <div class="card">
         <div class="card-title">Quick Actions</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
-          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=matches]').click()">📅 View my schedule</button>
-          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=join]').click()">🔑 Enter join code</button>
-          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=standings]').click()">📊 See standings</button>
+          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=matches]').click()">View all matches</button>
+          <button class="btn btn-secondary btn-full" onclick="document.querySelector('[data-section=standings]').click()">See standings</button>
         </div>
       </div>`;
+    attachInstallBtn();
 
     flash(document.getElementById('live-matches-card'));
   }
@@ -1104,31 +1127,13 @@
       }
     }
 
-    const upcoming = myMatches.filter(m => m.status !== 'completed').sort((a,b) => (a.scheduledAt?.seconds||0) - (b.scheduledAt?.seconds||0));
-    const next = upcoming[0];
-    let nextHtml = '<p style="font-size:.85rem;color:var(--gray-600)">No upcoming match scheduled yet.</p>';
-    if (next) {
-      const opp = next.homeId === myPlayer.id ? next.awayName : next.homeName;
-      const when = next.status === 'live' ? '🔴 LIVE NOW' : (next.scheduledAt ? new Date(next.scheduledAt.seconds*1000).toLocaleString() : 'Time TBA');
-      nextHtml = `<div class="match-card" style="${next.status==='live'?'border-left:3px solid var(--green)':''}">
-        <div class="match-teams">
-          <div class="match-player" style="color:var(--green-dark)">${esc(myPlayer.name)}</div>
-          <div class="match-vs">vs</div>
-          <div class="match-player">${esc(opp)}</div>
-        </div>
-        <div class="match-meta"><span>📅 ${when}</span>${next.status==='live'?`<span class="match-code">🔑 ${esc(next.joinCode)}</span>`:''}</div>
-      </div>`;
-    }
-
     el.innerHTML = BANNER_HTML + `
       <div class="card" style="margin-bottom:1rem">
         <div class="card-title">👋 Hi, ${esc(myPlayer.name)}</div>
         ${rankHtml || '<p style="font-size:.85rem;color:var(--gray-600)">Standings will appear once groups are drawn.</p>'}
       </div>
-      <div class="card">
-        <div class="card-title">Next Match</div>
-        ${nextHtml}
-      </div>`;
+      ${INSTALL_CARD_HTML}`;
+    attachInstallBtn();
   }
 
   // Service Worker — detect updates and prompt the user to refresh,
