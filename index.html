@@ -324,7 +324,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v83';
+  const APP_VERSION = 'v84';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -1072,6 +1072,10 @@
     } catch { el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load results.</p></div>'; }
   }
 
+  // These must be declared before renderHome() is called below.
+  let myPlayer = null;
+  let myMatches = [];
+
   // ── INIT ──
   // Render home immediately with cached/empty state so users never see an infinite spinner.
   // The real-time listeners will update it once Firebase responds.
@@ -1104,8 +1108,6 @@
 
   // If this device already registered, skip the form, show their profile,
   // reveal the rest of the nav, and build their personal Home dashboard.
-  let myPlayer = null;
-  let myMatches = [];
 
   function enableFanMode() {
     localStorage.setItem('fanMode', '1');
