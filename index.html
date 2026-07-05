@@ -324,7 +324,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v82';
+  const APP_VERSION = 'v83';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -825,6 +825,11 @@
       localStorage.setItem('myRegisteredName', name);
       document.getElementById('reg-form').style.display = 'none';
       document.getElementById('reg-success').style.display = 'block';
+      // Reveal nav tabs and load profile immediately — no reload needed
+      document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
+      document.querySelector('.nav-item[data-section="register"] span').textContent = 'Profile';
+      startStandingsListener();
+      loadMyProfile(name);
     } catch (e) {
       toast(e.message || 'Registration failed. Try again.');
     }
@@ -838,21 +843,24 @@
   });
 
   document.getElementById('verify-submit').addEventListener('click', async () => {
-    const name = document.getElementById('verify-name').value.trim();
+    const nameRaw = document.getElementById('verify-name').value.trim();
     const idOrPhone = document.getElementById('verify-efid').value.trim().toLowerCase();
     const result = document.getElementById('verify-result');
-    if (!name || !idOrPhone) { toast('Enter your name and a phone number or eFootball ID'); return; }
+    if (!nameRaw || !idOrPhone) { toast('Enter your name and a phone number or eFootball ID'); return; }
     const btn = document.getElementById('verify-submit');
     btn.textContent = 'Verifying...'; btn.disabled = true;
     try {
-      const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
+      // Fetch all players and match name case-insensitively to avoid failures from capitalisation differences
+      const snap = await getDocs(collection(db, 'players'));
+      const nameLower = nameRaw.toLowerCase();
       const match = snap.docs.find(d => {
         const data = d.data();
-        return (data.efootballId || '').toLowerCase() === idOrPhone || (data.phone || '').toLowerCase() === idOrPhone;
+        return (data.name || '').toLowerCase() === nameLower &&
+          ((data.efootballId || '').toLowerCase() === idOrPhone || (data.phone || '').toLowerCase() === idOrPhone);
       });
       if (!match) {
         result.style.color = '#D93025';
-        result.textContent = "❌ No match found. Check your name and phone/eFootball ID exactly, or register below.";
+        result.textContent = "❌ No match found. Double-check your name and eFootball ID / phone number, then try again.";
       } else {
         localStorage.setItem('myRegisteredName', match.data().name);
         result.style.color = '#21F1A8';
@@ -1090,6 +1098,7 @@
   document.getElementById('not-me-btn').addEventListener('click', () => {
     if (!confirm("Reset this device? You'll see the registration form again — only do this if this profile isn't actually you.")) return;
     localStorage.removeItem('myRegisteredName');
+    sessionStorage.setItem('showVerify', '1');
     location.reload();
   });
 
@@ -1127,6 +1136,10 @@
     loadMyProfile(myRegisteredName);
   } else if (localStorage.getItem('fanMode')) {
     enableFanMode();
+  } else if (sessionStorage.getItem('showVerify')) {
+    sessionStorage.removeItem('showVerify');
+    document.getElementById('verify-form').style.display = 'block';
+    document.querySelector('.nav-item[data-section="register"]').click();
   }
 
   async function loadMyProfile(name) {
@@ -1134,9 +1147,11 @@
     try {
       const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
       if (snap.empty) {
-        // Stale localStorage (e.g. admin deleted the player) — fall back to the form.
+        // Stale localStorage — player was deleted or name changed. Clear and reset.
+        localStorage.removeItem('myRegisteredName');
         document.getElementById('reg-form').style.display = 'block';
         document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'none');
+        toast('Profile not found. Please re-verify or register again.');
         return;
       }
       const p = { id: snap.docs[0].id, ...snap.docs[0].data() };
