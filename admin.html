@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#171717" />
-  <title>Admin — eLeague Manager</title>
+  <title>Admin â€” eLeague Manager</title>
   <link rel="stylesheet" href="css/admin.css" />
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,7 +14,7 @@
 
 <!-- Login Screen -->
 <div id="login-screen" class="login-screen">
-  <div class="logo-big">⚽</div>
+  <div class="logo-big">âš½</div>
   <h1>eLeague Manager</h1>
   <p>Admin access only.<br>Sign in with your Google account to continue.</p>
   <button class="btn btn-primary" id="google-login-btn" style="gap:10px">
@@ -27,12 +27,12 @@
 
   <header class="admin-header">
     <div>
-      <h1>⚽ eLeague Admin</h1>
+      <h1>âš½ eLeague Admin</h1>
       <span id="admin-email" style="font-size:0.72rem;color:#171717;opacity:0.7"></span>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <span class="badge-admin">Admin</span>
-      <a href="index.html" class="btn btn-sm" style="text-decoration:none;background:rgba(0,0,0,0.15);color:#171717;border:1px solid rgba(0,0,0,0.2)">👤 Player</a>
+      <a href="index.html" class="btn btn-sm" style="text-decoration:none;background:rgba(0,0,0,0.15);color:#171717;border:1px solid rgba(0,0,0,0.2)">ðŸ‘¤ Player</a>
       <button class="btn btn-sm" id="logout-btn" style="background:rgba(0,0,0,0.15);color:#171717;border:1px solid rgba(0,0,0,0.2)">Logout</button>
     </div>
   </header>
@@ -44,9 +44,9 @@
     <button class="admin-tab" data-tab="knockout">Knockout</button>
     <button class="admin-tab" data-tab="results">Results</button>
     <button class="admin-tab" data-tab="log">Activity Log</button>
-    <button class="admin-tab" data-tab="announce">📢 Announce</button>
-    <button class="admin-tab" data-tab="admins">👥 Admins</button>
-    <button class="admin-tab" data-tab="help">❔ Help</button>
+    <button class="admin-tab" data-tab="announce">ðŸ“¢ Announce</button>
+    <button class="admin-tab" data-tab="admins">ðŸ‘¥ Admins</button>
+    <button class="admin-tab" data-tab="help">â” Help</button>
   </div>
 
   <script>
@@ -72,9 +72,9 @@
       <!-- PLAYERS TAB -->
       <div class="tab-content active" id="tab-players">
         <div class="stat-grid" id="stats-grid">
-          <div class="stat-box"><div class="num" id="st-total">—</div><div class="lbl">Registered</div></div>
-          <div class="stat-box"><div class="num" id="st-approved">—</div><div class="lbl">Approved</div></div>
-          <div class="stat-box"><div class="num" id="st-pending">—</div><div class="lbl">Pending</div></div>
+          <div class="stat-box"><div class="num" id="st-total">â€”</div><div class="lbl">Registered</div></div>
+          <div class="stat-box"><div class="num" id="st-approved">â€”</div><div class="lbl">Approved</div></div>
+          <div class="stat-box"><div class="num" id="st-pending">â€”</div><div class="lbl">Pending</div></div>
         </div>
         <div id="players-list">
           <div class="loader"><div class="spinner"></div></div>
@@ -120,18 +120,18 @@
       <!-- ANNOUNCE TAB -->
       <div class="tab-content" id="tab-announce" style="display:none">
         <div class="card">
-          <div class="card-title">📢 Send Announcement to All Users</div>
+          <div class="card-title">ðŸ“¢ Send Announcement to All Users</div>
           <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:1rem">Message appears instantly on every player's screen in real time.</p>
           <div class="form-group">
             <textarea id="announce-msg" class="form-input" rows="3" placeholder="e.g. Please refresh the app to get the latest update!" style="resize:vertical"></textarea>
           </div>
           <label style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;cursor:pointer;font-size:.85rem;color:var(--gray-700)">
             <input type="checkbox" id="announce-refresh-chk" style="width:18px;height:18px;accent-color:var(--green)">
-            Include <strong style="color:var(--green)">🔄 Tap to Refresh Now</strong> button
+            Include <strong style="color:var(--green)">ðŸ”„ Tap to Refresh Now</strong> button
           </label>
           <div style="display:flex;gap:8px">
-            <button id="announce-send-btn" class="btn btn-primary" style="flex:1">📢 Send to All</button>
-            <button id="announce-clear-btn" class="btn btn-secondary">✕ Clear</button>
+            <button id="announce-send-btn" class="btn btn-primary" style="flex:1">ðŸ“¢ Send to All</button>
+            <button id="announce-clear-btn" class="btn btn-secondary">âœ• Clear</button>
           </div>
           <div id="announce-status" style="margin-top:.75rem;font-size:.82rem;color:var(--gray-600)"></div>
         </div>
@@ -151,65 +151,65 @@
       <!-- HELP TAB -->
       <div class="tab-content" id="tab-help" style="display:none">
         <div class="card" style="margin-bottom:1rem">
-          <div class="card-title">Step 1 — Approve Players</div>
+          <div class="card-title">Step 1 â€” Approve Players</div>
           <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
             <li>Open the <strong>Players</strong> tab.</li>
             <li>New registrations show up as <strong>pending</strong>.</li>
-            <li>Click <strong>✓</strong> to approve or <strong>✗</strong> to reject.</li>
+            <li>Click <strong>âœ“</strong> to approve or <strong>âœ—</strong> to reject.</li>
           </ol>
           <p style="font-size:.8rem;color:var(--gray-600)">Only approved players can be placed into groups.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
-          <div class="card-title">Step 2 — Create Groups</div>
+          <div class="card-title">Step 2 â€” Create Groups</div>
           <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
             <li>Open the <strong>Groups</strong> tab. Approved players are auto-split into groups.</li>
             <li>Move a player into a different group if you want a specific split.</li>
             <li>Click <strong>Save Groups & Generate Schedule</strong>.</li>
           </ol>
-          <p style="font-size:.8rem;color:var(--gray-600)">This auto-creates the full round-robin schedule — no need to add matches manually.</p>
+          <p style="font-size:.8rem;color:var(--gray-600)">This auto-creates the full round-robin schedule â€” no need to add matches manually.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
-          <div class="card-title">Step 3 — Run a Match (Match Day)</div>
+          <div class="card-title">Step 3 â€” Run a Match (Match Day)</div>
           <ol style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
             <li>Open the <strong>Matches</strong> tab and pick a match.</li>
             <li>Click <strong>Go Live</strong>. Only 2 matches can be live at once.</li>
             <li>Share the <strong>Join Code</strong> (e.g. <code>GRP-A-M1</code>) with both players.</li>
-            <li>Tell them: "Go to league.getgol.in → Matches tab → find your match and enter the join code."</li>
-            <li>After confirming ready, players can submit their manager/team setup — you'll see both submissions right on this match's card.</li>
-            <li>They play the match in eFootball (one of them creates the 1v1 Match Room and shares that code with the other directly — that's separate from our Join Code).</li>
+            <li>Tell them: "Go to league.getgol.in â†’ Matches tab â†’ find your match and enter the join code."</li>
+            <li>After confirming ready, players can submit their manager/team setup â€” you'll see both submissions right on this match's card.</li>
+            <li>They play the match in eFootball (one of them creates the 1v1 Match Room and shares that code with the other directly â€” that's separate from our Join Code).</li>
           </ol>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
-          <div class="card-title">Scoring — players can self-report</div>
-          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">After playing, either player can enter the final score themselves from the <strong>Profile</strong> tab on the player site — no need for you to do it. If <strong>both players enter the same score</strong>, the match completes automatically and standings update — nothing for you to do. If their scores <strong>don't match</strong>, you'll see a <strong style="color:#D93025">⚠️ Score mismatch</strong> flag on this match's card showing both numbers — check with the players and enter the correct score yourself to resolve it. You can also enter or override any score manually at any time, same as before.</p>
+          <div class="card-title">Scoring â€” players can self-report</div>
+          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">After playing, either player can enter the final score themselves from the <strong>Profile</strong> tab on the player site â€” no need for you to do it. If <strong>both players enter the same score</strong>, the match completes automatically and standings update â€” nothing for you to do. If their scores <strong>don't match</strong>, you'll see a <strong style="color:#D93025">âš ï¸ Score mismatch</strong> flag on this match's card showing both numbers â€” check with the players and enter the correct score yourself to resolve it. You can also enter or override any score manually at any time, same as before.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
-          <div class="card-title">Step 4 — Standings & Knockout</div>
-          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Standings update automatically as scores are entered — no manual calculation. Once <strong>every</strong> group match is completed, the knockout bracket is generated automatically from each group's top finishers. The <strong>Knockout</strong> tab works exactly like Matches: set live, share the code, enter the score. Semifinal losers automatically get a 3rd place match. The winner is announced when the Final completes.</p>
+          <div class="card-title">Step 4 â€” Standings & Knockout</div>
+          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Standings update automatically as scores are entered â€” no manual calculation. Once <strong>every</strong> group match is completed, the knockout bracket is generated automatically from each group's top finishers. The <strong>Knockout</strong> tab works exactly like Matches: set live, share the code, enter the score. Semifinal losers automatically get a 3rd place match. The winner is announced when the Final completes.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">Match Reminders</div>
-          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Players can tap "Enable" on their Profile tab to get a push notification ~10 minutes before their match's scheduled time — this is fully automatic once they opt in, nothing for you to set up per match. It only works if you've set a <strong>date and time</strong> on the match (the 📅 Schedule button), since that's what the reminder is timed against.</p>
+          <p style="font-size:.85rem;color:var(--gray-700);line-height:1.7">Players can tap "Enable" on their Profile tab to get a push notification ~10 minutes before their match's scheduled time â€” this is fully automatic once they opt in, nothing for you to set up per match. It only works if you've set a <strong>date and time</strong> on the match (the ðŸ“… Schedule button), since that's what the reminder is timed against.</p>
         </div>
 
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">Handling Problems</div>
           <ul style="font-size:.85rem;color:var(--gray-700);line-height:1.8;padding-left:1.2rem">
-            <li><strong>Score mismatch flagged:</strong> see the "Scoring" section above — enter the correct score to resolve it.</li>
-            <li><strong>Player disputes a score:</strong> players can email you directly (link in their Help modal). Use <strong>✏️ Correct Score</strong> on the Results tab to fix it.</li>
-            <li><strong>You entered a wrong score:</strong> go to Matches tab, find the completed match, click <strong>✏️ Correct Score</strong> and re-enter — it overwrites the old one.</li>
+            <li><strong>Score mismatch flagged:</strong> see the "Scoring" section above â€” enter the correct score to resolve it.</li>
+            <li><strong>Player disputes a score:</strong> players can email you directly (link in their Help modal). Use <strong>âœï¸ Correct Score</strong> on the Results tab to fix it.</li>
+            <li><strong>You entered a wrong score:</strong> go to Matches tab, find the completed match, click <strong>âœï¸ Correct Score</strong> and re-enter â€” it overwrites the old one.</li>
             <li>Every action you take is recorded in the <strong>Activity Log</strong> tab with a timestamp.</li>
           </ul>
         </div>
 
         <div class="card" style="background:#FEF7E0;border-color:#FAC775">
           <div class="card-title" style="color:#854F0B">Managing Other Admins</div>
-          <p style="font-size:.82rem;color:#854F0B;line-height:1.6">Only the default admin can add or remove admins, from the <strong>Admins</strong> tab. Maximum 3 admins total. New admins just sign in at league.getgol.in/admin.html with their own Google account — no password to share.</p>
+          <p style="font-size:.82rem;color:#854F0B;line-height:1.6">Only the default admin can add or remove admins, from the <strong>Admins</strong> tab. Maximum 3 admins total. New admins just sign in at league.getgol.in/admin.html with their own Google account â€” no password to share.</p>
         </div>
       </div>
 
@@ -222,12 +222,12 @@
 
 <!-- Update Banner -->
 <div id="update-banner" onclick="location.reload()" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#4DA3FF;color:#fff;text-align:center;padding:14px 1rem;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
-  🔄 New update available — Tap here to refresh!
+  ðŸ”„ New update available â€” Tap here to refresh!
 </div>
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v84';
+  const CURRENT_APP_VERSION = 'v85';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -300,7 +300,7 @@
     });
   });
 
-  // ── PLAYERS — real-time ──
+  // â”€â”€ PLAYERS â€” real-time â”€â”€
   let playersListenerStarted = false;
   function loadPlayers() {
     if (playersListenerStarted) return;
@@ -311,7 +311,7 @@
       document.getElementById('st-approved').textContent = players.filter(p=>p.status==='approved').length;
       document.getElementById('st-pending').textContent  = players.filter(p=>p.status==='pending').length;
       if (!players.length) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">👥</span><p>No registrations yet.</p></div>';
+        el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ‘¥</span><p>No registrations yet.</p></div>';
         return;
       }
       el.innerHTML = players.map(p => `
@@ -319,27 +319,27 @@
           <div class="player-avatar">${p.name[0].toUpperCase()}</div>
           <div style="flex:1">
             <div class="player-name">${esc(p.name)}</div>
-            <div class="player-sub">⚽ ${esc(p.efootballId)}${p.phone?' · 📱 '+esc(p.phone):''}</div>
+            <div class="player-sub">âš½ ${esc(p.efootballId)}${p.phone?' Â· ðŸ“± '+esc(p.phone):''}</div>
             <div style="font-size:.7rem;margin-top:2px">${
               !p.appVersion
                 ? '<span style="color:var(--gray-600)">App version: unknown</span>'
                 : p.appVersion === CURRENT_APP_VERSION
-                  ? `<span style="color:#0DB87E">✓ Latest (${esc(p.appVersion)})</span>`
-                  : `<span style="color:#D93025">⚠️ Outdated (${esc(p.appVersion)})</span>`
+                  ? `<span style="color:#0DB87E">âœ“ Latest (${esc(p.appVersion)})</span>`
+                  : `<span style="color:#D93025">âš ï¸ Outdated (${esc(p.appVersion)})</span>`
             }</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span class="badge badge-${p.status==='approved'?'green':p.status==='rejected'?'red':'amber'}">${p.status}</span>
             ${p.status==='pending'?`
-              <button class="btn btn-sm btn-primary" onclick="approvePlayer('${p.id}')">✓</button>
-              <button class="btn btn-sm btn-danger" onclick="rejectPlayer('${p.id}')">✗</button>`:''}
-            <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}','${esc(p.name)}')" title="Remove player">🗑️</button>
+              <button class="btn btn-sm btn-primary" onclick="approvePlayer('${p.id}')">âœ“</button>
+              <button class="btn btn-sm btn-danger" onclick="rejectPlayer('${p.id}')">âœ—</button>`:''}
+            <button class="btn btn-sm btn-danger" onclick="removePlayer('${p.id}','${esc(p.name)}')" title="Remove player">ðŸ—‘ï¸</button>
           </div>
         </div>`).join('');
     });
   }
 
-  window.approvePlayer = async (id) => { await updatePlayerStatus(id, 'approved'); toast('Player approved! ✅'); };
+  window.approvePlayer = async (id) => { await updatePlayerStatus(id, 'approved'); toast('Player approved! âœ…'); };
   window.rejectPlayer  = async (id) => { await updatePlayerStatus(id, 'rejected'); toast('Player rejected.'); };
   window.removePlayer  = async (id, name) => {
     if (!confirm(`Remove "${name}" permanently? This cannot be undone.`)) return;
@@ -347,7 +347,7 @@
     toast(`${name} removed.`);
   };
 
-  // ── GROUPS ──
+  // â”€â”€ GROUPS â”€â”€
   async function loadGroups() {
     const el = document.getElementById('groups-panel');
     const players = (await getAllPlayers()).filter(p => p.status === 'approved');
@@ -372,7 +372,7 @@
       });
       html += `</div>
       <div style="text-align:center;margin-top:1rem">
-        <button id="edit-groups-btn" class="btn btn-secondary">✏️ Edit Groups</button>
+        <button id="edit-groups-btn" class="btn btn-secondary">âœï¸ Edit Groups</button>
       </div>`;
       el.innerHTML = html;
       document.getElementById('edit-groups-btn').addEventListener('click', () => {
@@ -383,7 +383,7 @@
     }
 
     if (!players.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">👥</span><p>Approve players first before drawing groups.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ‘¥</span><p>Approve players first before drawing groups.</p></div>';
       return;
     }
 
@@ -411,8 +411,8 @@
   function renderGroupFormatPicker(players, el) {
     const n = players.length;
     const formats = [
-      { value: '4', label: `4 Player Group`, desc: `${Math.ceil(n/4)} groups · 4 players each` },
-      { value: '3', label: `3 Player Group`, desc: `${Math.ceil(n/3)} groups · 3 players each` },
+      { value: '4', label: `4 Player Group`, desc: `${Math.ceil(n/4)} groups Â· 4 players each` },
+      { value: '3', label: `3 Player Group`, desc: `${Math.ceil(n/3)} groups Â· 3 players each` },
       { value: '2groups', label: `2 Groups`, desc: `~${Math.ceil(n/2)} players each` },
     ];
 
@@ -498,7 +498,7 @@
     const banner = document.createElement('div');
     banner.id = 'draft-banner';
     banner.style.cssText = 'display:flex;align-items:center;gap:8px;background:#FEF7E0;border:1px solid #FAC775;border-radius:8px;padding:8px 12px;font-size:.8rem;color:#854F0B;margin-bottom:.75rem';
-    banner.innerHTML = '📋 <strong>Draft restored.</strong> Your last saved arrangement has been loaded.';
+    banner.innerHTML = 'ðŸ“‹ <strong>Draft restored.</strong> Your last saved arrangement has been loaded.';
     const builderWrap = document.getElementById('group-builder-wrap');
     if (builderWrap) builderWrap.insertAdjacentElement('beforebegin', banner);
   }
@@ -539,7 +539,7 @@
         const pname = tile.dataset.name;
         const sel = tile.querySelector('.move-select');
         if (!sel) return;
-        sel.innerHTML = `<option value="">Move →</option>` +
+        sel.innerHTML = `<option value="">Move â†’</option>` +
           allLetters.filter(l => l !== letter).map(l => `<option value="${l}">Group ${l}</option>`).join('');
         // re-bind (remove old, add new)
         const newSel = sel.cloneNode(true);
@@ -553,7 +553,7 @@
       const approveBtn = box.querySelector('.approve-group-btn');
       if (approveBtn && approveBtn.dataset.approved === 'true') {
         approveBtn.dataset.approved = 'false';
-        approveBtn.textContent = '✓ Approve Group';
+        approveBtn.textContent = 'âœ“ Approve Group';
         approveBtn.style.background = '';
         approveBtn.style.color = '';
         approveBtn.style.borderColor = '';
@@ -580,7 +580,7 @@
   function renderGroupBuilder(groupMap, el) {
     const letters = Object.keys(groupMap);
     let html = `<div class="card"><div class="card-title">Assign players to groups</div>
-      <p style="font-size:0.82rem;color:var(--gray-600);margin-bottom:1rem">Use <strong>Move →</strong> on each player to reassign them. Approve each group when ready.</p>
+      <p style="font-size:0.82rem;color:var(--gray-600);margin-bottom:1rem">Use <strong>Move â†’</strong> on each player to reassign them. Approve each group when ready.</p>
       <div class="group-grid" id="group-builder">`;
     letters.forEach(letter => {
       const players = groupMap[letter];
@@ -589,7 +589,7 @@
           <span>Group ${letter} <span class="gb-count" style="font-weight:400;color:var(--gray-600)">${players.length}P</span></span>
           <button class="approve-group-btn btn btn-sm" data-letter="${letter}" data-approved="false"
             style="font-size:.72rem;padding:3px 10px;border:1.5px solid var(--primary);color:var(--primary);background:transparent;border-radius:99px;cursor:pointer">
-            ✓ Approve Group
+            âœ“ Approve Group
           </button>
         </div>
         <div class="group-players" id="gp-${letter}">
@@ -597,7 +597,7 @@
             <div class="drag-player" data-id="${p.id}" data-name="${esc(p.name)}" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
               <span>${esc(p.name)}</span>
               <select class="move-select" style="font-size:.72rem;border:1px solid var(--gray-200);border-radius:6px;padding:2px 4px;background:#2E2E2E;color:#CCCCCC;cursor:pointer">
-                <option value="">Move →</option>
+                <option value="">Move â†’</option>
                 ${letters.filter(l => l !== letter).map(l => `<option value="${l}">Group ${l}</option>`).join('')}
               </select>
             </div>`).join('')}
@@ -606,7 +606,7 @@
     });
     html += `</div>
       <div style="display:flex;gap:8px;margin-top:1rem">
-        <button class="btn btn-secondary" id="save-draft-btn" style="flex:1">💾 Save Draft</button>
+        <button class="btn btn-secondary" id="save-draft-btn" style="flex:1">ðŸ’¾ Save Draft</button>
         <button class="btn btn-primary confirm-btn" id="save-groups-btn" disabled style="opacity:0.45;flex:2">
           Save Groups & Generate Schedule (0/${letters.length} approved)
         </button>
@@ -631,13 +631,13 @@
         const isApproved = btn.dataset.approved === 'true';
         if (!isApproved) {
           btn.dataset.approved = 'true';
-          btn.textContent = '✅ Approved';
+          btn.textContent = 'âœ… Approved';
           btn.style.background = 'var(--primary)';
           btn.style.color = '#fff';
           btn.style.borderColor = 'var(--primary)';
         } else {
           btn.dataset.approved = 'false';
-          btn.textContent = '✓ Approve Group';
+          btn.textContent = 'âœ“ Approve Group';
           btn.style.background = 'transparent';
           btn.style.color = 'var(--primary)';
           btn.style.borderColor = 'var(--primary)';
@@ -651,9 +651,9 @@
     document.getElementById('save-draft-btn').addEventListener('click', () => {
       saveGroupDraft();
       const btn = document.getElementById('save-draft-btn');
-      btn.textContent = '✅ Draft Saved!';
+      btn.textContent = 'âœ… Draft Saved!';
       btn.style.color = 'var(--primary)';
-      setTimeout(() => { btn.textContent = '💾 Save Draft'; btn.style.color = ''; }, 2000);
+      setTimeout(() => { btn.textContent = 'ðŸ’¾ Save Draft'; btn.style.color = ''; }, 2000);
       document.getElementById('draft-banner') && (document.getElementById('draft-banner').remove());
     });
 
@@ -669,7 +669,7 @@
       try {
         await saveGroupsAndGenerateMatches(finalGroups);
         clearGroupDraft();
-        toast('Groups saved! Match schedule generated. ✅');
+        toast('Groups saved! Match schedule generated. âœ…');
         loadGroups();
       } catch (e) {
         toast('Error: ' + e.message);
@@ -677,12 +677,12 @@
     });
   }
 
-  // ── MATCHES ──
+  // â”€â”€ MATCHES â”€â”€
   async function loadMatches() {
     const el = document.getElementById('matches-panel');
     const matches = await getMatches('group');
     if (!matches.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>Generate groups first to see the match schedule.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ“…</span><p>Generate groups first to see the match schedule.</p></div>';
       return;
     }
     const groups = [...new Set(matches.map(m => m.group))].sort();
@@ -708,18 +708,18 @@
     return `<div class="match-card" style="margin-bottom:0.75rem">
       <div class="match-teams">
         <div class="match-player">${esc(m.homeName)}</div>
-        <div class="match-vs">${m.status === 'completed' ? m.homeScore+' – '+m.awayScore : 'vs'}</div>
+        <div class="match-vs">${m.status === 'completed' ? m.homeScore+' â€“ '+m.awayScore : 'vs'}</div>
         <div class="match-player">${esc(m.awayName)}</div>
       </div>
       <div class="match-meta" style="margin-bottom:0.75rem">
-        <span class="match-code">🔑 ${m.joinCode}</span>
+        <span class="match-code">ðŸ”‘ ${m.joinCode}</span>
         <span class="badge badge-${statusColor}">${m.status}</span>
-        ${m.scoreMismatch ? `<span class="badge badge-red" style="background:#FCE8E6;color:#D93025">⚠️ Score mismatch</span>` : ''}
+        ${m.scoreMismatch ? `<span class="badge badge-red" style="background:#FCE8E6;color:#D93025">âš ï¸ Score mismatch</span>` : ''}
       </div>
       ${m.scoreMismatch ? `
         <div style="background:#FCE8E6;border-radius:8px;padding:.5rem .75rem;margin-bottom:.75rem;font-size:.78rem;color:#D93025">
-          <strong>${esc(m.homeName)}</strong> reported ${m.homeReportH}–${m.homeReportA}, but
-          <strong>${esc(m.awayName)}</strong> reported ${m.awayReportH}–${m.awayReportA}.
+          <strong>${esc(m.homeName)}</strong> reported ${m.homeReportH}â€“${m.homeReportA}, but
+          <strong>${esc(m.awayName)}</strong> reported ${m.awayReportH}â€“${m.awayReportA}.
           Enter the correct score below to resolve.
         </div>` : ''}
       ${(m.homeTeamSetup || m.awayTeamSetup) ? `
@@ -728,38 +728,38 @@
           ${m.awayTeamSetup ? `<div><strong>${esc(m.awayName)}:</strong> ${esc(m.awayTeamSetup)}</div>` : `<div style="color:var(--gray-600)"><strong>${esc(m.awayName)}:</strong> not submitted yet</div>`}
         </div>` : ''}
       ${m.status === 'scheduled' ? `
-        ${dateDisplay ? `<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 Scheduled: ${dateDisplay}</div>` : ''}
+        ${dateDisplay ? `<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">ðŸ“… Scheduled: ${dateDisplay}</div>` : ''}
         <input type="datetime-local" class="form-input" style="width:100%;min-height:44px;font-size:0.9rem;margin-bottom:.5rem" id="dt-${m.id}" value="${date}" onchange="document.getElementById('sch-btn-${m.id}').style.display='flex'" />
-        <button class="btn btn-primary btn-full" id="sch-btn-${m.id}" onclick="saveSchedule('${m.id}')" style="display:${date?'flex':'none'};margin-bottom:.5rem">📅 Confirm Schedule</button>
+        <button class="btn btn-primary btn-full" id="sch-btn-${m.id}" onclick="saveSchedule('${m.id}')" style="display:${date?'flex':'none'};margin-bottom:.5rem">ðŸ“… Confirm Schedule</button>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-primary btn-sm" onclick="goLive('${m.id}')">🔴 Go Live</button>
-          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+          <button class="btn btn-primary btn-sm" onclick="goLive('${m.id}')">ðŸ”´ Go Live</button>
+          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">ðŸ“² Notify</button>
         </div>` : ''}
       ${m.status === 'live' ? `
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <div class="score-inputs">
             <input type="number" class="score-input" id="live-hs-${m.id}" placeholder="0" min="0" max="99" />
-            <span class="score-dash">–</span>
+            <span class="score-dash">â€“</span>
             <input type="number" class="score-input" id="live-as-${m.id}" placeholder="0" min="0" max="99" />
           </div>
-          <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">✓ Save Score</button>
-          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
-          <button class="btn btn-sm btn-danger" onclick="cancelLive('${m.id}')">✕ Cancel Live</button>
+          <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">âœ“ Save Score</button>
+          <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">ðŸ“² Notify</button>
+          <button class="btn btn-sm btn-danger" onclick="cancelLive('${m.id}')">âœ• Cancel Live</button>
         </div>` : ''}
       ${m.status === 'completed' ? `
-        <div style="text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:.5rem">${m.homeScore} – ${m.awayScore}</div>
+        <div style="text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:.5rem">${m.homeScore} â€“ ${m.awayScore}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-          <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">📲 Share Result</button>
-          <button class="btn btn-sm btn-secondary" onclick="correctScore('${m.id}')">✏️ Correct Score</button>
+          <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">ðŸ“² Share Result</button>
+          <button class="btn btn-sm btn-secondary" onclick="correctScore('${m.id}')">âœï¸ Correct Score</button>
         </div>
         <div id="correct-${m.id}" style="display:none;margin-top:.5rem">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <div class="score-inputs">
               <input type="number" class="score-input" id="hs-${m.id}" value="${m.homeScore}" min="0" max="99" />
-              <span class="score-dash">–</span>
+              <span class="score-dash">â€“</span>
               <input type="number" class="score-input" id="as-${m.id}" value="${m.awayScore}" min="0" max="99" />
             </div>
-            <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">✓ Save</button>
+            <button class="btn btn-primary btn-sm" onclick="saveScore('${m.id}')">âœ“ Save</button>
           </div>
         </div>` : ''}
     </div>`;
@@ -769,10 +769,10 @@
     const val = document.getElementById('dt-' + id)?.value;
     if (!val) { toast('Pick a date and time first'); return; }
     await updateMatch(id, { scheduledAt: new Date(val) });
-    toast('Match scheduled! ✅'); loadMatches();
+    toast('Match scheduled! âœ…'); loadMatches();
   };
   window.goLive = async (id) => {
-    try { await setMatchLive(id); toast('Match is now live! 🔴'); loadMatches(); }
+    try { await setMatchLive(id); toast('Match is now live! ðŸ”´'); loadMatches(); }
     catch (e) { toast(e.message); }
   };
   window.correctScore = (id) => {
@@ -793,7 +793,7 @@
     const as = parseInt((liveAs || corrAs)?.value);
     if (isNaN(hs) || isNaN(as)) { toast('Enter both scores'); return; }
     await enterScore(id, hs, as);
-    toast('Score saved! ✅'); loadMatches();
+    toast('Score saved! âœ…'); loadMatches();
     await checkAndGenerateKnockout();
   };
   window.notifyWA = (id, home, away, code, scheduledAt) => {
@@ -807,7 +807,7 @@
     window.open(generateMatchAlert(m), '_blank');
   };
 
-  // ── KNOCKOUT ──
+  // â”€â”€ KNOCKOUT â”€â”€
   async function loadKnockout() {
     const el = document.getElementById('knockout-panel');
     const rounds = ['r32','r16','qf','sf','3rd','final'];
@@ -828,35 +828,35 @@
           return `<div class="match-card" style="margin-bottom:.75rem">
             <div class="match-teams">
               <div class="match-player ${m.winner==='home'?'winner':''}" style="${m.winner==='home'?'color:var(--green);font-weight:700':''}">${esc(m.homeName)}</div>
-              <div class="match-vs">${m.status==='completed'?m.homeScore+' – '+m.awayScore:'vs'}</div>
+              <div class="match-vs">${m.status==='completed'?m.homeScore+' â€“ '+m.awayScore:'vs'}</div>
               <div class="match-player ${m.winner==='away'?'winner':''}" style="${m.winner==='away'?'color:var(--green);font-weight:700':''}">${esc(m.awayName)}</div>
             </div>
             <div class="match-meta" style="margin-bottom:.5rem">
-              <span class="match-code">🔑 ${m.joinCode}</span>
+              <span class="match-code">ðŸ”‘ ${m.joinCode}</span>
               <span class="badge badge-${m.status==='live'?'green':m.status==='completed'?'gray':'blue'}">${m.status}</span>
             </div>
             ${m.status==='scheduled'?`
-              ${dateDisplay?`<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 ${dateDisplay}</div>`:''}
+              ${dateDisplay?`<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">ðŸ“… ${dateDisplay}</div>`:''}
               <input type="datetime-local" class="form-input" style="width:100%;min-height:44px;font-size:.9rem;margin-bottom:.5rem" id="ko-dt-${m.id}" value="${dateVal}" onchange="document.getElementById('ko-sch-btn-${m.id}').style.display='flex'" />
-              <button class="btn btn-primary btn-full" id="ko-sch-btn-${m.id}" onclick="koSchedule('${m.id}')" style="display:${dateVal?'flex':'none'};margin-bottom:.5rem">📅 Confirm Schedule</button>
+              <button class="btn btn-primary btn-full" id="ko-sch-btn-${m.id}" onclick="koSchedule('${m.id}')" style="display:${dateVal?'flex':'none'};margin-bottom:.5rem">ðŸ“… Confirm Schedule</button>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">🔴 Go Live</button>
-                <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+                <button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">ðŸ”´ Go Live</button>
+                <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">ðŸ“² Notify</button>
               </div>` : ''}
             ${m.status==='live'?`
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                 <div class="score-inputs">
                   <input type="number" class="score-input" id="khs-${m.id}" placeholder="0" style="width:48px" />
-                  <span class="score-dash">–</span>
+                  <span class="score-dash">â€“</span>
                   <input type="number" class="score-input" id="kas-${m.id}" placeholder="0" style="width:48px" />
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="koSaveScore('${m.id}','${round}')">✓ Save Score</button>
-                <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
-                <button class="btn btn-sm btn-danger" onclick="koCancelLive('${m.id}')">✕ Cancel Live</button>
+                <button class="btn btn-primary btn-sm" onclick="koSaveScore('${m.id}','${round}')">âœ“ Save Score</button>
+                <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">ðŸ“² Notify</button>
+                <button class="btn btn-sm btn-danger" onclick="koCancelLive('${m.id}')">âœ• Cancel Live</button>
               </div>` : ''}
             ${m.status==='completed'?`
               <div style="display:flex;justify-content:flex-end">
-                <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${round}')">📲 Share Result</button>
+                <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${round}')">ðŸ“² Share Result</button>
               </div>` : ''}
           </div>`;
         }).join('')}
@@ -864,7 +864,7 @@
     }
 
     if (!hasAny) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">🏆</span><p>Knockout rounds appear here after group stage is complete.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ†</span><p>Knockout rounds appear here after group stage is complete.</p></div>';
       return;
     }
     el.innerHTML = html;
@@ -874,10 +874,10 @@
     const val = document.getElementById('ko-dt-' + id)?.value;
     if (!val) { toast('Pick a date and time first'); return; }
     await updateMatch(id, { scheduledAt: new Date(val) });
-    toast('Match scheduled! ✅'); loadKnockout();
+    toast('Match scheduled! âœ…'); loadKnockout();
   };
   window.koGoLive = async (id) => {
-    try { await setMatchLive(id); toast('Match live! 🔴'); loadKnockout(); }
+    try { await setMatchLive(id); toast('Match live! ðŸ”´'); loadKnockout(); }
     catch (e) { toast(e.message); }
   };
   window.koCancelLive = async (id) => {
@@ -892,16 +892,16 @@
     if (hs === as) { toast('No draws in knockout! Adjust the score.'); return; }
     await enterScore(id, hs, as);
     await advanceKnockout(round);
-    toast('Score saved! ✅'); loadKnockout();
+    toast('Score saved! âœ…'); loadKnockout();
   };
 
-  // ── RESULTS ──
+  // â”€â”€ RESULTS â”€â”€
   async function loadResults() {
     const el = document.getElementById('results-panel');
     const matches = await getMatches();
     const done = matches.filter(m => m.status === 'completed');
     if (!done.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>No completed matches yet.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ“Š</span><p>No completed matches yet.</p></div>';
       return;
     }
 
@@ -929,27 +929,27 @@
         const awayWin = m.winner === 'away';
         return `<div class="match-card" style="margin-bottom:.75rem">
           <div class="match-teams">
-            <div class="match-player" style="${homeWin?'color:var(--green);font-weight:700':''}">${esc(m.homeName)}${homeWin?' 🏆':''}</div>
-            <div class="match-vs" style="font-size:1rem;font-weight:700;color:var(--gray-900)">${m.homeScore} – ${m.awayScore}</div>
-            <div class="match-player" style="${awayWin?'color:var(--green);font-weight:700':''}">${esc(m.awayName)}${awayWin?' 🏆':''}</div>
+            <div class="match-player" style="${homeWin?'color:var(--green);font-weight:700':''}">${esc(m.homeName)}${homeWin?' ðŸ†':''}</div>
+            <div class="match-vs" style="font-size:1rem;font-weight:700;color:var(--gray-900)">${m.homeScore} â€“ ${m.awayScore}</div>
+            <div class="match-player" style="${awayWin?'color:var(--green);font-weight:700':''}">${esc(m.awayName)}${awayWin?' ðŸ†':''}</div>
           </div>
           <div class="match-meta" style="margin-top:.4rem">
             ${m.group ? `<span class="badge badge-gray">Group ${m.group}</span>` : '<span></span>'}
-            ${isDraw ? '<span class="badge badge-gray">🤝 Draw</span>' : '<span class="badge badge-green">✓ Completed</span>'}
+            ${isDraw ? '<span class="badge badge-gray">ðŸ¤ Draw</span>' : '<span class="badge badge-green">âœ“ Completed</span>'}
           </div>
           <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:.5rem">
-            <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">📲 Share Result</button>
-            <button class="btn btn-sm btn-secondary" onclick="toggleResultEdit('${m.id}')">✏️ Edit</button>
+            <button class="btn btn-sm btn-whatsapp" onclick="shareResult('${esc(m.homeName)}','${esc(m.awayName)}',${m.homeScore},${m.awayScore},'${m.phase||'group'}')">ðŸ“² Share Result</button>
+            <button class="btn btn-sm btn-secondary" onclick="toggleResultEdit('${m.id}')">âœï¸ Edit</button>
           </div>
           <div id="redit-${m.id}" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--gray-200)">
-            <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.4rem">Correct the score — this will recalculate the winner and update standings.</p>
+            <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.4rem">Correct the score â€” this will recalculate the winner and update standings.</p>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <div class="score-inputs">
                 <input type="number" class="score-input" id="res-hs-${m.id}" value="${m.homeScore}" min="0" max="99" />
-                <span class="score-dash">–</span>
+                <span class="score-dash">â€“</span>
                 <input type="number" class="score-input" id="res-as-${m.id}" value="${m.awayScore}" min="0" max="99" />
               </div>
-              <button class="btn btn-primary btn-sm" onclick="saveResultEdit('${m.id}')">✓ Save</button>
+              <button class="btn btn-primary btn-sm" onclick="saveResultEdit('${m.id}')">âœ“ Save</button>
               <button class="btn btn-secondary btn-sm" onclick="toggleResultEdit('${m.id}')">Cancel</button>
             </div>
           </div>
@@ -968,37 +968,37 @@
     const as_ = parseInt(document.getElementById('res-as-' + id)?.value);
     if (isNaN(hs) || isNaN(as_)) { toast('Enter both scores'); return; }
     await enterScore(id, hs, as_);
-    toast('Score corrected! ✅');
+    toast('Score corrected! âœ…');
     loadResults();
   };
   window.shareResult = (home, away, hs, as_, phase) => {
     window.open(generateResultAlert({ homePlayer: home, awayPlayer: away, homeScore: hs, awayScore: as_, phase }), '_blank');
   };
 
-  // ── ACTIVITY LOG ──
+  // â”€â”€ ACTIVITY LOG â”€â”€
   async function loadActivityLog() {
     const el = document.getElementById('log-panel');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
     try {
       const logs = await getLogs(100);
       if (!logs.length) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">📋</span><p>No activity yet. Actions will appear here.</p></div>';
+        el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ“‹</span><p>No activity yet. Actions will appear here.</p></div>';
         return;
       }
       el.innerHTML = '<div class="card">' + logs.map(log => `
         <div style="display:flex;gap:10px;padding:8px 0;border-bottom:.5px solid var(--gray-100)">
-          <span style="font-size:1.1rem;flex-shrink:0">${LOG_ICON[log.type]||'📋'}</span>
+          <span style="font-size:1.1rem;flex-shrink:0">${LOG_ICON[log.type]||'ðŸ“‹'}</span>
           <div style="flex:1">
             <div style="font-size:.85rem;font-weight:500">${esc(log.message)}</div>
             <div style="font-size:.72rem;color:var(--gray-600)">${log.createdAt ? new Date(log.createdAt.seconds*1000).toLocaleString() : 'Just now'}</div>
           </div>
         </div>`).join('') + '</div>';
     } catch(e) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading log.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">âš ï¸</span><p>Error loading log.</p></div>';
     }
   }
 
-  // ── ANNOUNCE ──
+  // â”€â”€ ANNOUNCE â”€â”€
   let announceUnsubscribe = null;
   function loadAnnounce() {
     const annRef = doc(db, 'announcements', 'current');
@@ -1011,7 +1011,7 @@
         currentEl.innerHTML = `<div style="background:#1a3d2a;border:1px solid var(--green);border-radius:10px;padding:.75rem 1rem;color:var(--green);font-weight:600">${esc(data.message)}</div>`;
         document.getElementById('announce-msg').value = data.message;
       } else {
-        currentEl.textContent = 'None — no active announcement.';
+        currentEl.textContent = 'None â€” no active announcement.';
       }
     });
 
@@ -1020,19 +1020,19 @@
       if (!msg) { toast('Type a message first'); return; }
       const showRefresh = document.getElementById('announce-refresh-chk').checked;
       await setDoc(annRef, { message: msg, active: true, showRefresh, sentAt: serverTimestamp() });
-      document.getElementById('announce-status').textContent = '✅ Sent to all users!';
+      document.getElementById('announce-status').textContent = 'âœ… Sent to all users!';
       setTimeout(() => { document.getElementById('announce-status').textContent = ''; }, 3000);
     };
 
     document.getElementById('announce-clear-btn').onclick = async () => {
       await setDoc(annRef, { message: '', active: false, sentAt: serverTimestamp() });
       document.getElementById('announce-msg').value = '';
-      document.getElementById('announce-status').textContent = '🗑️ Announcement cleared.';
+      document.getElementById('announce-status').textContent = 'ðŸ—‘ï¸ Announcement cleared.';
       setTimeout(() => { document.getElementById('announce-status').textContent = ''; }, 3000);
     };
   }
 
-  // ── ADMINS MANAGEMENT ──
+  // â”€â”€ ADMINS MANAGEMENT â”€â”€
   async function loadAdmins() {
     const el = document.getElementById('admins-panel');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
@@ -1043,7 +1043,7 @@
         ${isDefault ? `
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">Add new admin</div>
-          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter their Gmail address. They sign in with Google — no password needed. Maximum 3 admins total.</p>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter their Gmail address. They sign in with Google â€” no password needed. Maximum 3 admins total.</p>
           <div style="display:flex;gap:8px">
             <input type="email" class="form-input" id="new-admin-email" placeholder="theirgmail@gmail.com" style="flex:1" />
             <button class="btn btn-primary" onclick="addAdminFromUI()">Add</button>
@@ -1063,13 +1063,13 @@
             </div>`).join('') : '<p style="font-size:.85rem;color:var(--gray-600)">No other admins yet.</p>'}
         </div>
         <div class="card" style="background:#FEF7E0;border-color:#FAC775">
-          <div class="card-title" style="color:#854F0B">ℹ️ How it works</div>
+          <div class="card-title" style="color:#854F0B">â„¹ï¸ How it works</div>
           <p style="font-size:.82rem;color:#854F0B;line-height:1.6">${isDefault
             ? 'Add any Gmail address here. That person goes to <strong>league.getgol.in/admin.html</strong> and signs in with their Google account. If their email is on this list, they get admin access automatically.'
             : 'Only the default admin can add or remove admins.'}</p>
         </div>`;
     } catch(e) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Error loading admins.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">âš ï¸</span><p>Error loading admins.</p></div>';
     }
   }
 
@@ -1080,12 +1080,12 @@
     try {
       await addAdmin(email, currentAdminEmail);
       result.style.color = '#21F1A8';
-      result.textContent = '✅ ' + email + ' added as admin!';
+      result.textContent = 'âœ… ' + email + ' added as admin!';
       document.getElementById('new-admin-email').value = '';
       setTimeout(() => loadAdmins(), 1000);
     } catch(e) {
       result.style.color = '#D93025';
-      result.textContent = '❌ ' + e.message;
+      result.textContent = 'âŒ ' + e.message;
     }
   };
 
@@ -1100,7 +1100,7 @@
     }
   };
 
-  // SW update detection — same logic as index.html
+  // SW update detection â€” same logic as index.html
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(registration => {
       registration.update().catch(() => {});

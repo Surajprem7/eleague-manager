@@ -1,4 +1,4 @@
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+﻿importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
@@ -28,8 +28,8 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.openWindow('./'));
 });
 
-const CACHE = 'eleague-v84';
-// Large files (videos) excluded — they cache on first use so they
+const CACHE = 'eleague-v85';
+// Large files (videos) excluded â€” they cache on first use so they
 // don't block SW installation and cause silent update failures.
 const ASSETS = [
   './',
@@ -70,8 +70,8 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: 'window' }))
-      .then(clients => clients.forEach(client => client.navigate(client.url)))
+    // No client.navigate() here â€” the update banner in index.html handles
+    // the reload so users see a notification instead of a sudden blank screen.
   );
 });
 
@@ -89,7 +89,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Network first for HTML pages — always get the latest markup, fall back to cache offline
+  // Network first for HTML pages â€” always get the latest markup, fall back to cache offline
   if (e.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/')) {
     e.respondWith(
       fetch(e.request).then(res => {

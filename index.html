@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#21F1A8" />
-  <meta name="description" content="eLeague Manager — eFootball Tournament" />
+  <meta name="description" content="eLeague Manager â€” eFootball Tournament" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="eLeague" />
@@ -45,7 +45,7 @@
 
 <!-- Splash Screen -->
 <div id="splash">
-  <span class="splash-icon">⚽</span>
+  <span class="splash-icon">âš½</span>
   <h1>eLeague Manager</h1>
   <p>Loading tournament...</p>
 </div>
@@ -53,30 +53,30 @@
 <!-- Intro Video -->
 <div id="intro-video-overlay" style="position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center">
   <video id="intro-video" src="assets/intro.mp4" autoplay muted playsinline style="width:100%;height:100%;object-fit:contain"></video>
-  <button id="intro-mute-btn" aria-label="Unmute" style="position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:42px;height:42px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">🔇</button>
-  <button id="intro-skip-btn" style="position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:99px;padding:8px 16px;font-size:0.85rem;font-weight:600;cursor:pointer">Skip ▶</button>
+  <button id="intro-mute-btn" aria-label="Unmute" style="position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:42px;height:42px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:50%;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center">ðŸ”‡</button>
+  <button id="intro-skip-btn" style="position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:99px;padding:8px 16px;font-size:0.85rem;font-weight:600;cursor:pointer">Skip â–¶</button>
 </div>
 
 <!-- Instructions Video -->
 <div id="instructions-video-overlay" style="position:fixed;inset:0;background:#000;z-index:9999;display:none;align-items:center;justify-content:center">
   <video id="instructions-video" src="assets/instructions.mp4" controls playsinline style="width:100%;height:100%;object-fit:contain"></video>
-  <p id="instructions-ios-hint" style="display:none;position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:16px;right:16px;text-align:center;color:#fff;font-size:0.78rem;background:rgba(0,0,0,0.55);border-radius:10px;padding:8px 12px;margin:0">📲 To install: tap <strong>Share</strong> then <strong>Add to Home Screen</strong></p>
-  <button id="instructions-close-btn" aria-label="Close" style="position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:99px;padding:8px 16px;font-size:0.85rem;font-weight:600;cursor:pointer">✕ Close</button>
+  <p id="instructions-ios-hint" style="display:none;position:absolute;bottom:max(16px,env(safe-area-inset-bottom));left:16px;right:16px;text-align:center;color:#fff;font-size:0.78rem;background:rgba(0,0,0,0.55);border-radius:10px;padding:8px 12px;margin:0">ðŸ“² To install: tap <strong>Share</strong> then <strong>Add to Home Screen</strong></p>
+  <button id="instructions-close-btn" aria-label="Close" style="position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:99px;padding:8px 16px;font-size:0.85rem;font-weight:600;cursor:pointer">âœ• Close</button>
 </div>
 
 <!-- Offline Banner -->
-<div class="offline-banner" id="offline-banner">⚡ You're offline — showing cached data</div>
+<div class="offline-banner" id="offline-banner">âš¡ You're offline â€” showing cached data</div>
 
 <!-- Update Banner -->
 <div id="update-banner" onclick="location.reload()" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#4DA3FF;color:#fff;text-align:center;padding:14px 1rem;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
-  🔄 New update available — Tap here to refresh!
+  ðŸ”„ New update available â€” Tap here to refresh!
 </div>
 
 <!-- Announcement Banner -->
 <div id="announce-banner" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9998;background:#F9AB00;color:#171717;border-radius:16px;padding:1.5rem 1.75rem;font-size:1rem;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:340px;width:90%;text-align:center">
   <div id="announce-banner-text" style="margin-bottom:1rem;line-height:1.5"></div>
   <div id="announce-refresh-wrap" style="display:none;margin-bottom:.75rem">
-    <button onclick="location.reload(true)" style="width:100%;background:#171717;color:#21F1A8;border:none;border-radius:99px;padding:10px 20px;font-size:.9rem;font-weight:700;cursor:pointer">🔄 Tap to Refresh Now</button>
+    <button onclick="location.reload(true)" style="width:100%;background:#171717;color:#21F1A8;border:none;border-radius:99px;padding:10px 20px;font-size:.9rem;font-weight:700;cursor:pointer">ðŸ”„ Tap to Refresh Now</button>
   </div>
   <button onclick="document.getElementById('announce-banner').style.display='none'" style="background:rgba(0,0,0,0.15);border:none;border-radius:99px;padding:8px 20px;font-size:.85rem;font-weight:700;cursor:pointer;color:#171717">OK, Got it</button>
 </div>
@@ -86,17 +86,17 @@
 <div id="install-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center;padding:0">
   <div style="background:#1E1E1E;border-radius:24px 24px 0 0;padding:1.75rem 1.5rem calc(1.75rem + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -8px 32px rgba(0,0,0,0.5)">
     <div style="text-align:center;margin-bottom:1.25rem">
-      <div style="font-size:3rem;margin-bottom:.5rem">⚽</div>
+      <div style="font-size:3rem;margin-bottom:.5rem">âš½</div>
       <div style="font-size:1.2rem;font-weight:700;color:#EEEEEE;margin-bottom:.35rem">Install eLeague Manager</div>
-      <div style="font-size:.85rem;color:#AAAAAA;line-height:1.5">Get the full experience — instant access, works offline, and always up to date.</div>
+      <div style="font-size:.85rem;color:#AAAAAA;line-height:1.5">Get the full experience â€” instant access, works offline, and always up to date.</div>
     </div>
     <div id="install-android-wrap" style="display:none">
-      <button id="install-android-btn" style="width:100%;padding:1rem;background:#21F1A8;color:#171717;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:.75rem">📲 Install App</button>
+      <button id="install-android-btn" style="width:100%;padding:1rem;background:#21F1A8;color:#171717;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:.75rem">ðŸ“² Install App</button>
     </div>
     <div id="install-ios-wrap" style="display:none;background:#2A2A2A;border-radius:12px;padding:1rem;margin-bottom:.75rem;font-size:.85rem;color:#CCCCCC;line-height:1.8">
-      <div>1. Tap the <strong style="color:#21F1A8">Share</strong> button <strong>⬆️</strong> at the bottom of Safari</div>
+      <div>1. Tap the <strong style="color:#21F1A8">Share</strong> button <strong>â¬†ï¸</strong> at the bottom of Safari</div>
       <div>2. Scroll down and tap <strong style="color:#21F1A8">Add to Home Screen</strong></div>
-      <div>3. Tap <strong style="color:#21F1A8">Add</strong> — done!</div>
+      <div>3. Tap <strong style="color:#21F1A8">Add</strong> â€” done!</div>
     </div>
     <button id="install-dismiss-btn" style="width:100%;padding:.75rem;background:transparent;color:#AAAAAA;border:1px solid #333;border-radius:14px;font-size:.9rem;font-weight:600;cursor:pointer">Maybe Later</button>
   </div>
@@ -105,13 +105,13 @@
 <!-- Header -->
 <header class="app-header">
   <div class="container">
-    <div class="logo">⚽</div>
+    <div class="logo">âš½</div>
     <div style="flex:1">
       <h1>eLeague Manager</h1>
       <p id="tournament-phase">eFootball Tournament</p>
     </div>
     <span class="realtime-badge"><span class="live-dot"></span>Live</span>
-    <button id="help-btn" aria-label="Help" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:10px">❔</button>
+    <button id="help-btn" aria-label="Help" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:10px">â”</button>
   </div>
 </header>
 
@@ -120,12 +120,12 @@
   <div style="background:#242424;border-radius:20px 20px 0 0;max-height:85vh;overflow-y:auto;width:100%;max-width:480px;padding:1.25rem">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
       <h2 style="margin:0;font-size:1.1rem">How eLeague Works</h2>
-      <button id="help-close-btn" aria-label="Close" style="background:#3D3D3D;border:none;color:#EEEEEE;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">✕</button>
+      <button id="help-close-btn" aria-label="Close" style="background:#3D3D3D;border:none;color:#EEEEEE;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">âœ•</button>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">1. Register</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Fill in your name and eFootball ID on the <strong>Profile</strong> tab. Your registration needs admin approval before you're confirmed — check back on the Home tab.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Fill in your name and eFootball ID on the <strong>Profile</strong> tab. Your registration needs admin approval before you're confirmed â€” check back on the Home tab.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
@@ -135,7 +135,7 @@
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">3. Play the match</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Play in the eFootball app directly — this website doesn't host the gameplay. One of you creates a 1v1 Match Room in eFootball and shares the room code with your opponent via WhatsApp.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">Play in the eFootball app directly â€” this website doesn't host the gameplay. One of you creates a 1v1 Match Room in eFootball and shares the room code with your opponent via WhatsApp.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
@@ -145,7 +145,7 @@
 
     <div class="card" style="margin-bottom:.75rem">
       <div class="card-title">5. Get match reminders</div>
-      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">On your <strong>Profile</strong> tab, tap <strong>Enable</strong> to get a notification 10 minutes before your scheduled match starts — even if you don't have the app open.</p>
+      <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6">On your <strong>Profile</strong> tab, tap <strong>Enable</strong> to get a notification 10 minutes before your scheduled match starts â€” even if you don't have the app open.</p>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
@@ -154,9 +154,9 @@
     </div>
 
     <div class="card">
-      <div class="card-title">⚠️ Report an Issue</div>
+      <div class="card-title">âš ï¸ Report an Issue</div>
       <p style="font-size:.85rem;color:var(--gray-700);line-height:1.6;margin-bottom:.75rem">If a result looks wrong or you have a problem, email the admin directly. Include your name, the match join code, and what happened.</p>
-      <a href="mailto:surajtxglive@gmail.com?subject=eLeague%20Issue&body=Name%3A%0AMatch%20Code%3A%0AWhat%20happened%3A" class="btn btn-secondary btn-full" style="text-decoration:none">✉️ Email Admin</a>
+      <a href="mailto:surajtxglive@gmail.com?subject=eLeague%20Issue&body=Name%3A%0AMatch%20Code%3A%0AWhat%20happened%3A" class="btn btn-secondary btn-full" style="text-decoration:none">âœ‰ï¸ Email Admin</a>
     </div>
   </div>
 </div>
@@ -197,11 +197,11 @@
           </p>
           <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--gray-200,#333)">
             <p style="font-size:.8rem;color:var(--gray-600);text-align:center;margin-bottom:.75rem">Not playing? You can still follow the tournament.</p>
-            <button id="fan-join-btn" class="btn btn-secondary btn-full" style="font-size:.9rem">🏟️ Watch as Fan</button>
+            <button id="fan-join-btn" class="btn btn-secondary btn-full" style="font-size:.9rem">ðŸŸï¸ Watch as Fan</button>
           </div>
         </div>
         <div id="reg-success" style="display:none;text-align:center;padding:1rem">
-          <span style="font-size:2.5rem">✅</span>
+          <span style="font-size:2.5rem">âœ…</span>
           <h3 style="margin:0.5rem 0">Registered!</h3>
           <p style="color:var(--gray-600);font-size:0.9rem">Your registration is pending approval. Check back soon!</p>
         </div>
@@ -209,7 +209,7 @@
         <!-- VERIFY (for players already in the admin's list but not recognized on this device) -->
         <div id="verify-form" style="display:none;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--gray-200,#eee)">
           <div class="card-title">Verify Your Registration</div>
-          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter your name and either your phone number or eFootball ID — whichever you gave when registering.</p>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter your name and either your phone number or eFootball ID â€” whichever you gave when registering.</p>
           <div class="form-group">
             <label class="form-label">Your full name</label>
             <input type="text" class="form-input" id="verify-name" placeholder="Enter your name" maxlength="40" />
@@ -233,23 +233,23 @@
           </div>
         </div>
         <div style="font-size:.88rem;color:var(--gray-700);line-height:1.9">
-          <div>⚽ <span id="profile-efid"></span></div>
-          <div id="profile-phone-row" style="display:none">📱 <span id="profile-phone"></span></div>
-          <div id="profile-group-row" style="display:none">👥 Group <span id="profile-group"></span></div>
+          <div>âš½ <span id="profile-efid"></span></div>
+          <div id="profile-phone-row" style="display:none">ðŸ“± <span id="profile-phone"></span></div>
+          <div id="profile-group-row" style="display:none">ðŸ‘¥ Group <span id="profile-group"></span></div>
         </div>
         <p id="profile-status-msg" style="font-size:.85rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--gray-200,#eee)"></p>
         <button id="not-me-btn" style="background:none;border:none;color:var(--gray-600);font-size:.78rem;text-decoration:underline;cursor:pointer;margin-top:.5rem;padding:0">Not you? Switch account</button>
       </div>
 
-      <!-- FAN MODE card — shown when watching as a fan (not a registered player) -->
+      <!-- FAN MODE card â€” shown when watching as a fan (not a registered player) -->
       <div id="fan-mode-card" class="card" style="display:none;margin-top:.75rem;text-align:center;padding:1.5rem 1.25rem">
-        <div style="font-size:2rem;margin-bottom:.5rem">🏟️</div>
+        <div style="font-size:2rem;margin-bottom:.5rem">ðŸŸï¸</div>
         <div style="font-weight:700;font-size:1rem;margin-bottom:.25rem">Fan Mode Active</div>
         <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:1rem">You can view match schedules, results, standings and the bracket.</p>
         <button id="exit-fan-btn" style="background:none;border:none;color:var(--gray-600);font-size:.78rem;text-decoration:underline;cursor:pointer;padding:0">Exit Fan Mode</button>
       </div>
 
-      <!-- MY MATCHES — shown below profile after registration -->
+      <!-- MY MATCHES â€” shown below profile after registration -->
       <div id="my-profile-matches-wrap" style="display:none;margin-top:.75rem">
         <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin-bottom:.5rem">My Matches</div>
         <div id="notif-prompt" style="display:none;margin-bottom:.75rem"></div>
@@ -322,9 +322,9 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
+  // Bump this alongside sw.js's CACHE constant on every deploy â€” lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v84';
+  const APP_VERSION = 'v85';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -369,12 +369,12 @@
     skipBtn.addEventListener('click', dismiss);
     muteBtn.addEventListener('click', () => {
       video.muted = !video.muted;
-      muteBtn.textContent = video.muted ? '🔇' : '🔊';
+      muteBtn.textContent = video.muted ? 'ðŸ”‡' : 'ðŸ”Š';
       muteBtn.setAttribute('aria-label', video.muted ? 'Unmute' : 'Mute');
     });
   })();
 
-  // Instructions video + Add to Home Screen — both triggered from the same play button
+  // Instructions video + Add to Home Screen â€” both triggered from the same play button
   (function() {
     const overlay = document.getElementById('instructions-video-overlay');
     const video = document.getElementById('instructions-video');
@@ -418,7 +418,7 @@
     video.addEventListener('ended', close);
   })();
 
-  // Install prompt — show a big modal to users who haven't installed the PWA
+  // Install prompt â€” show a big modal to users who haven't installed the PWA
   (function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (isStandalone) return; // already installed
@@ -459,7 +459,7 @@
     });
   })();
 
-  // Share button — shares the intro video for the best first impression,
+  // Share button â€” shares the intro video for the best first impression,
   // with fallbacks for browsers that can't share files or don't support
   // the Web Share API at all.
   document.addEventListener('click', async (e) => {
@@ -495,7 +495,7 @@
     }
   });
 
-  // Submit match score (delegated — match cards re-render on every realtime update)
+  // Submit match score (delegated â€” match cards re-render on every realtime update)
   document.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-submit-score]');
     if (!btn) return;
@@ -512,17 +512,17 @@
       const outcome = await submitPlayerScore(matchId, side, h, a);
       if (outcome === 'waiting') {
         resultEl.style.color = 'var(--gray-600)';
-        resultEl.textContent = '✅ Submitted! Waiting for your opponent to submit their score.';
+        resultEl.textContent = 'âœ… Submitted! Waiting for your opponent to submit their score.';
       } else if (outcome === 'matched') {
         resultEl.style.color = '#21F1A8';
-        resultEl.textContent = '✅ Scores matched — match completed!';
+        resultEl.textContent = 'âœ… Scores matched â€” match completed!';
       } else {
         resultEl.style.color = '#D93025';
-        resultEl.textContent = '⚠️ Score not matching with your opponent\'s submission. Admin has been notified.';
+        resultEl.textContent = 'âš ï¸ Score not matching with your opponent\'s submission. Admin has been notified.';
       }
     } catch (err) {
       resultEl.style.color = '#D93025';
-      resultEl.textContent = '❌ ' + err.message;
+      resultEl.textContent = 'âŒ ' + err.message;
     } finally {
       btn.disabled = false;
     }
@@ -544,14 +544,14 @@
   window.addEventListener('offline', () => offlineBanner.classList.add('show'));
   window.addEventListener('online',  () => offlineBanner.classList.remove('show'));
 
-  // Announcement banner — real-time from Firestore
+  // Announcement banner â€” real-time from Firestore
   onSnapshot(doc(db, 'announcements', 'current'), snap => {
     const banner = document.getElementById('announce-banner');
     const textEl = document.getElementById('announce-banner-text');
     const refreshWrap = document.getElementById('announce-refresh-wrap');
     const data = snap.exists() ? snap.data() : null;
     if (data && data.active && data.message) {
-      textEl.textContent = '📢 ' + data.message;
+      textEl.textContent = 'ðŸ“¢ ' + data.message;
       refreshWrap.style.display = data.showRefresh ? 'block' : 'none';
       banner.style.display = 'block';
     } else {
@@ -578,7 +578,7 @@
     el.classList.add('update-flash');
   }
 
-  // ── NAVIGATION ──
+  // â”€â”€ NAVIGATION â”€â”€
   let currentSection = 'home';
   let matchesTabInitialized = false;
   let resultsTabInitialized = false;
@@ -602,12 +602,12 @@
     });
   });
 
-  // ── HOME — real-time ──
+  // â”€â”€ HOME â€” real-time â”€â”€
   let homeInitialized = false;
   let cachedStatus = null;
   let cachedLiveMatches = [];
 
-  // Banner with instructions play button — always shown at top of home screen
+  // Banner with instructions play button â€” always shown at top of home screen
   const BANNER_HTML = `
     <div style="border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem;position:relative">
       <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
@@ -655,7 +655,7 @@
           <div class="player-item"><div class="player-avatar">1</div><div><div class="player-name">Register</div><div class="player-sub">Fill in your details to join</div></div></div>
           <div class="player-item"><div class="player-avatar">2</div><div><div class="player-name">Get approved</div><div class="player-sub">Admin confirms your spot</div></div></div>
           <div class="player-item"><div class="player-avatar">3</div><div><div class="player-name">Play matches</div><div class="player-sub">Check your schedule and results</div></div></div>
-          <div class="player-item"><div class="player-avatar">4</div><div><div class="player-name">Win the league!</div><div class="player-sub">Group stage → Knockout → Final</div></div></div>
+          <div class="player-item"><div class="player-avatar">4</div><div><div class="player-name">Win the league!</div><div class="player-sub">Group stage â†’ Knockout â†’ Final</div></div></div>
         </div>`;
       attachInstallBtn();
       return;
@@ -664,15 +664,15 @@
     if (status.phase === 'done' && status.winner) {
       el.innerHTML = BANNER_HTML + INSTALL_CARD_HTML + `
         <div class="winner-banner">
-          <span class="trophy">🏆</span>
+          <span class="trophy">ðŸ†</span>
           <h2>${esc(status.winner)}</h2>
           <p>Tournament Champion!</p>
         </div>
         <div class="card">
           <div class="card-title">Final Results</div>
-          <div class="player-item"><div class="player-avatar">🥇</div><div><div class="player-name">${esc(status.winner)}</div><div class="player-sub">Champion</div></div></div>
-          ${status.second ? `<div class="player-item"><div class="player-avatar">🥈</div><div><div class="player-name">${esc(status.second)}</div><div class="player-sub">Runner-up</div></div></div>` : ''}
-          ${status.third  ? `<div class="player-item"><div class="player-avatar">🥉</div><div><div class="player-name">${esc(status.third)}</div><div class="player-sub">Third place</div></div></div>` : ''}
+          <div class="player-item"><div class="player-avatar">ðŸ¥‡</div><div><div class="player-name">${esc(status.winner)}</div><div class="player-sub">Champion</div></div></div>
+          ${status.second ? `<div class="player-item"><div class="player-avatar">ðŸ¥ˆ</div><div><div class="player-name">${esc(status.second)}</div><div class="player-sub">Runner-up</div></div></div>` : ''}
+          ${status.third  ? `<div class="player-item"><div class="player-avatar">ðŸ¥‰</div><div><div class="player-name">${esc(status.third)}</div><div class="player-sub">Third place</div></div></div>` : ''}
         </div>`;
       attachInstallBtn();
       return;
@@ -680,7 +680,7 @@
 
     const liveHtml = liveMatches.length ? `
       <div class="card" id="live-matches-card">
-        <div class="card-title">🔴 Live Now</div>
+        <div class="card-title">ðŸ”´ Live Now</div>
         ${liveMatches.map(m => `
           <div class="match-card" style="border-left:3px solid var(--green)">
             <div class="match-teams">
@@ -689,7 +689,7 @@
               <div class="match-player">${esc(m.awayName)}</div>
             </div>
             <div class="match-meta">
-              <span class="match-code">🔑 ${esc(m.joinCode)}</span>
+              <span class="match-code">ðŸ”‘ ${esc(m.joinCode)}</span>
               <span class="badge badge-green">Live</span>
             </div>
           </div>`).join('')}
@@ -698,7 +698,7 @@
     const isFanOrPlayer = localStorage.getItem('myRegisteredName') || localStorage.getItem('fanMode');
     el.innerHTML = BANNER_HTML + INSTALL_CARD_HTML + `
       <div style="background:var(--green-light);border-radius:var(--radius-md);padding:.75rem 1rem;margin-bottom:1rem;font-weight:600;color:var(--green-dark);display:flex;align-items:center;gap:8px">
-        ⚽ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
+        âš½ Phase: <strong>${status.phase === 'group' ? 'Group Stage' : status.phase === 'knockout' ? 'Knockout Rounds' : 'Registration'}</strong>
       </div>
       ${liveHtml}
       ${isFanOrPlayer ? `
@@ -713,7 +713,7 @@
         <p style="font-size:.88rem;color:var(--gray-600);margin-bottom:1rem">Register to play or watch the tournament as a fan.</p>
         <div style="display:flex;flex-direction:column;gap:.5rem">
           <button class="btn btn-primary btn-full" onclick="document.querySelector('[data-section=register]').click()">Register to Play</button>
-          <button class="btn btn-secondary btn-full" id="home-fan-btn">🏟️ Watch as Fan</button>
+          <button class="btn btn-secondary btn-full" id="home-fan-btn">ðŸŸï¸ Watch as Fan</button>
         </div>
       </div>`}`;
     attachInstallBtn();
@@ -743,14 +743,14 @@
       // Toast notification when a new match goes live
       if (matches.length > prev && prev >= 0 && document.getElementById('home-content').innerHTML.length > 100) {
         const newest = matches[matches.length - 1];
-        toast(`🔴 ${newest.homeName} vs ${newest.awayName} is now LIVE!`);
+        toast(`ðŸ”´ ${newest.homeName} vs ${newest.awayName} is now LIVE!`);
       }
       if (currentSection === 'home') renderHome();
       if (currentSection === 'standings') startStandingsListener();
     });
   }
 
-  // ── STANDINGS — real-time ──
+  // â”€â”€ STANDINGS â€” real-time â”€â”€
   let standingsListenerStarted = false;
   let cachedGroups = [];
   let cachedPlayers = [];
@@ -761,7 +761,7 @@
     if (currentSection === 'home' && localStorage.getItem('myRegisteredName')) renderMyDashboard();
     const el = document.getElementById('standings-content');
     if (!cachedGroups.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>Standings will appear after groups are drawn.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ“Š</span><p>Standings will appear after groups are drawn.</p></div>';
       return;
     }
     let html = '';
@@ -806,12 +806,12 @@
       const prev = JSON.stringify(cachedGroupMatches.filter(m=>m.status==='completed').map(m=>m.id));
       cachedGroupMatches = matches;
       const next = JSON.stringify(matches.filter(m=>m.status==='completed').map(m=>m.id));
-      if (prev !== next && prev !== '[]') toast('📊 Standings updated!');
+      if (prev !== next && prev !== '[]') toast('ðŸ“Š Standings updated!');
       renderStandings();
     });
   }
 
-  // ── REGISTER ──
+  // â”€â”€ REGISTER â”€â”€
   document.getElementById('reg-submit').addEventListener('click', async () => {
     const name  = document.getElementById('reg-name').value.trim();
     const efid  = document.getElementById('reg-efid').value.trim();
@@ -825,7 +825,7 @@
       localStorage.setItem('myRegisteredName', name);
       document.getElementById('reg-form').style.display = 'none';
       document.getElementById('reg-success').style.display = 'block';
-      // Reveal nav tabs and load profile immediately — no reload needed
+      // Reveal nav tabs and load profile immediately â€” no reload needed
       document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'flex');
       document.querySelector('.nav-item[data-section="register"] span').textContent = 'Profile';
       startStandingsListener();
@@ -836,7 +836,7 @@
     btn.textContent = 'Register Now'; btn.disabled = false;
   });
 
-  // ── VERIFY (re-link this device to an existing registration) ──
+  // â”€â”€ VERIFY (re-link this device to an existing registration) â”€â”€
   document.getElementById('show-verify-btn').addEventListener('click', () => {
     const vf = document.getElementById('verify-form');
     vf.style.display = vf.style.display === 'none' ? 'block' : 'none';
@@ -860,21 +860,21 @@
       });
       if (!match) {
         result.style.color = '#D93025';
-        result.textContent = "❌ No match found. Double-check your name and eFootball ID / phone number, then try again.";
+        result.textContent = "âŒ No match found. Double-check your name and eFootball ID / phone number, then try again.";
       } else {
         localStorage.setItem('myRegisteredName', match.data().name);
         result.style.color = '#21F1A8';
-        result.textContent = '✅ Verified! Loading your profile...';
+        result.textContent = 'âœ… Verified! Loading your profile...';
         setTimeout(() => location.reload(), 600);
       }
     } catch (e) {
       result.style.color = '#D93025';
-      result.textContent = '❌ ' + (e.message || 'Verification failed.');
+      result.textContent = 'âŒ ' + (e.message || 'Verification failed.');
     }
     btn.textContent = 'Verify'; btn.disabled = false;
   });
 
-  // ── MY MATCHES — real-time ──
+  // â”€â”€ MY MATCHES â€” real-time â”€â”€
 
   // Render the current player's matches below the profile card in the Register tab.
   function renderProfileMatches(player) {
@@ -887,7 +887,7 @@
 
     if (!scheduledMatches.length) {
       wrap.style.display = 'block';
-      el.innerHTML = '<div class="empty-state" style="padding:.75rem 0"><span class="icon">📅</span><p>No scheduled matches yet. Check back soon!</p></div>';
+      el.innerHTML = '<div class="empty-state" style="padding:.75rem 0"><span class="icon">ðŸ“…</span><p>No scheduled matches yet. Check back soon!</p></div>';
       return;
     }
 
@@ -898,7 +898,7 @@
       notifPrompt.style.display = 'block';
       notifPrompt.innerHTML = `
         <div class="card" style="display:flex;align-items:center;gap:10px;justify-content:space-between">
-          <p style="font-size:.82rem;color:var(--gray-600);margin:0">🔔 Get notified 10 min before your match.</p>
+          <p style="font-size:.82rem;color:var(--gray-600);margin:0">ðŸ”” Get notified 10 min before your match.</p>
           <button class="btn btn-primary btn-sm" id="enable-notif-btn">Enable</button>
         </div>`;
       document.getElementById('enable-notif-btn')?.addEventListener('click', async () => {
@@ -925,11 +925,11 @@
           <div class="match-player">${esc(opp)}</div>
         </div>
         <div class="match-meta">
-          <span>📅 ${date}</span>
+          <span>ðŸ“… ${date}</span>
           <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
         </div>
-        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} – ${esc(m.awayScore)}</div>` : ''}
-        ${m.status === 'live' ? `<div class="match-meta" style="margin-top:.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:.78rem;color:var(--green-dark);font-weight:500">LIVE now!</span></div>` : ''}
+        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} â€“ ${esc(m.awayScore)}</div>` : ''}
+        ${m.status === 'live' ? `<div class="match-meta" style="margin-top:.5rem"><span class="match-code">ðŸ”‘ ${esc(m.joinCode)}</span><span style="font-size:.78rem;color:var(--green-dark);font-weight:500">LIVE now!</span></div>` : ''}
         ${m.status === 'live' ? `
           <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--gray-200,#eee)">
             <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Played the match? Enter the final score below.</p>
@@ -938,7 +938,7 @@
                 <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.homeName)}</label>
                 <input type="number" class="score-input" id="score-h-${m.id}" min="0" max="99" placeholder="0" />
               </div>
-              <span style="font-weight:700;margin-top:14px">–</span>
+              <span style="font-weight:700;margin-top:14px">â€“</span>
               <div style="flex:1;text-align:center">
                 <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.awayName)}</label>
                 <input type="number" class="score-input" id="score-a-${m.id}" min="0" max="99" placeholder="0" />
@@ -946,13 +946,13 @@
             </div>
             <button class="btn btn-primary btn-full btn-sm" data-submit-score="${m.id}" data-side="${isHome ? 'home' : 'away'}">Submit Score</button>
             <div id="score-result-${m.id}" style="margin-top:.5rem;font-size:.8rem;text-align:center"></div>
-            ${m.scoreMismatch ? `<p style="font-size:.78rem;color:#D93025;text-align:center;margin-top:.5rem">⚠️ Score mismatch — check with opponent or contact admin.</p>` : ''}
+            ${m.scoreMismatch ? `<p style="font-size:.78rem;color:#D93025;text-align:center;margin-top:.5rem">âš ï¸ Score mismatch â€” check with opponent or contact admin.</p>` : ''}
           </div>` : ''}
       </div>`;
     }).join('');
   }
 
-  // All Matches tab — fetches every match from Firestore, sorted soonest scheduled first.
+  // All Matches tab â€” fetches every match from Firestore, sorted soonest scheduled first.
   async function loadAllMatches() {
     const el = document.getElementById('all-matches-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
@@ -970,11 +970,11 @@
     ];
 
     if (!all.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">📅</span><p>No matches yet.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ“…</span><p>No matches yet.</p></div>';
       return;
     }
 
-    // Sort: live → upcoming with date (soonest first) → upcoming TBA → completed
+    // Sort: live â†’ upcoming with date (soonest first) â†’ upcoming TBA â†’ completed
     const order = m => {
       if (m.status === 'live') return 0;
       if (m.status !== 'completed' && m.scheduledAt) return 1;
@@ -1002,16 +1002,16 @@
           <div class="match-player">${esc(m.awayName)}</div>
         </div>
         <div class="match-meta" style="margin-top:.35rem">
-          <span>📅 ${date}</span>
+          <span>ðŸ“… ${date}</span>
           ${m.status === 'live' ? '<span class="badge badge-green">Live</span>' : m.status === 'completed' ? '<span class="badge badge-gray">Completed</span>' : ''}
         </div>
-        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} – ${esc(m.awayScore)}</div>` : ''}
+        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} â€“ ${esc(m.awayScore)}</div>` : ''}
       </div>`;
     }).join('');
-    } catch { el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load matches.</p></div>'; }
+    } catch { el.innerHTML = '<div class="empty-state"><span class="icon">âš ï¸</span><p>Could not load matches.</p></div>'; }
   }
 
-  // ── RESULTS ──
+  // â”€â”€ RESULTS â”€â”€
   async function loadResults() {
     const el = document.getElementById('results-list');
     el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
@@ -1028,7 +1028,7 @@
     ].filter(m => m.status === 'completed');
 
     if (!all.length) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>No completed matches yet.</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="icon">ðŸ“Š</span><p>No completed matches yet.</p></div>';
       return;
     }
 
@@ -1057,9 +1057,9 @@
         const awayWin  = m.winner === 'away';
         return `<div class="match-card" style="margin-bottom:.75rem">
           <div class="match-teams">
-            <div class="match-player" style="${homeWin ? 'color:var(--green);font-weight:700' : ''}">${esc(m.homeName)}${homeWin ? ' 🏆' : ''}</div>
-            <div class="match-vs" style="font-size:1rem;font-weight:700">${m.homeScore} – ${m.awayScore}</div>
-            <div class="match-player" style="${awayWin ? 'color:var(--green);font-weight:700' : ''}">${esc(m.awayName)}${awayWin ? ' 🏆' : ''}</div>
+            <div class="match-player" style="${homeWin ? 'color:var(--green);font-weight:700' : ''}">${esc(m.homeName)}${homeWin ? ' ðŸ†' : ''}</div>
+            <div class="match-vs" style="font-size:1rem;font-weight:700">${m.homeScore} â€“ ${m.awayScore}</div>
+            <div class="match-player" style="${awayWin ? 'color:var(--green);font-weight:700' : ''}">${esc(m.awayName)}${awayWin ? ' ðŸ†' : ''}</div>
           </div>
           <div class="match-meta" style="margin-top:.4rem">
             ${m.group ? `<span class="badge badge-gray">Group ${m.group}</span>` : '<span></span>'}
@@ -1069,14 +1069,14 @@
       }).join('');
     }
     el.innerHTML = html;
-    } catch { el.innerHTML = '<div class="empty-state"><span class="icon">⚠️</span><p>Could not load results.</p></div>'; }
+    } catch { el.innerHTML = '<div class="empty-state"><span class="icon">âš ï¸</span><p>Could not load results.</p></div>'; }
   }
 
   // These must be declared before renderHome() is called below.
   let myPlayer = null;
   let myMatches = [];
 
-  // ── INIT ──
+  // â”€â”€ INIT â”€â”€
   // Render home immediately with cached/empty state so users never see an infinite spinner.
   // The real-time listeners will update it once Firebase responds.
   renderHome();
@@ -1089,7 +1089,7 @@
       if (el && el.querySelector('.spinner')) {
         el.innerHTML = BANNER_HTML + `
           <div class="card" style="text-align:center;padding:1.5rem">
-            <div style="font-size:2rem;margin-bottom:.5rem">⚠️</div>
+            <div style="font-size:2rem;margin-bottom:.5rem">âš ï¸</div>
             <div style="font-weight:600;margin-bottom:.5rem">Connection slow</div>
             <p style="font-size:.85rem;color:var(--gray-600);margin-bottom:1rem">Could not reach the server. Check your internet and try again.</p>
             <button class="btn btn-primary btn-full" onclick="location.reload()">Reload App</button>
@@ -1100,7 +1100,7 @@
   }, 8000);
 
   document.getElementById('not-me-btn').addEventListener('click', () => {
-    if (!confirm("Reset this device? You'll see the registration form again — only do this if this profile isn't actually you.")) return;
+    if (!confirm("Reset this device? You'll see the registration form again â€” only do this if this profile isn't actually you.")) return;
     localStorage.removeItem('myRegisteredName');
     sessionStorage.setItem('showVerify', '1');
     location.reload();
@@ -1149,7 +1149,7 @@
     try {
       const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
       if (snap.empty) {
-        // Stale localStorage — player was deleted or name changed. Clear and reset.
+        // Stale localStorage â€” player was deleted or name changed. Clear and reset.
         localStorage.removeItem('myRegisteredName');
         document.getElementById('reg-form').style.display = 'block';
         document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'none');
@@ -1183,7 +1183,7 @@
       } else {
         badge.className = 'badge badge-amber';
         badge.textContent = 'pending';
-        msg.textContent = "Waiting for admin approval — check back soon!";
+        msg.textContent = "Waiting for admin approval â€” check back soon!";
       }
 
       profileCard.style.display = 'block';
@@ -1207,7 +1207,7 @@
       const name = localStorage.getItem('myRegisteredName') || 'Player';
       el.innerHTML = BANNER_HTML + `
         <div class="card" style="margin-bottom:1rem">
-          <div class="card-title">👋 Hi, ${esc(name)}</div>
+          <div class="card-title">ðŸ‘‹ Hi, ${esc(name)}</div>
           <p style="font-size:.85rem;color:var(--gray-600)">Loading your profile...</p>
         </div>
         ${INSTALL_CARD_HTML}`;
@@ -1222,26 +1222,26 @@
       const standings = computeStandings(gPlayers, gMatches);
       const idx = standings.findIndex(r => r.id === myPlayer.id);
       if (idx !== -1) {
-        rankHtml = `<div class="player-item"><div class="player-avatar">#${idx+1}</div><div><div class="player-name">${idx+1} of ${standings.length} in Group ${esc(myPlayer.group)}</div><div class="player-sub">${standings[idx].pts} pts · ${standings[idx].w}W ${standings[idx].d}D ${standings[idx].l}L</div></div></div>`;
+        rankHtml = `<div class="player-item"><div class="player-avatar">#${idx+1}</div><div><div class="player-name">${idx+1} of ${standings.length} in Group ${esc(myPlayer.group)}</div><div class="player-sub">${standings[idx].pts} pts Â· ${standings[idx].w}W ${standings[idx].d}D ${standings[idx].l}L</div></div></div>`;
       }
     }
 
     el.innerHTML = BANNER_HTML + `
       <div class="card" style="margin-bottom:1rem">
-        <div class="card-title">👋 Hi, ${esc(myPlayer.name)}</div>
+        <div class="card-title">ðŸ‘‹ Hi, ${esc(myPlayer.name)}</div>
         ${rankHtml || '<p style="font-size:.85rem;color:var(--gray-600)">Standings will appear once groups are drawn.</p>'}
       </div>
       ${INSTALL_CARD_HTML}`;
     attachInstallBtn();
   }
 
-  // Service Worker — detect updates and prompt the user to refresh,
+  // Service Worker â€” detect updates and prompt the user to refresh,
   // since installed PWAs / open tabs can otherwise sit on stale code
   // indefinitely without the user knowing a new version exists.
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(registration => {
 
-      // Check for a new SW immediately on load, and again every 60 s —
+      // Check for a new SW immediately on load, and again every 60 s â€”
       // without this the browser only checks on navigation, so long-lived
       // PWA sessions never know a new version exists.
       registration.update().catch(() => {});
@@ -1252,7 +1252,7 @@
         if (document.visibilityState === 'visible') registration.update().catch(() => {});
       });
 
-      // Show update banner once only — guard prevents duplicates.
+      // Show update banner once only â€” guard prevents duplicates.
       let bannerShown = false;
       function showUpdateBanner() {
         if (bannerShown) return;
