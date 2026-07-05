@@ -357,16 +357,21 @@ p  { font-size: 0.95rem; }
   bottom: 5rem;
   left: 50%;
   transform: translateX(-50%) translateY(10px);
-  background: var(--gray-900);
-  color: var(--white);
+  background: rgba(20, 20, 20, 0.92);
+  color: #EEEEEE;
+  border: 1px solid #3D3D3D;
   padding: 0.6rem 1.2rem;
   border-radius: 99px;
   font-size: 0.85rem;
+  font-weight: 500;
   z-index: 999;
   opacity: 0;
   transition: all 0.25s;
   white-space: nowrap;
   pointer-events: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
