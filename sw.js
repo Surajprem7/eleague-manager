@@ -28,7 +28,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.openWindow('./'));
 });
 
-const CACHE = 'eleague-v89';
+const CACHE = 'eleague-v90';
 // Large files (videos) excluded — they cache on first use so they
 // don't block SW installation and cause silent update failures.
 const ASSETS = [
@@ -65,8 +65,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
       .then(c => c.addAll(ASSETS))
-    // No skipWaiting() here � new SW waits until user taps the update banner
-    // or the refresh button. This prevents silent mid-session reloads.
+      .then(() => self.skipWaiting())
   );
 });
 
