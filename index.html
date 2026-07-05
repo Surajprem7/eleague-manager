@@ -68,7 +68,7 @@
 <div class="offline-banner" id="offline-banner">âš¡ You're offline â€” showing cached data</div>
 
 <!-- Update Banner -->
-<div id="update-banner" onclick="location.reload()" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#4DA3FF;color:#fff;text-align:center;padding:14px 1rem;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#4DA3FF;color:#fff;text-align:center;padding:14px 1rem;font-size:.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
   ðŸ”„ New update available â€” Tap here to refresh!
 </div>
 
@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy â€” lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v86';
+  const APP_VERSION = 'v87';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -1236,38 +1236,53 @@
     attachInstallBtn();
   }
 
-  // Service Worker â€” detect updates and prompt the user to refresh,
-  // since installed PWAs / open tabs can otherwise sit on stale code
-  // indefinitely without the user knowing a new version exists.
+  // ── SERVICE WORKER — update detection ──
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').then(registration => {
 
-      // Check for a new SW immediately on load, and again every 60 s â€”
-      // without this the browser only checks on navigation, so long-lived
-      // PWA sessions never know a new version exists.
-      registration.update().catch(() => {});
-      setInterval(() => registration.update().catch(() => {}), 60000);
+      // Tell the waiting SW to take over → triggers controllerchange → reload.
+      function activateWaiting() {
+        if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
 
-      // Also check when the app comes back into focus (home screen reopen).
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') registration.update().catch(() => {});
-      });
-
-      // Show update banner once only â€” guard prevents duplicates.
+      // Show update banner when a new SW has installed and is waiting.
       let bannerShown = false;
       function showUpdateBanner() {
         if (bannerShown) return;
         bannerShown = true;
-        document.getElementById('update-banner').style.display = 'block';
+        const banner = document.getElementById('update-banner');
+        banner.style.display = 'block';
+        banner.onclick = () => activateWaiting();
       }
+
+      // Watch for a new SW being found and installed.
       registration.addEventListener('updatefound', () => {
         const w = registration.installing;
-        if (w) w.addEventListener('statechange', () => {
+        if (!w) return;
+        w.addEventListener('statechange', () => {
+          // Only show banner if there was already an active SW (not first install).
           if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner();
         });
       });
+
+      // Handle case where page loaded with a SW already waiting.
       if (registration.waiting && navigator.serviceWorker.controller) showUpdateBanner();
-      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+
+      // Reload when new SW takes over. Guard prevents double-reload on first install.
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloading) return;
+        reloading = true;
+        location.reload();
+      });
+
+      // Proactively check for updates: on load, every 60s, and on tab refocus.
+      registration.update().catch(() => {});
+      setInterval(() => registration.update().catch(() => {}), 60000);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') registration.update().catch(() => {});
+      });
+
     }).catch(() => {});
   }
 
@@ -1277,22 +1292,16 @@
     btn.style.opacity = '0.5';
     btn.style.pointerEvents = 'none';
 
-    if (!('serviceWorker' in navigator)) {
-      location.reload();
-      return;
-    }
+    if (!('serviceWorker' in navigator)) { location.reload(); return; }
 
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) { location.reload(); return; }
 
-      // If there's already a waiting SW, activate it immediately
-      if (reg.waiting) {
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        return;
-      }
+      // If a new SW is already waiting, activate it → controllerchange → reload.
+      if (reg.waiting) { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); return; }
 
-      // Check for a new version from the server
+      // Otherwise check the server for a newer version.
       await reg.update();
 
       if (reg.waiting) {
