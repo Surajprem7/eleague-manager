@@ -111,7 +111,8 @@
       <p id="tournament-phase">eFootball Tournament</p>
     </div>
     <span class="realtime-badge"><span class="live-dot"></span>Live</span>
-    <button id="help-btn" aria-label="Help" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:10px">â”</button>
+    <button id="refresh-btn" aria-label="Check for updates" title="Check for updates" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:6px">&#x1F504;</button>
+    <button id="help-btn" aria-label="Help" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:6px">â”</button>
   </div>
 </header>
 
@@ -324,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy â€” lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v85';
+  const APP_VERSION = 'v86';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -1269,6 +1270,42 @@
       navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }).catch(() => {});
   }
+
+  // ── REFRESH BUTTON ──
+  document.getElementById('refresh-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('refresh-btn');
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+
+    if (!('serviceWorker' in navigator)) {
+      location.reload();
+      return;
+    }
+
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) { location.reload(); return; }
+
+      // If there's already a waiting SW, activate it immediately
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        return;
+      }
+
+      // Check for a new version from the server
+      await reg.update();
+
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        toast('You are on the latest version!');
+        btn.style.opacity = '';
+        btn.style.pointerEvents = '';
+      }
+    } catch {
+      location.reload();
+    }
+  });
 </script>
 </body>
 </html>
