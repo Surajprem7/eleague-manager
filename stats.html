@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#21F1A8" />
+  <meta name="theme-color" content="#CBA135" />
   <meta name="description" content="eLeague Manager — Player Stats" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Stats — eLeague Manager</title>
@@ -15,10 +15,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     .stat-hero {
-      background: linear-gradient(135deg, #21F1A8, #0DB87E);
+      background: linear-gradient(135deg, #CBA135, #A8872A);
       border-radius: var(--radius-xl);
       padding: 1.5rem;
-      color: #171717;
+      color: #060C18;
       margin-bottom: 1rem;
       text-align: center;
     }
@@ -29,9 +29,9 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.8rem; font-weight: 700;
       margin: 0 auto 0.75rem;
-      color: #171717;
+      color: #060C18;
     }
-    .stat-hero h2 { color: #171717; font-size: 1.2rem; margin-bottom: 2px; }
+    .stat-hero h2 { color: #060C18; font-size: 1.2rem; margin-bottom: 2px; }
     .stat-hero p  { opacity: 0.8; font-size: 0.82rem; }
     .stat-grid-4 {
       display: grid;
@@ -40,7 +40,7 @@
       margin-bottom: 1rem;
     }
     .mini-stat {
-      background: #242424;
+      background: #0C1828;
       border-radius: var(--radius-md);
       padding: 0.75rem 0.5rem;
       text-align: center;
@@ -73,7 +73,7 @@
       overflow: hidden;
       margin: 6px 0 2px;
     }
-    .win-bar { height: 100%; background: #21F1A8; border-radius: 4px; transition: width 0.6s ease; }
+    .win-bar { height: 100%; background: #CBA135; border-radius: 4px; transition: width 0.6s ease; }
     .leaderboard-row {
       display: flex;
       align-items: center;
@@ -94,7 +94,7 @@
     .rank-3 { background: #CD7F32; color: #fff; }
     .rank-n { background: var(--gray-100); color: var(--gray-600); }
     .lb-name { flex: 1; font-size: 0.9rem; font-weight: 500; }
-    .lb-goals { font-size: 1rem; font-weight: 700; color: #0DB87E; }
+    .lb-goals { font-size: 1rem; font-weight: 700; color: #A8872A; }
     .lb-played { font-size: 0.75rem; color: var(--gray-600); }
     .tab-row {
       display: flex; gap: 4px;
@@ -111,13 +111,13 @@
       font-family: var(--font); transition: all 0.15s;
     }
     .stab.active {
-      background: #21F1A8;
-      color: #171717;
+      background: #CBA135;
+      color: #060C18;
       font-weight: 600;
     }
     .back-btn {
       display: flex; align-items: center; gap: 6px;
-      color: #0DB87E; font-size: 0.85rem;
+      color: #A8872A; font-size: 0.85rem;
       font-weight: 500; text-decoration: none;
       margin-bottom: 1rem;
     }

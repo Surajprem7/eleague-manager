@@ -2,8 +2,8 @@
 @import url('style.css');
 
 .admin-header {
-  background: #21F1A8;
-  color: #171717;
+  background: linear-gradient(135deg, #CBA135, #E8C450);
+  color: #060C18;
   padding: 1rem;
   display: flex;
   align-items: center;
@@ -13,12 +13,12 @@
   left: 0;
   right: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 16px rgba(203,161,53,0.3);
 }
-.admin-header h1 { font-size: 1rem; color: #171717; }
+.admin-header h1 { font-size: 1rem; color: #060C18; }
 .admin-header .badge-admin {
   background: rgba(0,0,0,0.15);
-  color: #171717;
+  color: #060C18;
   font-size: 0.7rem;
   padding: 2px 8px;
   border-radius: 99px;
@@ -27,8 +27,8 @@
 .admin-tabs {
   display: flex !important;
   gap: 0;
-  background: #242424;
-  border-top: 2px solid #3D3D3D;
+  background: #080E1C;
+  border-top: 2px solid #1C2E48;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   position: fixed !important;
@@ -70,7 +70,7 @@ main.page {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: var(--gray-50);
+  background: #060C18;
   text-align: center;
 }
 .login-screen .logo-big {
@@ -93,13 +93,13 @@ main.page {
   width: 52px;
   text-align: center;
   padding: 0.5rem;
-  border: 1.5px solid #3D3D3D;
+  border: 1.5px solid #1C2E48;
   border-radius: var(--radius-sm);
   font-size: 1.1rem;
   font-weight: 700;
   font-family: var(--font);
-  background: #2E2E2E;
-  color: #EEEEEE;
+  background: #112038;
+  color: #E8EEF8;
 }
 .score-dash { font-size: 1.2rem; color: var(--gray-400); }
 
@@ -109,8 +109,8 @@ main.page {
   gap: 0.75rem;
 }
 .group-box {
-  background: #242424;
-  border: 1px solid #333333;
+  background: #0C1828;
+  border: 1px solid #1C2E48;
   border-radius: var(--radius-lg);
   padding: 1rem;
   box-shadow: var(--shadow-sm);
@@ -151,8 +151,8 @@ main.page {
   margin-bottom: 1rem;
 }
 .stat-box {
-  background: #242424;
-  border: 1px solid #333333;
+  background: #0C1828;
+  border: 1px solid #1C2E48;
   border-radius: var(--radius-lg);
   padding: 1rem;
   text-align: center;

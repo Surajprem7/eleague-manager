@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#21F1A8" />
+  <meta name="theme-color" content="#CBA135" />
   <meta name="description" content="eLeague Manager — eFootball Tournament" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -18,7 +18,7 @@
   <style>
     .live-dot {
       width: 8px; height: 8px; border-radius: 50%;
-      background: #21F1A8; display: inline-block;
+      background:#CBA135; display: inline-block;
       animation: pulse 1.2s ease-in-out infinite;
       margin-right: 6px;
     }
@@ -28,8 +28,8 @@
     }
     .realtime-badge {
       display: inline-flex; align-items: center;
-      font-size: 0.7rem; color: var(--green-dark, #0DB87E);
-      background: rgba(33,241,168,0.15); padding: 2px 8px;
+      font-size: 0.7rem; color: var(--green-dark, #A8872A);
+      background: rgba(203,161,53,0.15); padding: 2px 8px;
       border-radius: 99px; margin-left: 8px;
     }
     .update-flash {
@@ -73,32 +73,32 @@
 </div>
 
 <!-- Announcement Banner -->
-<div id="announce-banner" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9998;background:#F9AB00;color:#171717;border-radius:16px;padding:1.5rem 1.75rem;font-size:1rem;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:340px;width:90%;text-align:center">
+<div id="announce-banner" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9998;background:#F9AB00;color:#060C18;border-radius:16px;padding:1.5rem 1.75rem;font-size:1rem;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:340px;width:90%;text-align:center">
   <div id="announce-banner-text" style="margin-bottom:1rem;line-height:1.5"></div>
   <div id="announce-refresh-wrap" style="display:none;margin-bottom:.75rem">
-    <button onclick="location.reload(true)" style="width:100%;background:#171717;color:#21F1A8;border:none;border-radius:99px;padding:10px 20px;font-size:.9rem;font-weight:700;cursor:pointer">🔄 Tap to Refresh Now</button>
+    <button onclick="location.reload(true)" style="width:100%;background:#060C18;color:#CBA135;border:none;border-radius:99px;padding:10px 20px;font-size:.9rem;font-weight:700;cursor:pointer">🔄 Tap to Refresh Now</button>
   </div>
-  <button onclick="document.getElementById('announce-banner').style.display='none'" style="background:rgba(0,0,0,0.15);border:none;border-radius:99px;padding:8px 20px;font-size:.85rem;font-weight:700;cursor:pointer;color:#171717">OK, Got it</button>
+  <button onclick="document.getElementById('announce-banner').style.display='none'" style="background:rgba(0,0,0,0.15);border:none;border-radius:99px;padding:8px 20px;font-size:.85rem;font-weight:700;cursor:pointer;color:#060C18">OK, Got it</button>
 </div>
 
 
 <!-- Install App Prompt Modal -->
 <div id="install-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);align-items:flex-end;justify-content:center;padding:0">
-  <div style="background:#1E1E1E;border-radius:24px 24px 0 0;padding:1.75rem 1.5rem calc(1.75rem + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -8px 32px rgba(0,0,0,0.5)">
+  <div style="background:#0C1828;border-radius:24px 24px 0 0;padding:1.75rem 1.5rem calc(1.75rem + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -8px 32px rgba(0,0,0,0.5)">
     <div style="text-align:center;margin-bottom:1.25rem">
       <div style="font-size:3rem;margin-bottom:.5rem">⚽</div>
-      <div style="font-size:1.2rem;font-weight:700;color:#EEEEEE;margin-bottom:.35rem">Install eLeague Manager</div>
-      <div style="font-size:.85rem;color:#AAAAAA;line-height:1.5">Get the full experience — instant access, works offline, and always up to date.</div>
+      <div style="font-size:1.2rem;font-weight:700;color:#E8EEF8;margin-bottom:.35rem">Install eLeague Manager</div>
+      <div style="font-size:.85rem;color:#7A8FA8;line-height:1.5">Get the full experience — instant access, works offline, and always up to date.</div>
     </div>
     <div id="install-android-wrap" style="display:none">
-      <button id="install-android-btn" style="width:100%;padding:1rem;background:#21F1A8;color:#171717;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:.75rem">📲 Install App</button>
+      <button id="install-android-btn" style="width:100%;padding:1rem;background:#CBA135;color:#060C18;border:none;border-radius:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-bottom:.75rem">📲 Install App</button>
     </div>
-    <div id="install-ios-wrap" style="display:none;background:#2A2A2A;border-radius:12px;padding:1rem;margin-bottom:.75rem;font-size:.85rem;color:#CCCCCC;line-height:1.8">
-      <div>1. Tap the <strong style="color:#21F1A8">Share</strong> button <strong>⬆️</strong> at the bottom of Safari</div>
-      <div>2. Scroll down and tap <strong style="color:#21F1A8">Add to Home Screen</strong></div>
-      <div>3. Tap <strong style="color:#21F1A8">Add</strong> — done!</div>
+    <div id="install-ios-wrap" style="display:none;background:#0A1628;border-radius:12px;padding:1rem;margin-bottom:.75rem;font-size:.85rem;color:#A8B8D0;line-height:1.8">
+      <div>1. Tap the <strong style="color:#CBA135">Share</strong> button <strong>⬆️</strong> at the bottom of Safari</div>
+      <div>2. Scroll down and tap <strong style="color:#CBA135">Add to Home Screen</strong></div>
+      <div>3. Tap <strong style="color:#CBA135">Add</strong> — done!</div>
     </div>
-    <button id="install-dismiss-btn" style="width:100%;padding:.75rem;background:transparent;color:#AAAAAA;border:1px solid #333;border-radius:14px;font-size:.9rem;font-weight:600;cursor:pointer">Maybe Later</button>
+    <button id="install-dismiss-btn" style="width:100%;padding:.75rem;background:transparent;color:#7A8FA8;border:1px solid #1A2840;border-radius:14px;font-size:.9rem;font-weight:600;cursor:pointer">Maybe Later</button>
   </div>
 </div>
 
@@ -111,17 +111,17 @@
       <p id="tournament-phase">eFootball Tournament</p>
     </div>
     <span class="realtime-badge"><span class="live-dot"></span>Live</span>
-    <button id="refresh-btn" aria-label="Check for updates" title="Check for updates" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:6px">&#x1F504;</button>
-    <button id="help-btn" aria-label="Help" style="background:rgba(0,0,0,0.15);border:none;color:#171717;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:6px">❔</button>
+    <button id="refresh-btn" aria-label="Check for updates" title="Check for updates" style="background:rgba(0,0,0,0.15);border:none;color:#060C18;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:6px">&#x1F504;</button>
+    <button id="help-btn" aria-label="Help" style="background:rgba(0,0,0,0.15);border:none;color:#060C18;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;margin-left:6px">❔</button>
   </div>
 </header>
 
 <!-- Help Modal -->
 <div id="help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;align-items:flex-end;justify-content:center">
-  <div style="background:#242424;border-radius:20px 20px 0 0;max-height:85vh;overflow-y:auto;width:100%;max-width:480px;padding:1.25rem">
+  <div style="background:#0C1828;border-radius:20px 20px 0 0;max-height:85vh;overflow-y:auto;width:100%;max-width:480px;padding:1.25rem">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
       <h2 style="margin:0;font-size:1.1rem">How eLeague Works</h2>
-      <button id="help-close-btn" aria-label="Close" style="background:#3D3D3D;border:none;color:#EEEEEE;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">✕</button>
+      <button id="help-close-btn" aria-label="Close" style="background:#1C2E48;border:none;color:#E8EEF8;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer">✕</button>
     </div>
 
     <div class="card" style="margin-bottom:.75rem">
@@ -514,7 +514,7 @@
         resultEl.style.color = 'var(--gray-600)';
         resultEl.textContent = '✅ Submitted! Waiting for your opponent to submit their score.';
       } else if (outcome === 'matched') {
-        resultEl.style.color = '#21F1A8';
+        resultEl.style.color = '#CBA135';
         resultEl.textContent = '✅ Scores matched — match completed!';
       } else {
         resultEl.style.color = '#D93025';
@@ -613,7 +613,7 @@
       <img src="assets/banner.png" alt="eLeague" style="width:100%;aspect-ratio:3/2;object-fit:cover;display:block" onerror="this.style.display='none'" />
       <button id="instructions-play-btn" aria-label="Watch instructions" style="position:absolute;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.18);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
         <span style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.3)">
-          <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #0DB87E;margin-left:5px"></span>
+          <span style="width:0;height:0;border-top:14px solid transparent;border-bottom:14px solid transparent;border-left:22px solid #A8872A;margin-left:5px"></span>
         </span>
       </button>
       <button id="banner-share-btn" aria-label="Share" style="position:absolute;bottom:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2">
@@ -863,7 +863,7 @@
         result.textContent = "❌ No match found. Double-check your name and eFootball ID / phone number, then try again.";
       } else {
         localStorage.setItem('myRegisteredName', match.data().name);
-        result.style.color = '#21F1A8';
+        result.style.color = '#CBA135';
         result.textContent = '✅ Verified! Loading your profile...';
         setTimeout(() => location.reload(), 600);
       }
