@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v93';
+  const APP_VERSION = 'v94';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -1149,11 +1149,14 @@
     try {
       const snap = await getDocs(query(collection(db, 'players'), where('name', '==', name)));
       if (snap.empty) {
-        // Stale localStorage — player was deleted or name changed. Clear and reset.
+        // Stale localStorage — player deleted or name changed. Clear state and guide to verify.
         localStorage.removeItem('myRegisteredName');
         document.getElementById('reg-form').style.display = 'block';
+        document.getElementById('verify-form').style.display = 'block';
         document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'none');
-        toast('Profile not found. Please re-verify or register again.');
+        document.querySelector('.nav-item[data-section="register"] span').textContent = 'Register';
+        document.querySelector('.nav-item[data-section="register"]').click();
+        toast('⚠️ Profile not found — please verify your registration below.');
         return;
       }
       const p = { id: snap.docs[0].id, ...snap.docs[0].data() };
@@ -1195,8 +1198,18 @@
       });
       if (currentSection === 'home') renderHome();
     } catch {
-      document.getElementById('reg-form').style.display = 'block';
-      document.querySelectorAll('.nav-registered-only').forEach(el => el.style.display = 'none');
+      // Network / Firestore error — do NOT clear login state or hide nav.
+      // The account is still saved on this device; just show a retry card.
+      toast('⚠️ Could not load your profile. Check your connection.');
+      profileCard.innerHTML = `
+        <div style="text-align:center;padding:1.25rem">
+          <div style="font-size:2rem;margin-bottom:.5rem">⚠️</div>
+          <div style="font-weight:600;margin-bottom:.5rem">Connection Error</div>
+          <p style="font-size:.85rem;color:var(--gray-600);margin-bottom:1rem">Could not reach the server. Your account is still saved on this device.</p>
+          <button class="btn btn-primary btn-full" onclick="location.reload()">🔄 Retry</button>
+          <button style="margin-top:.5rem;width:100%;background:none;border:none;color:var(--gray-600);font-size:.8rem;text-decoration:underline;cursor:pointer;padding:.5rem" onclick="localStorage.removeItem('myRegisteredName');location.reload()">Not your account? Switch</button>
+        </div>`;
+      profileCard.style.display = 'block';
     }
   }
 
