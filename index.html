@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v94';
+  const APP_VERSION = 'v95';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -423,39 +423,69 @@
   // Dismissing only hides it for this session; it comes back next time they open the link
   (function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (isStandalone) return; // already installed — never show again
-    if (sessionStorage.getItem('installSkipped')) return; // skipped this session
+    if (isStandalone) return;
 
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const modal = document.getElementById('install-modal');
-    let deferredPrompt = null;
+    let installPrompt = null; // holds the beforeinstallprompt event on Android
 
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      installPrompt = e;
+    });
+    window.addEventListener('appinstalled', () => {
+      modal.style.display = 'none';
+      installPrompt = null;
+    });
+
+    // Decide what content to show each time the modal opens
+    function openInstallModal() {
+      if (sessionStorage.getItem('installSkipped')) return;
+      const androidWrap = document.getElementById('install-android-wrap');
+      const iosWrap     = document.getElementById('install-ios-wrap');
+      if (installPrompt) {
+        androidWrap.style.display = 'block';
+        iosWrap.style.display = 'none';
+      } else if (isIOS) {
+        iosWrap.style.display = 'block';
+        androidWrap.style.display = 'none';
+      } else {
+        // Browser doesn't support install prompt — show iOS-style manual instructions
+        iosWrap.style.display = 'block';
+        iosWrap.innerHTML = `
+          <div style="font-size:.85rem;color:#A8B8D0;line-height:1.8">
+            <div>1. Tap your browser's <strong style="color:#CBA135">menu</strong> (⋮ or ···)</div>
+            <div>2. Tap <strong style="color:#CBA135">Add to Home Screen</strong> or <strong style="color:#CBA135">Install App</strong></div>
+            <div>3. Tap <strong style="color:#CBA135">Add</strong> — done!</div>
+          </div>`;
+        androidWrap.style.display = 'none';
+      }
+      modal.style.display = 'flex';
+    }
+
+    // Expose for the home card "Install App" button
+    window.__openInstallModal = openInstallModal;
+
+    // Auto-show: on iOS after 3s; on Android wait for beforeinstallprompt then show after 3s
     if (isIOS) {
-      document.getElementById('install-ios-wrap').style.display = 'block';
-      setTimeout(() => { modal.style.display = 'flex'; }, 3000);
+      setTimeout(openInstallModal, 3000);
     } else {
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        document.getElementById('install-android-wrap').style.display = 'block';
-        setTimeout(() => { modal.style.display = 'flex'; }, 3000);
-      });
-      window.addEventListener('appinstalled', () => {
-        modal.style.display = 'none';
+      window.addEventListener('beforeinstallprompt', () => {
+        setTimeout(openInstallModal, 3000);
       });
     }
 
     document.getElementById('install-android-btn').addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      deferredPrompt = null;
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      installPrompt = null;
       modal.style.display = 'none';
     });
 
     document.getElementById('install-dismiss-btn').addEventListener('click', () => {
       modal.style.display = 'none';
-      sessionStorage.setItem('installSkipped', '1'); // hide for this session only
+      sessionStorage.setItem('installSkipped', '1');
     });
   })();
 
@@ -638,7 +668,8 @@
     const btn = document.getElementById('home-install-btn');
     if (!btn) return;
     btn.addEventListener('click', () => {
-      document.getElementById('install-modal').style.display = 'flex';
+      if (window.__openInstallModal) window.__openInstallModal();
+      else document.getElementById('install-modal').style.display = 'flex';
     });
   }
 
