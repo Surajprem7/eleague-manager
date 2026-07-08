@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v99';
+  const APP_VERSION = 'v100';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -968,12 +968,12 @@
             <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Played the match? Enter the final score below.</p>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:.5rem">
               <div style="flex:1;text-align:center">
-                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.homeName)}</label>
+                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px;text-transform:uppercase">${esc(m.homeName)}</label>
                 <input type="number" class="score-input" id="score-h-${m.id}" min="0" max="99" placeholder="0" />
               </div>
               <span style="font-weight:700;margin-top:14px">–</span>
               <div style="flex:1;text-align:center">
-                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px">${esc(m.awayName)}</label>
+                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px;text-transform:uppercase">${esc(m.awayName)}</label>
                 <input type="number" class="score-input" id="score-a-${m.id}" min="0" max="99" placeholder="0" />
               </div>
             </div>

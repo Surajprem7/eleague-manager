@@ -28,7 +28,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(self.clients.openWindow('./'));
 });
 
-const CACHE = 'eleague-v99';
+const CACHE = 'eleague-v100';
 // Large files (videos) excluded — they cache on first use so they
 // don't block SW installation and cause silent update failures.
 const ASSETS = [
