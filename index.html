@@ -180,7 +180,7 @@
         <div id="reg-form">
           <div class="form-group">
             <label class="form-label">Your full name</label>
-            <input type="text" class="form-input" id="reg-name" placeholder="Enter your name" maxlength="40" />
+            <input type="text" class="form-input" id="reg-name" placeholder="Enter your name" maxlength="40" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
           </div>
           <div class="form-group">
             <label class="form-label">eFootball username / ID</label>
@@ -213,7 +213,7 @@
           <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">Enter your name and either your phone number or eFootball ID — whichever you gave when registering.</p>
           <div class="form-group">
             <label class="form-label">Your full name</label>
-            <input type="text" class="form-input" id="verify-name" placeholder="Enter your name" maxlength="40" />
+            <input type="text" class="form-input" id="verify-name" placeholder="Enter your name" maxlength="40" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" />
           </div>
           <div class="form-group">
             <label class="form-label">Phone number or eFootball ID</label>
@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v97';
+  const APP_VERSION = 'v98';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -844,7 +844,7 @@
 
   // ── REGISTER ──
   document.getElementById('reg-submit').addEventListener('click', async () => {
-    const name  = document.getElementById('reg-name').value.trim();
+    const name  = document.getElementById('reg-name').value.trim().toUpperCase();
     const efid  = document.getElementById('reg-efid').value.trim();
     const phone = document.getElementById('reg-phone').value.trim();
     if (!name || !efid) { toast('Please fill in name and eFootball ID'); return; }
@@ -1195,7 +1195,7 @@
       const p = { id: snap.docs[0].id, ...snap.docs[0].data() };
       myPlayer = p;
       document.getElementById('profile-avatar').textContent = p.name?.[0]?.toUpperCase() || '?';
-      document.getElementById('profile-name').textContent = p.name;
+      document.getElementById('profile-name').textContent = (p.name || '').toUpperCase();
       document.getElementById('profile-efid').textContent = p.efootballId;
 
       const phoneRow = document.getElementById('profile-phone-row');
@@ -1250,7 +1250,7 @@
   function renderMyDashboard() {
     const el = document.getElementById('home-content');
     if (!myPlayer) {
-      const name = localStorage.getItem('myRegisteredName') || 'Player';
+      const name = (localStorage.getItem('myRegisteredName') || 'Player').toUpperCase();
       el.innerHTML = BANNER_HTML + `
         <div class="card" style="margin-bottom:1rem">
           <div class="card-title">👋 Hi, ${esc(name)}</div>
