@@ -235,7 +235,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v100';
+  const CURRENT_APP_VERSION = 'v101';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -816,7 +816,7 @@
       date = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       time = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     }
-    const m = { homePlayer: home, awayPlayer: away, date, time, joinCode: code };
+    const m = { homePlayer: (home||'').toUpperCase(), awayPlayer: (away||'').toUpperCase(), date, time, joinCode: code };
     window.open(generateMatchAlert(m), '_blank');
   };
 
@@ -985,7 +985,7 @@
     loadResults();
   };
   window.shareResult = (home, away, hs, as_, phase) => {
-    window.open(generateResultAlert({ homePlayer: home, awayPlayer: away, homeScore: hs, awayScore: as_, phase }), '_blank');
+    window.open(generateResultAlert({ homePlayer: (home||'').toUpperCase(), awayPlayer: (away||'').toUpperCase(), homeScore: hs, awayScore: as_, phase }), '_blank');
   };
 
   // ── ACTIVITY LOG ──
@@ -1189,7 +1189,7 @@
             html += `<div style="background:var(--red-light);border-radius:8px;padding:.6rem .75rem;margin-bottom:.5rem">
               <div style="font-weight:600;color:var(--red);font-size:.85rem">&#x26BD; ${esc(name)}</div>
               <div style="font-size:.78rem;color:var(--gray-600);margin-top:2px">Both at ${time}:</div>
-              ${c.matches.map(m => `<div style="font-size:.78rem;color:var(--gray-900);margin-top:3px">&middot; ${esc(m.homeName)} vs ${esc(m.awayName)}</div>`).join('')}
+              ${c.matches.map(m => `<div style="font-size:.78rem;color:var(--gray-900);margin-top:3px">&middot; ${esc((m.homeName||'').toUpperCase())} vs ${esc((m.awayName||'').toUpperCase())}</div>`).join('')}
             </div>`;
           });
         });
