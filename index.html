@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v98';
+  const APP_VERSION = 'v99';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -807,7 +807,7 @@
             <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
             <tbody>${standings.map((r,i) => `
               <tr class="${i<2?'qualify':''}">
-                <td>${esc(r.name)}</td>
+                <td>${esc((r.name||'').toUpperCase())}</td>
                 <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
                 <td>${r.gd>0?'+'+r.gd:r.gd}</td>
                 <td><strong>${r.pts}</strong></td>
@@ -1274,7 +1274,7 @@
 
     el.innerHTML = BANNER_HTML + `
       <div class="card" style="margin-bottom:1rem">
-        <div class="card-title">👋 Hi, ${esc(myPlayer.name)}</div>
+        <div class="card-title">👋 Hi, ${esc((myPlayer.name||'').toUpperCase())}</div>
         ${rankHtml || '<p style="font-size:.85rem;color:var(--gray-600)">Standings will appear once groups are drawn.</p>'}
       </div>
       ${INSTALL_CARD_HTML}`;

@@ -235,7 +235,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v98';
+  const CURRENT_APP_VERSION = 'v99';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -327,7 +327,7 @@
         <div class="player-item">
           <div class="player-avatar">${p.name[0].toUpperCase()}</div>
           <div style="flex:1">
-            <div class="player-name">${esc(p.name)}</div>
+            <div class="player-name">${esc((p.name||'').toUpperCase())}</div>
             <div class="player-sub">⚽ ${esc(p.efootballId)}${p.phone?' · 📱 '+esc(p.phone):''}</div>
             <div style="font-size:.7rem;margin-top:2px">${
               !p.appVersion
@@ -375,7 +375,7 @@
           <div class="group-box-title">Group ${g.letter}</div>
           <table class="standings-table">
             <thead><tr><th>Player</th><th>Pts</th><th>GD</th></tr></thead>
-            <tbody>${standings.map((r,i)=>`<tr class="${i<2?'qualify':''}"><td>${esc(r.name)}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td></tr>`).join('')}</tbody>
+            <tbody>${standings.map((r,i)=>`<tr class="${i<2?'qualify':''}"><td>${esc((r.name||'').toUpperCase())}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td></tr>`).join('')}</tbody>
           </table>
         </div>`;
       });
@@ -604,7 +604,7 @@
         <div class="group-players" id="gp-${letter}">
           ${players.map(p => `
             <div class="drag-player" data-id="${p.id}" data-name="${esc(p.name)}" style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-              <span>${esc(p.name)}</span>
+              <span>${esc((p.name||'').toUpperCase())}</span>
               <select class="move-select" style="font-size:.72rem;border:1px solid var(--gray-200);border-radius:6px;padding:2px 4px;background:#112038;color:#A8B8D0;cursor:pointer">
                 <option value="">Move →</option>
                 ${letters.filter(l => l !== letter).map(l => `<option value="${l}">Group ${l}</option>`).join('')}
