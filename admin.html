@@ -41,6 +41,7 @@
     <button class="admin-tab active" data-tab="players">Players</button>
     <button class="admin-tab" data-tab="groups">Groups</button>
     <button class="admin-tab" data-tab="matches">Matches</button>
+    <button class="admin-tab" data-tab="schedule">&#x1F4C5; Schedule</button>
     <button class="admin-tab" data-tab="knockout">Knockout</button>
     <button class="admin-tab" data-tab="results">Results</button>
     <button class="admin-tab" data-tab="log">Activity Log</button>
@@ -91,6 +92,13 @@
       <!-- MATCHES TAB -->
       <div class="tab-content" id="tab-matches" style="display:none">
         <div id="matches-panel">
+          <div class="loader"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE TAB -->
+      <div class="tab-content" id="tab-schedule" style="display:none">
+        <div id="schedule-panel">
           <div class="loader"><div class="spinner"></div></div>
         </div>
       </div>
@@ -227,7 +235,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v96';
+  const CURRENT_APP_VERSION = 'v97';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -292,6 +300,7 @@
       if (tab.dataset.tab === 'players')  loadPlayers();
       if (tab.dataset.tab === 'groups')   loadGroups();
       if (tab.dataset.tab === 'matches')  loadMatches();
+      if (tab.dataset.tab === 'schedule') loadSchedule();
       if (tab.dataset.tab === 'knockout') loadKnockout();
       if (tab.dataset.tab === 'results')  loadResults();
       if (tab.dataset.tab === 'log')      loadActivityLog();
@@ -1103,6 +1112,174 @@
       toast('Error: ' + e.message);
     }
   };
+
+  // ── SCHEDULE / CONFLICT DETECTOR ──
+  async function loadSchedule() {
+    const el = document.getElementById('schedule-panel');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+    try {
+      const [groupSnap, koSnap] = await Promise.all([
+        getDocs(collection(db, 'matches')).catch(() => ({ docs: [] })),
+        getDocs(collection(db, 'knockoutMatches')).catch(() => ({ docs: [] }))
+      ]);
+
+      const all = [
+        ...groupSnap.docs.map(d => ({ id: d.id, _col: 'group', ...d.data() })),
+        ...koSnap.docs.map(d => ({ id: d.id, _col: 'knockout', ...d.data() }))
+      ].filter(m => m.scheduledAt && m.status !== 'completed');
+
+      if (!all.length) {
+        el.innerHTML = '<div class="empty-state"><span class="icon">&#x1F4C5;</span><p>No scheduled matches yet.</p></div>';
+        return;
+      }
+
+      all.sort((a, b) => a.scheduledAt.seconds - b.scheduledAt.seconds);
+
+      // Round to the minute for slot comparison
+      function slotKey(m) {
+        const d = new Date(m.scheduledAt.seconds * 1000);
+        d.setSeconds(0, 0);
+        return d.getTime();
+      }
+
+      // Build slot → players map
+      const slotMap = {};
+      all.forEach(m => {
+        const key = slotKey(m);
+        if (!slotMap[key]) slotMap[key] = [];
+        slotMap[key].push({ matchId: m.id, playerId: m.homeId || m.homeName, playerName: m.homeName, match: m });
+        slotMap[key].push({ matchId: m.id, playerId: m.awayId || m.awayName, playerName: m.awayName, match: m });
+      });
+
+      // Detect conflicts
+      const conflictMatchIds = new Set();
+      const conflictPlayers = {}; // playerName → [{slot, matches}]
+
+      Object.entries(slotMap).forEach(([slot, entries]) => {
+        const seen = {};
+        entries.forEach(e => {
+          const key = e.playerId;
+          if (!seen[key]) seen[key] = [];
+          seen[key].push(e);
+        });
+        Object.values(seen).forEach(group => {
+          if (group.length > 1) {
+            group.forEach(e => conflictMatchIds.add(e.matchId));
+            const name = group[0].playerName;
+            if (!conflictPlayers[name]) conflictPlayers[name] = [];
+            conflictPlayers[name].push({ slot: parseInt(slot), matches: group.map(e => e.match) });
+          }
+        });
+      });
+
+      const conflictCount = Object.keys(conflictPlayers).length;
+      let html = '';
+
+      // ── Conflict summary banner ──
+      if (conflictCount > 0) {
+        html += `<div class="card" style="border:2px solid var(--red);margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">&#x26A0;&#xFE0F;</span>
+            <div style="font-weight:700;color:var(--red);font-size:.95rem">Schedule Conflicts Detected</div>
+          </div>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem">${conflictCount} player${conflictCount > 1 ? 's have' : ' has'} 2+ matches at the same time slot.</p>`;
+        Object.entries(conflictPlayers).forEach(([name, conflicts]) => {
+          conflicts.forEach(c => {
+            const time = new Date(c.slot).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+            html += `<div style="background:var(--red-light);border-radius:8px;padding:.6rem .75rem;margin-bottom:.5rem">
+              <div style="font-weight:600;color:var(--red);font-size:.85rem">&#x26BD; ${esc(name)}</div>
+              <div style="font-size:.78rem;color:var(--gray-600);margin-top:2px">Both at ${time}:</div>
+              ${c.matches.map(m => `<div style="font-size:.78rem;color:var(--gray-900);margin-top:3px">&middot; ${esc(m.homeName)} vs ${esc(m.awayName)}</div>`).join('')}
+            </div>`;
+          });
+        });
+        html += '</div>';
+      } else {
+        html += `<div class="card" style="border:1px solid #00C875;display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+          <span style="font-size:1.2rem">&#x2705;</span>
+          <div style="font-size:.88rem;color:#00C875;font-weight:600">No conflicts &mdash; all players have clear schedules</div>
+        </div>`;
+      }
+
+      // ── Schedule by date ──
+      const byDate = {};
+      all.forEach(m => {
+        const d = new Date(m.scheduledAt.seconds * 1000);
+        const label = d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+        if (!byDate[label]) byDate[label] = [];
+        byDate[label].push(m);
+      });
+
+      Object.entries(byDate).forEach(([dateLabel, dayMatches]) => {
+        html += `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin:1rem 0 .5rem">&#x1F4C5; ${dateLabel}</div>`;
+
+        const byTime = {};
+        dayMatches.forEach(m => {
+          const t = new Date(m.scheduledAt.seconds * 1000).toLocaleTimeString([], { timeStyle: 'short' });
+          if (!byTime[t]) byTime[t] = [];
+          byTime[t].push(m);
+        });
+
+        Object.entries(byTime).forEach(([time, slotMatches]) => {
+          const hasConflict = slotMatches.some(m => conflictMatchIds.has(m.id));
+          html += `<div style="margin-bottom:.75rem">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:.35rem">
+              <span style="font-size:.82rem;font-weight:700;color:${hasConflict ? 'var(--red)' : 'var(--green)'}">${time}</span>
+              <span style="font-size:.72rem;color:var(--gray-600)">${slotMatches.length} match${slotMatches.length > 1 ? 'es' : ''}</span>
+              ${hasConflict ? `<span class="badge badge-red" style="font-size:.68rem">&#x26A0;&#xFE0F; Conflict</span>` : ''}
+            </div>`;
+          slotMatches.forEach(m => {
+            const isConflict = conflictMatchIds.has(m.id);
+            const phase = m._col === 'knockout' ? (m.phase ? m.phase.replace(/_/g,' ') : 'Knockout') : `Group ${m.group || ''}`;
+            html += `<div class="match-card" style="margin-bottom:.4rem;${isConflict ? 'border-left:3px solid var(--red);' : ''}">
+              <div style="font-size:.68rem;color:var(--gray-600);margin-bottom:.2rem;font-weight:600;text-transform:uppercase">${phase}</div>
+              <div class="match-teams">
+                <div class="match-player" style="font-size:.85rem">${esc(m.homeName)}</div>
+                <div class="match-vs">vs</div>
+                <div class="match-player" style="font-size:.85rem">${esc(m.awayName)}</div>
+              </div>
+            </div>`;
+          });
+          html += '</div>';
+        });
+      });
+
+      // ── Per-player overview ──
+      const playerMap = {};
+      all.forEach(m => {
+        [[m.homeId || m.homeName, m.homeName], [m.awayId || m.awayName, m.awayName]].forEach(([pid, name]) => {
+          if (!playerMap[pid]) playerMap[pid] = { name, matches: [] };
+          playerMap[pid].matches.push(m);
+        });
+      });
+
+      html += `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-600);margin:1.25rem 0 .5rem">&#x1F464; Player Schedule Overview</div>`;
+      html += '<div class="card">';
+      Object.values(playerMap)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(({ name, matches }) => {
+          const hasConflict = name in conflictPlayers;
+          html += `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid var(--gray-100)">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:.88rem;color:${hasConflict ? 'var(--red)' : 'var(--gray-900)'}">${esc(name)} ${hasConflict ? '&#x26A0;&#xFE0F;' : ''}</div>
+              <div style="font-size:.72rem;color:var(--gray-600);margin-top:3px;line-height:1.6">
+                ${matches.map(m => {
+                  const t = new Date(m.scheduledAt.seconds * 1000).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                  const phase = m._col === 'knockout' ? 'KO' : `Grp ${m.group || ''}`;
+                  return `<span style="display:inline-block;margin-right:8px;white-space:nowrap">${phase} &middot; ${t}</span>`;
+                }).join('')}
+              </div>
+            </div>
+            <span class="badge ${hasConflict ? 'badge-red' : 'badge-blue'}" style="flex-shrink:0;margin-left:8px;margin-top:2px">${matches.length}</span>
+          </div>`;
+        });
+      html += '</div>';
+
+      el.innerHTML = html;
+    } catch(e) {
+      el.innerHTML = '<div class="empty-state"><span class="icon">&#x26A0;&#xFE0F;</span><p>Could not load schedule data.</p></div>';
+    }
+  }
 
   // SW update detection — same logic as index.html
   if ('serviceWorker' in navigator) {
