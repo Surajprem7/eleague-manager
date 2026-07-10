@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v101';
+  const APP_VERSION = 'v102';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -950,30 +950,34 @@
     el.innerHTML = sorted.map(m => {
       const isHome = m.homeId === player.id;
       const opp = isHome ? m.awayName : m.homeName;
+      const myScore  = isHome ? m.homeScore  : m.awayScore;
+      const oppScore = isHome ? m.awayScore  : m.homeScore;
       const date = m.scheduledAt ? new Date(m.scheduledAt.seconds * 1000).toLocaleString() : 'TBA';
+      // Score inputs: BOTH players always enter Home score | Away score (same order)
+      // so the two reports can be compared field-by-field in submitPlayerScore.
       return `<div class="match-card" style="${m.status === 'live' ? 'border-left:3px solid var(--green)' : ''}">
         <div class="match-teams">
-          <div class="match-player" style="color:var(--green-dark)">${esc(player.name)}</div>
+          <div class="match-player" style="color:var(--green-dark)">${esc((player.name||'').toUpperCase())}</div>
           <div class="match-vs">vs</div>
-          <div class="match-player">${esc(opp)}</div>
+          <div class="match-player">${esc((opp||'').toUpperCase())}</div>
         </div>
         <div class="match-meta">
           <span>📅 ${date}</span>
           <span class="badge badge-${m.status === 'live' ? 'green' : m.status === 'completed' ? 'gray' : 'blue'}">${m.status}</span>
         </div>
-        ${m.status === 'completed' ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${esc(m.homeScore)} – ${esc(m.awayScore)}</div>` : ''}
+        ${m.status === 'completed' && m.homeScore != null ? `<div style="text-align:center;font-size:1.2rem;font-weight:700;margin-top:.5rem">${myScore} – ${oppScore}</div>` : ''}
         ${m.status === 'live' ? `<div class="match-meta" style="margin-top:.5rem"><span class="match-code">🔑 ${esc(m.joinCode)}</span><span style="font-size:.78rem;color:var(--green-dark);font-weight:500">LIVE now!</span></div>` : ''}
         ${m.status === 'live' ? `
           <div style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--gray-200,#eee)">
-            <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Played the match? Enter the final score below.</p>
+            <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:.5rem">Enter the final score — <strong style="color:var(--green)">${isHome ? 'your score first' : 'home team score first'}</strong>.</p>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:.5rem">
               <div style="flex:1;text-align:center">
-                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px;text-transform:uppercase">${esc(m.homeName)}</label>
+                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px;text-transform:uppercase">${esc(m.homeName)} ${isHome ? '(you)' : '(opp)'}</label>
                 <input type="number" class="score-input" id="score-h-${m.id}" min="0" max="99" placeholder="0" />
               </div>
               <span style="font-weight:700;margin-top:14px">–</span>
               <div style="flex:1;text-align:center">
-                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px;text-transform:uppercase">${esc(m.awayName)}</label>
+                <label style="font-size:.72rem;color:var(--gray-600);display:block;margin-bottom:2px;text-transform:uppercase">${esc(m.awayName)} ${isHome ? '(opp)' : '(you)'}</label>
                 <input type="number" class="score-input" id="score-a-${m.id}" min="0" max="99" placeholder="0" />
               </div>
             </div>
