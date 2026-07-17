@@ -147,6 +147,25 @@
           <div class="card-title">Current Active Message</div>
           <div id="announce-current" style="font-size:.85rem;color:var(--gray-700)">None</div>
         </div>
+
+        <!-- PUSH NOTIFICATIONS -->
+        <div class="card" style="margin-top:1rem">
+          <div class="card-title">🔔 Push Notification (device alert)</div>
+          <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:1rem">
+            Sends a push notification to players who have enabled alerts — works even when the app is closed.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input id="push-title" class="form-input" type="text" placeholder="e.g. 📢 eLeague Update" value="📢 eLeague Update" />
+          </div>
+          <div class="form-group">
+            <textarea id="push-msg" class="form-input" rows="3" placeholder="e.g. Round 2 matches have been scheduled. Check your profile!" style="resize:vertical"></textarea>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="push-all-btn" class="btn btn-primary" style="flex:1">🔔 Push to All Players</button>
+          </div>
+          <div id="push-status" style="margin-top:.75rem;font-size:.82rem;color:var(--gray-600)"></div>
+        </div>
       </div>
 
       <!-- ADMINS TAB -->
@@ -235,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v103';
+  const CURRENT_APP_VERSION = 'v104';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -243,6 +262,7 @@
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings } from './js/tournament.js';
   import { generateMatchAlert, generateResultAlert, generateWinnerAlert } from './js/notify.js';
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
   import { onPlayers, onGroupMatches, onGroups, onKnockoutMatches } from './js/realtime.js';
   import { getLogs, LOG_ICON } from './js/activitylog.js';
   import {
@@ -1042,6 +1062,24 @@
       document.getElementById('announce-msg').value = '';
       document.getElementById('announce-status').textContent = '🗑️ Announcement cleared.';
       setTimeout(() => { document.getElementById('announce-status').textContent = ''; }, 3000);
+    };
+
+    // Push notification (Cloud Function callable)
+    document.getElementById('push-all-btn').onclick = async () => {
+      const title = document.getElementById('push-title').value.trim() || '📢 eLeague Update';
+      const msg   = document.getElementById('push-msg').value.trim();
+      const statusEl = document.getElementById('push-status');
+      if (!msg) { toast('Enter a push message first'); return; }
+      statusEl.textContent = '⏳ Sending…';
+      try {
+        const functions = getFunctions();
+        const sendPush  = httpsCallable(functions, 'sendPush');
+        const result    = await sendPush({ title, message: msg });
+        statusEl.textContent = `✅ Delivered to ${result.data.sent} / ${result.data.total} devices`;
+      } catch (e) {
+        statusEl.textContent = `❌ ${e.message}`;
+      }
+      setTimeout(() => { statusEl.textContent = ''; }, 5000);
     };
   }
 
