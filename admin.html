@@ -254,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v105';
+  const CURRENT_APP_VERSION = 'v106';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -386,7 +386,20 @@
     if (groupsExist) {
       const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       const matches = await getMatches('group');
-      let html = `<div class="group-grid">`;
+
+      // Read qualify-per-group setting from Firestore (default 2)
+      const tournSnap = await getDoc(doc(db, 'tournament', 'main'));
+      const qualifyN = (tournSnap.exists() ? tournSnap.data().qualifyPerGroup : null) || 2;
+
+      let html = `
+        <div class="card" style="margin-bottom:1rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:.88rem;font-weight:600;color:var(--gray-700);flex:1">🏆 Players advancing from each group:</span>
+          <select id="qualify-select" class="form-input" style="width:auto;min-width:80px;padding:6px 10px">
+            ${[1,2,3,4].map(n => `<option value="${n}"${n===qualifyN?' selected':''}>${n}</option>`).join('')}
+          </select>
+          <button id="qualify-save-btn" class="btn btn-primary btn-sm">Save</button>
+        </div>
+        <div class="group-grid">`;
       groups.sort((a,b) => a.letter.localeCompare(b.letter)).forEach(g => {
         const gPlayers = players.filter(p => g.players.includes(p.id));
         const gMatches = matches.filter(m => m.group === g.letter);
@@ -395,7 +408,7 @@
           <div class="group-box-title">Group ${g.letter}</div>
           <table class="standings-table">
             <thead><tr><th>Player</th><th>Pts</th><th>GD</th></tr></thead>
-            <tbody>${standings.map((r,i)=>`<tr class="${i<2?'qualify':''}"><td>${esc((r.name||'').toUpperCase())}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td></tr>`).join('')}</tbody>
+            <tbody>${standings.map((r,i)=>`<tr class="${i<qualifyN?'qualify':''}"><td>${esc((r.name||'').toUpperCase())}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td></tr>`).join('')}</tbody>
           </table>
         </div>`;
       });
@@ -404,6 +417,13 @@
         <button id="edit-groups-btn" class="btn btn-secondary">✏️ Edit Groups</button>
       </div>`;
       el.innerHTML = html;
+
+      document.getElementById('qualify-save-btn').addEventListener('click', async () => {
+        const n = parseInt(document.getElementById('qualify-select').value);
+        await updateDoc(doc(db, 'tournament', 'main'), { qualifyPerGroup: n });
+        toast(`✅ Top ${n} from each group will advance`);
+        loadGroups();
+      });
       document.getElementById('edit-groups-btn').addEventListener('click', () => {
         if (!confirm('Are you sure you want to edit groups? This will reset the current groups and match schedule.')) return;
         renderGroupFormatPicker(players, el);
