@@ -254,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v108';
+  const CURRENT_APP_VERSION = 'v109';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -966,6 +966,13 @@
     let html = '';
     let hasAny = false;
 
+    // Fetch all approved players once — needed for edit dropdowns
+    const allPlayers = (await getAllPlayers()).filter(p => p.status === 'approved');
+    const makeOpts = (selectedId) => allPlayers.map(p => {
+      const n = esc((p.name||'').toUpperCase());
+      return `<option value="${p.id}" data-name="${n}"${p.id === selectedId ? ' selected' : ''}>${n}</option>`;
+    }).join('');
+
     for (const round of rounds) {
       const matches = await getMatches(round);
       if (!matches.length) continue;
@@ -978,9 +985,9 @@
           const dateDisplay = dt ? dt.toLocaleString([],{dateStyle:'medium',timeStyle:'short'}) : '';
           return `<div class="match-card" style="margin-bottom:.75rem">
             <div class="match-teams">
-              <div class="match-player ${m.winner==='home'?'winner':''}" style="${m.winner==='home'?'color:var(--green);font-weight:700':''}">${esc(m.homeName)}</div>
+              <div class="match-player ${m.winner==='home'?'winner':''}" style="${m.winner==='home'?'color:var(--green);font-weight:700':''}">${esc((m.homeName||'').toUpperCase())}</div>
               <div class="match-vs">${m.status==='completed'?m.homeScore+' – '+m.awayScore:'vs'}</div>
-              <div class="match-player ${m.winner==='away'?'winner':''}" style="${m.winner==='away'?'color:var(--green);font-weight:700':''}">${esc(m.awayName)}</div>
+              <div class="match-player ${m.winner==='away'?'winner':''}" style="${m.winner==='away'?'color:var(--green);font-weight:700':''}">${esc((m.awayName||'').toUpperCase())}</div>
             </div>
             <div class="match-meta" style="margin-bottom:.5rem">
               <span class="match-code">🔑 ${m.joinCode}</span>
@@ -990,9 +997,22 @@
               ${dateDisplay?`<div style="font-size:.78rem;color:var(--green);margin-bottom:.5rem">📅 ${dateDisplay}</div>`:''}
               <input type="datetime-local" class="form-input" style="width:100%;min-height:44px;font-size:.9rem;margin-bottom:.5rem" id="ko-dt-${m.id}" value="${dateVal}" onchange="document.getElementById('ko-sch-btn-${m.id}').style.display='flex'" />
               <button class="btn btn-primary btn-full" id="ko-sch-btn-${m.id}" onclick="koSchedule('${m.id}')" style="display:${dateVal?'flex':'none'};margin-bottom:.5rem">📅 Confirm Schedule</button>
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.5rem">
                 <button class="btn btn-primary btn-sm" onclick="koGoLive('${m.id}')">🔴 Go Live</button>
                 <button class="btn btn-sm btn-whatsapp" onclick="notifyWA('${m.id}','${esc(m.homeName)}','${esc(m.awayName)}','${m.joinCode}','${m.scheduledAt?.seconds||''}')">📲 Notify</button>
+                <button class="btn btn-sm btn-secondary" onclick="koSwap('${m.id}','${esc(m.homeId)}','${esc(m.homeName)}','${esc(m.awayId)}','${esc(m.awayName)}')">🔁 Swap</button>
+                <button class="btn btn-sm btn-secondary" onclick="koToggleEdit('${m.id}')">✏️ Edit</button>
+              </div>
+              <div id="ko-edit-${m.id}" style="display:none;background:#0C1828;border:1px solid #CBA135;border-radius:10px;padding:.75rem;margin-top:.25rem">
+                <div style="font-size:.75rem;font-weight:700;color:#CBA135;margin-bottom:.5rem">EDIT MATCHUP</div>
+                <label style="font-size:.78rem;color:var(--gray-600)">Home (left)</label>
+                <select id="ko-home-sel-${m.id}" class="form-input" style="margin-bottom:.5rem">${makeOpts(m.homeId)}</select>
+                <label style="font-size:.78rem;color:var(--gray-600)">Away (right)</label>
+                <select id="ko-away-sel-${m.id}" class="form-input" style="margin-bottom:.75rem">${makeOpts(m.awayId)}</select>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-primary btn-sm" style="flex:1" onclick="koSaveMatchup('${m.id}')">✓ Save</button>
+                  <button class="btn btn-secondary btn-sm" onclick="koToggleEdit('${m.id}')">Cancel</button>
+                </div>
               </div>` : ''}
             ${m.status==='live'?`
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1062,6 +1082,31 @@
     const result = await advanceKnockout(round);
     if (result) { toast('Next round generated! ✅'); loadKnockout(); }
     else toast('Could not advance — check that all matches in this round are completed.');
+  };
+
+  window.koToggleEdit = (id) => {
+    const panel = document.getElementById('ko-edit-' + id);
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window.koSwap = async (id, homeId, homeName, awayId, awayName) => {
+    if (!confirm(`Swap players?\n${homeName} ↔ ${awayName}`)) return;
+    await updateMatch(id, { homeId: awayId, homeName: awayName, awayId: homeId, awayName: homeName });
+    toast('Players swapped! ✅'); loadKnockout();
+  };
+
+  window.koSaveMatchup = async (id) => {
+    const homeSel = document.getElementById('ko-home-sel-' + id);
+    const awaySel = document.getElementById('ko-away-sel-' + id);
+    const homeId  = homeSel.value;
+    const awayId  = awaySel.value;
+    const homeName = homeSel.options[homeSel.selectedIndex].dataset.name;
+    const awayName = awaySel.options[awaySel.selectedIndex].dataset.name;
+    if (homeId === awayId) { toast('Home and Away must be different players'); return; }
+    if (!confirm(`Set matchup:\n${homeName} vs ${awayName}?`)) return;
+    await updateMatch(id, { homeId, homeName, awayId, awayName });
+    toast('Matchup updated! ✅'); loadKnockout();
   };
 
   window.koSchedule = async (id) => {
