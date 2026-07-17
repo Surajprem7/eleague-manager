@@ -325,7 +325,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v106';
+  const APP_VERSION = 'v107';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
@@ -807,23 +807,34 @@
       el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><p>Standings will appear after groups are drawn.</p></div>';
       return;
     }
+    const qualifyN = cachedStatus?.qualifyPerGroup || 2;
     let html = '';
     cachedGroups.sort((a,b) => a.letter.localeCompare(b.letter)).forEach(g => {
       const gPlayers = cachedPlayers.filter(p => g.players.includes(p.id));
       const gMatches = cachedGroupMatches.filter(m => m.group === g.letter);
       const standings = computeStandings(gPlayers, gMatches);
+      const totalMatches = gPlayers.length * (gPlayers.length - 1) / 2;
+      const doneMatches = gMatches.filter(m => m.status === 'completed').length;
+      const groupDone = doneMatches === totalMatches;
       html += `
         <div class="card">
           <div class="card-title">Group ${esc(g.letter)}</div>
           <table class="standings-table">
-            <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
-            <tbody>${standings.map((r,i) => `
-              <tr class="${i<2?'qualify':''}">
+            <thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th><th></th></tr></thead>
+            <tbody>${standings.map((r,i) => {
+              const isQ = i < qualifyN;
+              const badge = isQ
+                ? `<span style="background:#1a3d2a;color:#00C875;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:99px;white-space:nowrap">Q</span>`
+                : (groupDone ? `<span style="background:#2a1a1a;color:#D93025;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:99px;white-space:nowrap">OUT</span>` : '');
+              const divider = i === qualifyN - 1 ? ' style="border-bottom:2px dashed #CBA135"' : '';
+              return `<tr class="${isQ?'qualify':''}"${divider}>
                 <td>${esc((r.name||'').toUpperCase())}</td>
                 <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td>
                 <td>${r.gd>0?'+'+r.gd:r.gd}</td>
                 <td><strong>${r.pts}</strong></td>
-              </tr>`).join('')}
+                <td>${badge}</td>
+              </tr>`;
+            }).join('')}
             </tbody>
           </table>
         </div>`;

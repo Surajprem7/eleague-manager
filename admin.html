@@ -254,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v106';
+  const CURRENT_APP_VERSION = 'v107';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -404,11 +404,21 @@
         const gPlayers = players.filter(p => g.players.includes(p.id));
         const gMatches = matches.filter(m => m.group === g.letter);
         const standings = computeStandings(gPlayers, gMatches);
+        const totalM = gPlayers.length * (gPlayers.length - 1) / 2;
+        const doneM  = gMatches.filter(m => m.status === 'completed').length;
+        const groupDone = doneM === totalM;
         html += `<div class="group-box">
           <div class="group-box-title">Group ${g.letter}</div>
           <table class="standings-table">
-            <thead><tr><th>Player</th><th>Pts</th><th>GD</th></tr></thead>
-            <tbody>${standings.map((r,i)=>`<tr class="${i<qualifyN?'qualify':''}"><td>${esc((r.name||'').toUpperCase())}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td></tr>`).join('')}</tbody>
+            <thead><tr><th>Player</th><th>Pts</th><th>GD</th><th></th></tr></thead>
+            <tbody>${standings.map((r,i) => {
+              const isQ = i < qualifyN;
+              const badge = isQ
+                ? `<span style="background:#1a3d2a;color:#00C875;font-size:.65rem;font-weight:700;padding:2px 5px;border-radius:99px">Q</span>`
+                : (groupDone ? `<span style="background:#2a1a1a;color:#D93025;font-size:.65rem;font-weight:700;padding:2px 5px;border-radius:99px">OUT</span>` : '');
+              const divider = i === qualifyN - 1 ? ' style="border-bottom:2px dashed #CBA135"' : '';
+              return `<tr class="${isQ?'qualify':''}"${divider}><td>${esc((r.name||'').toUpperCase())}</td><td><strong>${r.pts}</strong></td><td>${r.gd>0?'+'+r.gd:r.gd}</td><td>${badge}</td></tr>`;
+            }).join('')}</tbody>
           </table>
         </div>`;
       });
