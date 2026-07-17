@@ -254,13 +254,13 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v107';
+  const CURRENT_APP_VERSION = 'v108';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
   import { getAllPlayers, updatePlayerStatus, deletePlayer, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
-  import { computeStandings } from './js/tournament.js';
+  import { computeStandings, getQualifiers } from './js/tournament.js';
   import { generateMatchAlert, generateResultAlert, generateWinnerAlert } from './js/notify.js';
   import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
   import { onPlayers, onGroupMatches, onGroups, onKnockoutMatches } from './js/realtime.js';
@@ -870,6 +870,94 @@
     window.open(generateMatchAlert(m), '_blank');
   };
 
+  // ── PROJECTED BRACKET ──
+  async function buildProjectedBracket(groupMatches) {
+    const tournSnap = await getDoc(doc(db, 'tournament', 'main'));
+    const qualifyN = (tournSnap.exists() ? tournSnap.data().qualifyPerGroup : null) || 2;
+
+    const players = (await getAllPlayers()).filter(p => p.status === 'approved');
+    const groupsSnap = await getDocs(collection(db, 'groups'));
+    const groups = groupsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const standings = {};
+    groups.sort((a,b) => a.letter.localeCompare(b.letter)).forEach(g => {
+      const gPlayers = players.filter(p => g.players.includes(p.id));
+      const gMatches = groupMatches.filter(m => m.group === g.letter);
+      standings[g.letter] = computeStandings(gPlayers, gMatches);
+    });
+
+    const qualifiers = getQualifiers(standings, qualifyN);
+    const seeds   = qualifiers.filter(q => q.rank === 0);
+    const runners = qualifiers.filter(q => q.rank === 1);
+
+    const pairs = [];
+    const usedRunners = new Set();
+    seeds.forEach(s => {
+      const opp = runners.find(r => r.group !== s.group && !usedRunners.has(r.id))
+               || runners.find(r => !usedRunners.has(r.id));
+      if (opp) { pairs.push([s, opp]); usedRunners.add(opp.id); }
+    });
+
+    const totalPlayers = pairs.length * 2;
+    const roundName = totalPlayers <= 2 ? 'Final' : totalPlayers <= 4 ? 'Semi-finals' : totalPlayers <= 8 ? 'Quarter-finals' : totalPlayers <= 16 ? 'Round of 16' : 'Round of 32';
+
+    const doneCount  = groupMatches.filter(m => m.status === 'completed').length;
+    const totalCount = groupMatches.length;
+    const pct = totalCount ? Math.round(doneCount / totalCount * 100) : 0;
+
+    let html = `
+      <div class="card" style="margin-bottom:1rem;border:1px solid #CBA135">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+          <div class="card-title" style="margin:0">🔮 Projected Bracket</div>
+          <span style="font-size:.75rem;color:var(--gray-600)">${doneCount}/${totalCount} matches done</span>
+        </div>
+        <div style="height:6px;background:#1C2E48;border-radius:3px;margin-bottom:.75rem">
+          <div style="height:100%;width:${pct}%;background:#CBA135;border-radius:3px;transition:width .4s"></div>
+        </div>
+        <p style="font-size:.78rem;color:var(--gray-600);margin-bottom:1rem">
+          Based on current standings — updates as matches complete. First round: <strong style="color:#CBA135">${roundName}</strong>.
+        </p>`;
+
+    if (!pairs.length) {
+      html += `<div style="text-align:center;padding:1rem;color:var(--gray-600);font-size:.85rem">No matches played yet — standings needed to project bracket.</div>`;
+    } else {
+      pairs.forEach(([seed, runner], i) => {
+        const seedName   = (seed.name   || '?').toUpperCase();
+        const runnerName = (runner.name || '?').toUpperCase();
+        html += `
+          <div style="display:flex;align-items:center;gap:8px;padding:.6rem .75rem;background:#0C1828;border-radius:10px;margin-bottom:.5rem;border:1px solid #1C2E48">
+            <span style="font-size:.75rem;color:#A8872A;font-weight:700;min-width:20px">#${i+1}</span>
+            <div style="flex:1">
+              <div style="font-size:.85rem;font-weight:600;color:#E8EEF8">${esc(seedName)}</div>
+              <div style="font-size:.7rem;color:#7A8FA8">1st · Group ${seed.group} · ${seed.pts}pts</div>
+            </div>
+            <span style="font-size:.8rem;color:#555;font-weight:700">vs</span>
+            <div style="flex:1;text-align:right">
+              <div style="font-size:.85rem;font-weight:600;color:#E8EEF8">${esc(runnerName)}</div>
+              <div style="font-size:.7rem;color:#7A8FA8">2nd · Group ${runner.group} · ${runner.pts}pts</div>
+            </div>
+          </div>`;
+      });
+    }
+
+    // Per-group progress summary
+    html += `<div style="margin-top:1rem;border-top:1px solid #1C2E48;padding-top:.75rem">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#A8872A;margin-bottom:.5rem">Group Progress</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem">`;
+    groups.forEach(g => {
+      const gMatches = groupMatches.filter(m => m.group === g.letter);
+      const done = gMatches.filter(m => m.status === 'completed').length;
+      const total = gMatches.length;
+      const complete = done === total;
+      html += `<span style="font-size:.75rem;padding:3px 8px;border-radius:99px;background:${complete?'#1a3d2a':'#1C2E48'};color:${complete?'#00C875':'#7A8FA8'}">
+        Group ${g.letter} ${done}/${total}${complete?' ✓':''}
+      </span>`;
+    });
+    html += `</div></div></div>`;
+
+    return html;
+  }
+
   // ── KNOCKOUT ──
   async function loadKnockout() {
     const el = document.getElementById('knockout-panel');
@@ -934,7 +1022,8 @@
         el.innerHTML = `<div class="empty-state"><span class="icon">🏆</span><p>All group matches are done. Generate the knockout bracket.</p>
           <button class="btn btn-primary" style="margin-top:1rem" onclick="forceGenerateKnockout()">⚡ Generate Knockout Bracket</button></div>`;
       } else {
-        el.innerHTML = '<div class="empty-state"><span class="icon">🏆</span><p>Knockout rounds appear here after group stage is complete.</p></div>';
+        // Show projected bracket based on current standings
+        el.innerHTML = await buildProjectedBracket(groupMatches);
       }
       return;
     }
