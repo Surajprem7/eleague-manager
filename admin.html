@@ -254,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v104';
+  const CURRENT_APP_VERSION = 'v105';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -897,11 +897,53 @@
     }
 
     if (!hasAny) {
-      el.innerHTML = '<div class="empty-state"><span class="icon">🏆</span><p>Knockout rounds appear here after group stage is complete.</p></div>';
+      // Check if group stage is fully done — if so, offer manual generate button
+      const groupMatches = await getMatches('group');
+      const groupDone = groupMatches.length > 0 && groupMatches.every(m => m.status === 'completed');
+      if (groupDone) {
+        el.innerHTML = `<div class="empty-state"><span class="icon">🏆</span><p>All group matches are done. Generate the knockout bracket.</p>
+          <button class="btn btn-primary" style="margin-top:1rem" onclick="forceGenerateKnockout()">⚡ Generate Knockout Bracket</button></div>`;
+      } else {
+        el.innerHTML = '<div class="empty-state"><span class="icon">🏆</span><p>Knockout rounds appear here after group stage is complete.</p></div>';
+      }
       return;
     }
+
+    // For each completed round that hasn't advanced yet, add a force-advance button
+    for (const round of rounds) {
+      const roundMatches = await getMatches(round);
+      if (!roundMatches.length) continue;
+      const allDone = roundMatches.every(m => m.status === 'completed');
+      if (!allDone) continue;
+      const rounds2 = { r32: 'r16', r16: 'qf', qf: 'sf', sf: 'final' };
+      const next = round === 'sf' ? 'final' : rounds2[round];
+      if (!next) continue;
+      const nextMatches = await getMatches(next === 'sf' ? 'final' : next);
+      // Also check 3rd place if sf is done
+      const thirdMatches = round === 'sf' ? await getMatches('3rd') : [];
+      if (!nextMatches.length && (round !== 'sf' || !thirdMatches.length)) {
+        html += `<div class="card" style="border:1px solid var(--green);margin-bottom:.75rem">
+          <p style="font-size:.85rem;color:var(--gray-600);margin-bottom:.75rem">
+            ⚠️ ${labels[round]} is complete but the next round wasn't generated automatically.
+          </p>
+          <button class="btn btn-primary" onclick="forceAdvanceRound('${round}')">⚡ Advance to ${labels[next] || next}</button>
+        </div>`;
+      }
+    }
+
     el.innerHTML = html;
   }
+
+  window.forceGenerateKnockout = async () => {
+    const generated = await checkAndGenerateKnockout();
+    if (generated) { toast('Knockout bracket generated! ✅'); loadKnockout(); }
+    else toast('Could not generate — check that all group matches are completed.');
+  };
+  window.forceAdvanceRound = async (round) => {
+    const result = await advanceKnockout(round);
+    if (result) { toast('Next round generated! ✅'); loadKnockout(); }
+    else toast('Could not advance — check that all matches in this round are completed.');
+  };
 
   window.koSchedule = async (id) => {
     const val = document.getElementById('ko-dt-' + id)?.value;
@@ -1000,9 +1042,18 @@
     const hs = parseInt(document.getElementById('res-hs-' + id)?.value);
     const as_ = parseInt(document.getElementById('res-as-' + id)?.value);
     if (isNaN(hs) || isNaN(as_)) { toast('Enter both scores'); return; }
+    const snap = await getDoc(doc(db, 'matches', id));
+    const phase = snap.exists() ? snap.data().phase : null;
     await enterScore(id, hs, as_);
     toast('Score corrected! ✅');
     loadResults();
+    const koPhases = ['r32','r16','qf','sf','3rd','final'];
+    if (phase === 'group') {
+      await checkAndGenerateKnockout().catch(() => {});
+    } else if (koPhases.includes(phase)) {
+      await advanceKnockout(phase).catch(() => {});
+      loadKnockout();
+    }
   };
   window.shareResult = (home, away, hs, as_, phase) => {
     window.open(generateResultAlert({ homePlayer: (home||'').toUpperCase(), awayPlayer: (away||'').toUpperCase(), homeScore: hs, awayScore: as_, phase }), '_blank');

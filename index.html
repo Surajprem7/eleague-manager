@@ -325,11 +325,12 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v104';
+  const APP_VERSION = 'v105';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
   import { submitPlayerScore } from './js/matches.js';
+  import { checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
   import { enableMatchNotifications } from './js/push.js';
   import { computeStandings } from './js/tournament.js';
   import {
@@ -546,6 +547,17 @@
       } else if (outcome === 'matched') {
         resultEl.style.color = '#CBA135';
         resultEl.textContent = '✅ Scores matched — match completed!';
+        // Trigger round advancement so the next KO round (or knockout gen) fires
+        // automatically even when players submit scores without admin involvement.
+        const koPhases = ['r32','r16','qf','sf','3rd','final'];
+        const { getDoc: _gd, doc: _d } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const mSnap = await _gd(_d(db, 'matches', matchId));
+        const phase = mSnap.exists() ? mSnap.data().phase : null;
+        if (phase === 'group') {
+          checkAndGenerateKnockout().catch(() => {});
+        } else if (koPhases.includes(phase)) {
+          advanceKnockout(phase).catch(() => {});
+        }
       } else {
         resultEl.style.color = '#D93025';
         resultEl.textContent = '⚠️ Score not matching with your opponent\'s submission. Admin has been notified.';
