@@ -254,11 +254,11 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v110';
+  const CURRENT_APP_VERSION = 'v111';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
-  import { getAllPlayers, updatePlayerStatus, deletePlayer, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout } from './js/admin.js';
+  import { getAllPlayers, updatePlayerStatus, deletePlayer, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout, resetKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings, getQualifiers } from './js/tournament.js';
   import { generateMatchAlert, generateResultAlert, generateWinnerAlert } from './js/notify.js';
@@ -1068,6 +1068,13 @@
       }
     }
 
+    if (hasAny) {
+      html = `<div class="card" style="border:1px solid #c0392b;margin-bottom:1rem;background:rgba(192,57,43,.07)">
+        <p style="font-size:.85rem;margin-bottom:.75rem">⚠️ Use this to delete the current bracket and regenerate it fresh (e.g. after changing how many qualify per group).</p>
+        <button class="btn btn-danger btn-sm" onclick="resetAndRegenerateKnockout()">🔄 Reset & Regenerate Knockout Bracket</button>
+      </div>` + html;
+    }
+
     el.innerHTML = html;
   }
 
@@ -1080,6 +1087,15 @@
     const result = await advanceKnockout(round);
     if (result) { toast('Next round generated! ✅'); loadKnockout(); }
     else toast('Could not advance — check that all matches in this round are completed.');
+  };
+
+  window.resetAndRegenerateKnockout = async () => {
+    if (!confirm('This will DELETE all current knockout matches and regenerate the bracket from scratch.\n\nCompleted match results will be lost.\n\nContinue?')) return;
+    const deleted = await resetKnockout();
+    if (!deleted) { toast('No knockout matches found to reset.'); return; }
+    const generated = await checkAndGenerateKnockout();
+    if (generated) { toast('Bracket reset and regenerated! ✅'); loadKnockout(); }
+    else toast('Reset done but could not regenerate — check group matches are all completed.');
   };
 
   window.koToggleEdit = (id) => {

@@ -125,19 +125,24 @@ export async function checkAndGenerateKnockout() {
     standings[letter] = computeStandings(gPlayers, gMatches);
   }
 
-  const qualifiers = getQualifiers(standings, 2);
-  const seeds   = qualifiers.filter(q => q.rank === 0);
-  const runners = qualifiers.filter(q => q.rank === 1);
+  const tournSnap = await getDoc(doc(db, 'tournament', 'main'));
+  const qualifyN = (tournSnap.exists() ? tournSnap.data().qualifyPerGroup : null) || 2;
+  const qualifiers = getQualifiers(standings, qualifyN);
 
+  // Seed all qualifiers: rank 0 (group winners) first, then rank 1, 2, 3...
+  // Within the same rank, sort alphabetically by group letter.
+  qualifiers.sort((a, b) => a.rank - b.rank || a.group.localeCompare(b.group));
+
+  // Standard seeded bracket: #1 vs #N, #2 vs #(N-1), etc.
+  // This ensures top seeds face the weakest qualifiers and avoids same-group
+  // first-round clashes when groups are of equal size.
+  const n = qualifiers.length;
   const pairs = [];
-  const usedRunners = new Set();
-  seeds.forEach(s => {
-    const opp = runners.find(r => r.group !== s.group && !usedRunners.has(r.id))
-             || runners.find(r => !usedRunners.has(r.id));
-    if (opp) { pairs.push([s, opp]); usedRunners.add(opp.id); }
-  });
+  for (let i = 0; i < Math.floor(n / 2); i++) {
+    pairs.push([qualifiers[i], qualifiers[n - 1 - i]]);
+  }
 
-  const totalPlayers = pairs.length * 2;
+  const totalPlayers = n;
   const roundName = totalPlayers <= 2 ? 'final' : totalPlayers <= 4 ? 'sf' : totalPlayers <= 8 ? 'qf' : totalPlayers <= 16 ? 'r16' : 'r32';
   const knockoutMatches = generateKnockoutRound(pairs.flat(), roundName);
 
@@ -149,6 +154,17 @@ export async function checkAndGenerateKnockout() {
   await batch.commit();
 
   await addLog(LOG.KNOCKOUT_GEN, `Knockout stage generated — ${roundName.toUpperCase()}`, { round: roundName, matches: knockoutMatches.length });
+  return true;
+}
+
+// Delete all knockout matches so the bracket can be regenerated from scratch
+export async function resetKnockout() {
+  const koSnap = await getDocs(query(collection(db, 'matches'), where('phase', 'in', ['r32','r16','qf','sf','3rd','final'])));
+  if (koSnap.empty) return false;
+  const batch = writeBatch(db);
+  koSnap.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  await addLog(LOG.KNOCKOUT_GEN, 'Knockout bracket reset by admin — will be regenerated', {});
   return true;
 }
 
