@@ -254,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v109';
+  const CURRENT_APP_VERSION = 'v110';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -887,18 +887,17 @@
     });
 
     const qualifiers = getQualifiers(standings, qualifyN);
-    const seeds   = qualifiers.filter(q => q.rank === 0);
-    const runners = qualifiers.filter(q => q.rank === 1);
+    // Seed all qualifiers: rank 0 (group winners) first, then rank 1, 2, 3...
+    qualifiers.sort((a, b) => a.rank - b.rank || a.group.localeCompare(b.group));
 
+    // Standard seeded bracket: #1 vs #N, #2 vs #(N-1), etc.
+    const n = qualifiers.length;
     const pairs = [];
-    const usedRunners = new Set();
-    seeds.forEach(s => {
-      const opp = runners.find(r => r.group !== s.group && !usedRunners.has(r.id))
-               || runners.find(r => !usedRunners.has(r.id));
-      if (opp) { pairs.push([s, opp]); usedRunners.add(opp.id); }
-    });
+    for (let i = 0; i < Math.floor(n / 2); i++) {
+      pairs.push([qualifiers[i], qualifiers[n - 1 - i]]);
+    }
 
-    const totalPlayers = pairs.length * 2;
+    const totalPlayers = n;
     const roundName = totalPlayers <= 2 ? 'Final' : totalPlayers <= 4 ? 'Semi-finals' : totalPlayers <= 8 ? 'Quarter-finals' : totalPlayers <= 16 ? 'Round of 16' : 'Round of 32';
 
     const doneCount  = groupMatches.filter(m => m.status === 'completed').length;
@@ -921,20 +920,19 @@
     if (!pairs.length) {
       html += `<div style="text-align:center;padding:1rem;color:var(--gray-600);font-size:.85rem">No matches played yet — standings needed to project bracket.</div>`;
     } else {
-      pairs.forEach(([seed, runner], i) => {
-        const seedName   = (seed.name   || '?').toUpperCase();
-        const runnerName = (runner.name || '?').toUpperCase();
+      const rankLabel = r => ['1st','2nd','3rd','4th'][r] || `${r+1}th`;
+      pairs.forEach(([a, b], i) => {
         html += `
           <div style="display:flex;align-items:center;gap:8px;padding:.6rem .75rem;background:#0C1828;border-radius:10px;margin-bottom:.5rem;border:1px solid #1C2E48">
             <span style="font-size:.75rem;color:#A8872A;font-weight:700;min-width:20px">#${i+1}</span>
             <div style="flex:1">
-              <div style="font-size:.85rem;font-weight:600;color:#E8EEF8">${esc(seedName)}</div>
-              <div style="font-size:.7rem;color:#7A8FA8">1st · Group ${seed.group} · ${seed.pts}pts</div>
+              <div style="font-size:.85rem;font-weight:600;color:#E8EEF8">${esc((a.name||'?').toUpperCase())}</div>
+              <div style="font-size:.7rem;color:#7A8FA8">${rankLabel(a.rank)} · Grp ${a.group} · ${a.pts}pts</div>
             </div>
             <span style="font-size:.8rem;color:#555;font-weight:700">vs</span>
             <div style="flex:1;text-align:right">
-              <div style="font-size:.85rem;font-weight:600;color:#E8EEF8">${esc(runnerName)}</div>
-              <div style="font-size:.7rem;color:#7A8FA8">2nd · Group ${runner.group} · ${runner.pts}pts</div>
+              <div style="font-size:.85rem;font-weight:600;color:#E8EEF8">${esc((b.name||'?').toUpperCase())}</div>
+              <div style="font-size:.7rem;color:#7A8FA8">${rankLabel(b.rank)} · Grp ${b.group} · ${b.pts}pts</div>
             </div>
           </div>`;
       });
