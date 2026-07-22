@@ -1,5 +1,5 @@
 import { auth, db } from './firebase.js';
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { collection, getDocs, getDoc, doc, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULT_ADMIN_EMAIL = 'surajtxglive@gmail.com';
@@ -20,18 +20,24 @@ async function isAdminEmail(email) {
   }
 }
 
-// Google login — uses redirect (works in PWA, WebView, and all browsers).
+// Google login — tries popup first (works in browsers + Android PWA via Custom Tab),
+// falls back to redirect if popups are blocked (iOS PWA / restrictive WebViews).
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
   try {
-    await signInWithRedirect(auth, provider);
+    await signInWithPopup(auth, provider);
   } catch(e) {
-    console.error('Login failed', e);
-    throw new Error('Sign-in failed. Please try again.');
+    const blocked = e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment';
+    if (blocked) {
+      await signInWithRedirect(auth, provider);
+    } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+      console.error('Login failed', e);
+      throw new Error('Sign-in failed. Try opening this page in Chrome or Safari directly.');
+    }
   }
 }
 
-// Call once on page load to complete a pending redirect sign-in.
+// Call once on page load to complete a pending redirect sign-in (iOS PWA fallback).
 export async function handleLoginRedirect() {
   try {
     await getRedirectResult(auth);

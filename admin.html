@@ -254,7 +254,7 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v112';
+  const CURRENT_APP_VERSION = 'v113';
 
   import { auth, db } from './js/firebase.js';
   import { loginWithGoogle, logout, onAdminAuth, handleLoginRedirect, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
@@ -279,9 +279,14 @@
 
   // Auth
   document.getElementById('google-login-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('google-login-btn');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to Google…';
     try {
       await loginWithGoogle();
     } catch(e) {
+      btn.disabled = false;
+      btn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" /> Sign in with Google';
       toast(e.message, 6000);
     }
   });
