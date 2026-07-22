@@ -254,10 +254,10 @@
 
 <script type="module">
   // Keep in sync with sw.js's CACHE and index.html's APP_VERSION on every deploy.
-  const CURRENT_APP_VERSION = 'v111';
+  const CURRENT_APP_VERSION = 'v112';
 
   import { auth, db } from './js/firebase.js';
-  import { loginWithGoogle, logout, onAdminAuth, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
+  import { loginWithGoogle, logout, onAdminAuth, handleLoginRedirect, getAdmins, addAdmin, removeAdmin, DEFAULT_ADMIN_EMAIL } from './js/auth.js';
   import { getAllPlayers, updatePlayerStatus, deletePlayer, saveGroupsAndGenerateMatches, setMatchLive, enterScore, checkAndGenerateKnockout, advanceKnockout, resetKnockout } from './js/admin.js';
   import { getMatches, updateMatch } from './js/matches.js';
   import { computeStandings, getQualifiers } from './js/tournament.js';
@@ -293,6 +293,9 @@
   });
 
   let currentAdminEmail = '';
+
+  // Complete any pending Google redirect sign-in (needed for PWA / WebView)
+  handleLoginRedirect();
 
   onAdminAuth(user => {
     if (user) {

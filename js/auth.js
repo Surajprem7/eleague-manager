@@ -1,5 +1,5 @@
 import { auth, db } from './firebase.js';
-import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { collection, getDocs, getDoc, doc, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 export const DEFAULT_ADMIN_EMAIL = 'surajtxglive@gmail.com';
@@ -20,22 +20,23 @@ async function isAdminEmail(email) {
   }
 }
 
-// Google login. Throws a friendly Error on failure (except when the user
-// closed the popup themselves, which isn't a real error).
+// Google login — uses redirect (works in PWA, WebView, and all browsers).
 export async function loginWithGoogle() {
   const provider = new GoogleAuthProvider();
   try {
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
+    await signInWithRedirect(auth, provider);
   } catch(e) {
     console.error('Login failed', e);
-    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-      return null;
-    }
-    if (e.code === 'auth/popup-blocked') {
-      throw new Error('Your browser blocked the sign-in popup. Please allow popups for this site in your browser settings, then try again.');
-    }
-    throw new Error('Sign-in failed. If you opened this link inside an app like WhatsApp or Instagram, try opening it in your regular browser instead.');
+    throw new Error('Sign-in failed. Please try again.');
+  }
+}
+
+// Call once on page load to complete a pending redirect sign-in.
+export async function handleLoginRedirect() {
+  try {
+    await getRedirectResult(auth);
+  } catch(e) {
+    console.error('Redirect result error', e);
   }
 }
 
