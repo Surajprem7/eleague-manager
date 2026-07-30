@@ -284,6 +284,11 @@
       <iframe id="stats-iframe" src="stats.html" style="width:100%;height:calc(100vh - 130px);border:none;border-radius:var(--radius-lg);display:block" loading="lazy"></iframe>
     </section>
 
+    <!-- BRACKET -->
+    <section class="section" id="sec-bracket">
+      <iframe id="bracket-iframe" src="bracket.html" style="width:100%;height:calc(100vh - 130px);border:none;border-radius:var(--radius-lg);display:block" loading="lazy"></iframe>
+    </section>
+
 
   </div>
 </main>
@@ -318,7 +323,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v114';
+  const APP_VERSION = 'v115';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
