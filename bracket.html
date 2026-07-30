@@ -98,51 +98,24 @@ async function loadBracket() {
     const allMatches = matchSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const status = tournSnap.empty ? null : { id: tournSnap.docs[0].id, ...tournSnap.docs[0].data() };
 
-    const koMatches = allMatches.filter(m => ROUND_ORDER.includes(m.phase));
+    // Only show upcoming (scheduled/live) SF matches
+    const sfMatches = allMatches.filter(m => m.phase === 'sf' && m.status !== 'completed');
 
-    if (!koMatches.length) {
-      el.innerHTML = `<div class="empty-bracket"><span style="font-size:2.5rem;display:block;margin-bottom:.75rem">🏆</span><p>Knockout bracket will appear here once the group stage is complete.</p><a href="index.html" style="color:#A8872A;font-size:.85rem">← Go back</a></div>`;
+    if (!sfMatches.length) {
+      el.innerHTML = `<div class="empty-bracket"><span style="font-size:2.5rem;display:block;margin-bottom:.75rem">🏆</span><p>Semi-final fixtures will appear here once the quarter-finals are done.</p><a href="index.html" style="color:#A8872A;font-size:.85rem">← Go back</a></div>`;
       return;
     }
 
-    // Show winner banner if done
-    let html = '';
-    if (status?.phase === 'done' && status.winner) {
-      html += `<div class="trophy-row">
-        <span class="t-icon">🏆</span>
-        <h2>${esc(status.winner)}</h2>
-        <p>Tournament Champion!</p>
-        ${status.second ? `<p style="margin-top:4px;opacity:.75;font-size:.8rem">🥈 ${esc(status.second)} &nbsp; ${status.third ? '🥉 ' + esc(status.third) : ''}</p>` : ''}
-      </div>`;
-    }
-
-    // Render each round
-    const rounds = [...new Set(koMatches.map(m => m.phase))].sort((a,b) => ROUND_ORDER.indexOf(a) - ROUND_ORDER.indexOf(b));
-
-    rounds.forEach(round => {
-      const rMatches = koMatches.filter(m => m.phase === round);
-      html += `<div class="bround">
-        <div class="phase-header">${ROUND_LABEL[round]||round}</div>
-        ${rMatches.map(m => {
-          const hWin = m.winner === 'home';
-          const aWin = m.winner === 'away';
-          return `<div class="bmatch">
-            <div class="bteam ${hWin?'winner':''}">${esc(m.homeName)}</div>
-            ${m.status === 'completed'
-              ? `<div class="bscore">${m.homeScore} – ${m.awayScore}</div>`
-              : `<div class="bvs">${m.status === 'live' ? '🔴 LIVE' : 'vs'}</div>`}
-            <div class="bteam ${aWin?'winner':''}" style="text-align:right">${esc(m.awayName)}</div>
-            ${m.status === 'completed' ? `<span style="font-size:.7rem;background:#001A0E;color:#00C875;padding:2px 6px;border-radius:4px;margin-left:4px">✓</span>` : ''}
-          </div>`;
-        }).join('')}
-      </div>`;
-    });
+    let html = `<div class="bround">
+      <div class="phase-header">⚽ Upcoming Semi-Finals</div>
+      ${sfMatches.map(m => `<div class="bmatch">
+        <div class="bteam">${esc((m.homeName||'').toUpperCase())}</div>
+        <div class="bvs">${m.status === 'live' ? '🔴 LIVE' : 'vs'}</div>
+        <div class="bteam" style="text-align:right">${esc((m.awayName||'').toUpperCase())}</div>
+      </div>`).join('')}
+    </div>`;
 
     el.innerHTML = html;
-
-    // Draw canvas for sharing
-    drawBracketCanvas(rounds, koMatches, status);
-    document.getElementById('share-section').style.display = 'block';
 
   } catch(e) {
     el.innerHTML = `<div class="empty-bracket"><span style="font-size:2rem">⚠️</span><p>Error loading bracket.</p></div>`;
@@ -306,13 +279,13 @@ function drawMatch(ctx, x, y, w, h, m) {
   ctx.font = homeWin ? '600 12px Inter, sans-serif' : '400 12px Inter, sans-serif';
   ctx.fillStyle = homeWin ? GREEN : DARK;
   ctx.textAlign = 'left';
-  const homeTxt = truncate(m.homeName || '?', 18);
+  const homeTxt = truncate((m.homeName || '?').toUpperCase(), 18);
   ctx.fillText(homeTxt, x + 10, y + h / 2 - 7);
 
   // Away player
   ctx.font = awayWin ? '600 12px Inter, sans-serif' : '400 12px Inter, sans-serif';
   ctx.fillStyle = awayWin ? GREEN : DARK;
-  const awayTxt = truncate(m.awayName || '?', 18);
+  const awayTxt = truncate((m.awayName || '?').toUpperCase(), 18);
   ctx.fillText(awayTxt, x + 10, y + h / 2 + 14);
 
   // Score or status

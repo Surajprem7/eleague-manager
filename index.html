@@ -313,6 +313,9 @@
   <button class="nav-item nav-registered-only" data-section="stats">
     <span>Leaderboard</span>
   </button>
+  <button class="nav-item nav-registered-only" data-section="bracket">
+    <span>Bracket</span>
+  </button>
   <a href="admin.html" class="nav-item" style="text-decoration:none">
     <span>Admin</span>
   </a>
@@ -323,7 +326,7 @@
 <script type="module">
   // Bump this alongside sw.js's CACHE constant on every deploy — lets admins
   // see which players are on the latest version vs. a stale cached one.
-  const APP_VERSION = 'v115';
+  const APP_VERSION = 'v116';
 
   import { db } from './js/firebase.js';
   import { registerPlayer } from './js/app.js';
